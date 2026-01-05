@@ -72,8 +72,15 @@ class PropertyExtractor:
                     validated[field] = None
         
         # Handle strings
-        for field in ['property_name', 'property_type', 'location', 'description']:
+        for field in ['property_name', 'property_type', 'location', 'description',
+                     'listing_id', 'internal_property_id', 'listing_status']:
             validated[field] = data.get(field)
+        
+        # Handle date_listed
+        if data.get('date_listed'):
+            validated['date_listed'] = data.get('date_listed')  # Keep as string for now, Django will parse
+        else:
+            validated['date_listed'] = None
         
         # Handle amenities array
         amenities = data.get('amenities')

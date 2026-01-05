@@ -20,6 +20,7 @@ class PropertyListSerializer(serializers.ModelSerializer):
     
     property_type_display = serializers.CharField(source='get_property_type_display', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
+    source_website_display = serializers.CharField(source='get_source_website_display', read_only=True)
     primary_image = serializers.SerializerMethodField()
     
     class Meta:
@@ -27,8 +28,9 @@ class PropertyListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'property_name', 'property_type', 'property_type_display',
             'price_usd', 'bedrooms', 'bathrooms', 'square_meters',
-            'location', 'status', 'status_display', 'primary_image',
-            'created_at'
+            'location', 'latitude', 'longitude', 'status', 'status_display', 
+            'source_website', 'source_website_display', 'source_url', 
+            'listing_id', 'listing_status', 'primary_image', 'created_at'
         ]
     
     def get_primary_image(self, obj):
@@ -45,6 +47,7 @@ class PropertyDetailSerializer(serializers.ModelSerializer):
     
     property_type_display = serializers.CharField(source='get_property_type_display', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
+    source_website_display = serializers.CharField(source='get_source_website_display', read_only=True)
     images = PropertyImageSerializer(many=True, read_only=True)
     price_per_sqm = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True, source='get_price_per_sqm')
     verified_by_name = serializers.CharField(source='verified_by.get_full_name', read_only=True, allow_null=True)
@@ -56,7 +59,9 @@ class PropertyDetailSerializer(serializers.ModelSerializer):
             'price_usd', 'bedrooms', 'bathrooms', 'square_meters', 'lot_size_m2',
             'location', 'latitude', 'longitude', 'description', 'amenities',
             'hoa_fee_monthly', 'property_tax_annual', 'year_built', 'parking_spaces',
-            'status', 'status_display', 'user_roles', 'source_url',
+            'status', 'status_display', 'user_roles', 'source_website', 
+            'source_website_display', 'source_url',
+            'listing_id', 'internal_property_id', 'listing_status', 'date_listed',
             'extraction_confidence', 'field_confidence', 'extracted_at',
             'last_verified', 'verified_by_name', 'is_active',
             'images', 'price_per_sqm', 'created_at', 'updated_at'
@@ -73,8 +78,9 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
             'property_name', 'property_type', 'price_usd', 'bedrooms', 'bathrooms',
             'square_meters', 'lot_size_m2', 'location', 'latitude', 'longitude',
             'description', 'amenities', 'hoa_fee_monthly', 'property_tax_annual',
-            'year_built', 'parking_spaces', 'status', 'user_roles', 'source_url',
-            'raw_html', 'extraction_confidence', 'field_confidence'
+            'year_built', 'parking_spaces', 'status', 'user_roles', 'source_website',
+            'source_url', 'listing_id', 'internal_property_id', 'listing_status', 
+            'date_listed', 'raw_html', 'extraction_confidence', 'field_confidence'
         ]
     
     def validate_price_usd(self, value):

@@ -286,7 +286,15 @@ PROPERTY_EXTRACTION_PROMPT = """You are a data extraction specialist. Extract pr
   "location_evidence": "exact quote from source",
   "latitude": number or null,
   "longitude": number or null,
-  "coordinates_evidence": "exact quote from source or 'extracted from map'",
+  "coordinates_evidence": "exact quote from source or 'extracted from map iframe'",
+  "listing_id": "string or null (public listing ID like '21317')",
+  "listing_id_evidence": "exact quote from source showing 'ID: 21317' or similar",
+  "internal_property_id": "string or null (internal ID from forms/hidden fields)",
+  "internal_property_id_evidence": "exact quote from source",
+  "listing_status": "string or null (Active, Published, Sold, Pending)",
+  "listing_status_evidence": "exact quote from source",
+  "date_listed": "YYYY-MM-DD or null (publication date)",
+  "date_listed_evidence": "exact quote from source",
   "description": "string or null",
   "square_meters": number or null,
   "square_meters_evidence": "exact quote from source",
@@ -306,6 +314,34 @@ PROPERTY_EXTRACTION_PROMPT = """You are a data extraction specialist. Extract pr
   "confidence_reasoning": "brief explanation of confidence score"
 }}
 ```
+
+**New Fields Extraction Guidelines:**
+
+**listing_id** - Public Listing ID:
+- Look for "ID:" followed by numbers (e.g., "ID: 21317")
+- Look for "Property ID:", "Listing #", "Ref:", "Reference:"
+- Extract the number only (e.g., "21317" not "ID: 21317")
+
+**internal_property_id** - Internal System ID:
+- Look in form inputs: <input name="property_id" value="10031">
+- Look in URLs: /property/10031
+- Different from public listing_id
+
+**listing_status** - Current Status:
+- Look for status badges or tags: "Active", "Published", "For Sale", "Sold", "Pending", "Under Contract"
+- Often in <span class="status"> or similar
+- Normalize to: Active, Published, Sold, Pending
+
+**date_listed** - Publication Date:
+- Look for "Listed:", "Published:", "Date:", "Added on:"
+- Look in metadata: <time datetime="2024-01-15">
+- Format as YYYY-MM-DD
+
+**Coordinates Extraction (Enhanced):**
+- Check iframe src for Google Maps: src="...&q=10.472,-84.64076..."
+- Extract latitude (first number) and longitude (second number) from q= parameter
+- Also check for embedded map divs with data-lat/data-lng attributes
+- Convert DMS to decimal if needed
 
 **Extraction Confidence Guidelines:**
 - 0.9-1.0: All major fields clearly stated

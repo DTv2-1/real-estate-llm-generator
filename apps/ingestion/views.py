@@ -13,6 +13,8 @@ from apps.users.models import CustomUser
 
 from core.scraping.scraper import scrape_url, ScraperError
 from core.llm.extraction import extract_property_data, ExtractionError
+from core.utils.website_detector import detect_source_website
+from core.utils.html_cleaner import clean_html_for_extraction
 from apps.properties.models import Property
 from apps.properties.serializers import PropertyDetailSerializer
 
@@ -41,6 +43,7 @@ class IngestURLView(APIView):
         logger.info(f"Permission classes: {self.permission_classes}")
         
         url = request.data.get('url')
+        source_website_override = request.data.get('source_website')  # Optional: user-selected website
         
         if not url:
             logger.warning("URL not provided in request")
@@ -62,19 +65,42 @@ class IngestURLView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            # Step 2: Extract property data with LLM
-            logger.info("Step 2: Extracting property data with LLM...")
-            html_content = scraped_data.get('html', scraped_data.get('text', ''))
-            logger.info(f"HTML content length: {len(html_content)}")
-            logger.info(f"HTML preview (first 500 chars): {html_content[:500]}")
+            # Step 2: Detect source website (needed for HTML cleaning)
+            if source_website_override:
+                source_website = source_website_override
+                logger.info(f"Step 2: Using user-selected source website: {source_website}")
+            else:
+                source_website = detect_source_website(url)
+                logger.info(f"Step 2: Auto-detected source website: {source_website}")
             
-            extracted_data = extract_property_data(html_content, url=url)
+            # Step 3: Clean HTML to reduce size before LLM extraction
+            html_content = scraped_data.get('html', scraped_data.get('text', ''))
+            logger.info(f"Original HTML size: {len(html_content)} chars")
+            
+            # Clean HTML based on website
+            cleaning_result = clean_html_for_extraction(html_content, source_website)
+            cleaned_html = cleaning_result['cleaned_html']
+            
+            logger.info(f"✂️ HTML Cleaning Results:")
+            logger.info(f"  - Original size: {cleaning_result['original_size']:,} chars")
+            logger.info(f"  - Cleaned size: {cleaning_result['cleaned_size']:,} chars")
+            logger.info(f"  - Reduction: {cleaning_result['reduction_percent']}% ({cleaning_result['reduction_bytes']:,} bytes)")
+            logger.info(f"  - Token savings: ~{cleaning_result['estimated_token_savings']:,} tokens")
+            logger.info(f"  - Cost savings: ~${cleaning_result['estimated_cost_savings_usd']}")
+            
+            # Step 4: Extract property data with LLM (using cleaned HTML)
+            logger.info("Step 4: Extracting property data with LLM...")
+            logger.info(f"Cleaned HTML preview (first 500 chars): {cleaned_html[:500]}")
+            
+            extracted_data = extract_property_data(cleaned_html, url=url)
             logger.info(f"Extraction complete. Confidence: {extracted_data.get('extraction_confidence')}")
             logger.info(f"Extracted fields with values: {[k for k, v in extracted_data.items() if v is not None and k not in ['tenant', 'user_roles']]}")
             
-            # Step 3: Add tenant and create property
+            # Step 5: Add source website and tenant
+            extracted_data['source_website'] = source_website
+            
             tenant = Tenant.objects.first()
-            logger.info(f"Step 3: Using tenant: {tenant.name if tenant else 'None'}")
+            logger.info(f"Using tenant: {tenant.name if tenant else 'None'}")
             extracted_data['tenant'] = tenant
             
             # Set default user_roles if not specified
@@ -154,6 +180,7 @@ class IngestTextView(APIView):
         """Process text and extract property data."""
         
         text = request.data.get('text')
+        source_website_override = request.data.get('source_website')  # Optional: user-selected website
         
         if not text:
             return Response(
@@ -165,6 +192,10 @@ class IngestTextView(APIView):
             # Extract property data with LLM
             logger.info("Extracting property data from text...")
             extracted_data = extract_property_data(text)
+            
+            # Set source_website from user selection or default to 'other'
+            extracted_data['source_website'] = source_website_override if source_website_override else 'other'
+            logger.info(f"Using source_website: {extracted_data['source_website']}")
             
             # Add tenant
             tenant = Tenant.objects.first()

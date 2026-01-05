@@ -6,9 +6,13 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from core.utils.health import health_check
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    
+    # Health check endpoint
+    path('api/health/', health_check, name='health_check'),
     
     # API v1 endpoints
     path('api/v1/auth/', include('apps.users.urls')),

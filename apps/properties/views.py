@@ -5,7 +5,7 @@ Views for Properties API.
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 
@@ -26,22 +26,30 @@ class PropertyViewSet(viewsets.ModelViewSet):
     
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['status', 'property_type', 'location']
+    filterset_fields = ['status', 'property_type', 'location', 'source_website']
     search_fields = ['property_name', 'description', 'location']
-    ordering_fields = ['created_at', 'price_usd', 'property_name']
+    ordering_fields = ['created_at', 'price_usd', 'property_name', 'source_website']
     ordering = ['-created_at']
+    
+    def get_permissions(self):
+        """Allow read-only access without authentication for list and retrieve."""
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        return [IsAuthenticated()]
     
     def get_queryset(self):
         """Filter properties by tenant and user role."""
-        user = self.request.user
         queryset = Property.objects.filter(
-            tenant=user.tenant,
             is_active=True
         ).select_related('tenant', 'verified_by').prefetch_related('images')
         
-        # Filter by role access
-        if user.role != 'admin':
-            queryset = queryset.filter(user_roles__contains=[user.role])
+        # If authenticated, filter by tenant
+        if self.request.user.is_authenticated:
+            queryset = queryset.filter(tenant=self.request.user.tenant)
+            
+            # Filter by role access
+            if self.request.user.role != 'admin':
+                queryset = queryset.filter(user_roles__contains=[self.request.user.role])
         
         # Query params filtering
         min_price = self.request.query_params.get('min_price')

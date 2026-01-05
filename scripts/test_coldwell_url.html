@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head><title>Test Coldwell Banker URL Detection</title></head>
+<body>
+<h2>Testing Coldwell Banker URL Detection</h2>
+<script>
+// Copy the functions from index.html
+function getWebsiteFromUrl(url) {
+    if (!url) return 'other';
+    const urlLower = url.toLowerCase();
+    if (urlLower.includes('encuentra24')) return 'encuentra24';
+    if (urlLower.includes('crrealestate') || urlLower.includes('cr-realestate')) return 'crrealestate';
+    if (urlLower.includes('coldwellbanker')) return 'coldwellbanker';
+    return 'other';
+}
+
+function getCategoryFromUrl(url) {
+    if (!url) return 'other';
+    const urlLower = url.toLowerCase();
+    
+    // Coldwell Banker detection
+    if (urlLower.includes('coldwellbanker')) {
+        if (urlLower.includes('house-for-sale') || urlLower.includes('casa-en-venta')) return 'venta-casas';
+        if (urlLower.includes('apartment-for-sale') || urlLower.includes('apartamento-en-venta')) return 'venta-apartamentos';
+        if (urlLower.includes('land-for-sale') || urlLower.includes('terreno-en-venta') || urlLower.includes('lote-en-venta')) return 'venta-lotes';
+        if (urlLower.includes('farm-for-sale') || urlLower.includes('finca-en-venta')) return 'venta-fincas';
+        return 'venta-casas';
+    }
+    return 'other';
+}
+
+// Test URLs
+const testUrl = 'https://www.coldwellbankercostarica.com/property/land-for-sale-in-la-fortuna/10031';
+
+console.log('Testing Coldwell Banker URL:', testUrl);
+console.log('Website detected:', getWebsiteFromUrl(testUrl));
+console.log('Category detected:', getCategoryFromUrl(testUrl));
+
+document.body.innerHTML += '<pre>' + 
+    'URL: ' + testUrl + '\n' +
+    'Website: ' + getWebsiteFromUrl(testUrl) + '\n' +
+    'Category: ' + getCategoryFromUrl(testUrl) + '\n' +
+    '</pre>';
+</script>
+</body>
+</html>

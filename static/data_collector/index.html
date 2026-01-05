@@ -19,7 +19,7 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        .sidebar-scrollbar::-webkit-scrollbar {
+        .sidebar-scrollbar::-webkit-scrollbar   {
             width: 6px;
         }
         .sidebar-scrollbar::-webkit-scrollbar-track {
@@ -32,49 +32,88 @@
         .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
             background: #555;
         }
+        .website-group {
+            margin-bottom: 1.5rem;
+        }
+        .website-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            background: #f9fafb;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+        }
+        .website-header:hover {
+            background: #f3f4f6;
+        }
+        .website-logo {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+        }
+        .property-count {
+            margin-left: auto;
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+        .collapsed .property-list {
+            display: none;
+        }
     </style>
 </head>
-<body class="bg-gray-50">
-    <!-- Sidebar -->
-    <div id="sidebar" class="fixed top-0 left-0 h-full w-80 bg-white shadow-xl transform -translate-x-full transition-transform duration-300 z-50 flex flex-col">
-        <div class="p-4 border-b flex justify-between items-center">
-            <h2 class="text-lg font-bold text-gray-800">📋 History</h2>
-            <button onclick="toggleSidebar()" class="text-gray-500 hover:text-gray-700">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+<body class="bg-gray-50 flex">
+    <!-- Left Sidebar - Permanent -->
+    <div class="w-80 bg-white shadow-xl flex flex-col h-screen sticky top-0">
+        <div class="p-4 border-b">
+            <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
                 </svg>
-            </button>
+                Saved Properties
+            </h2>
+            <p class="text-xs text-gray-500 mt-1">Organized by category</p>
         </div>
         <div class="flex-1 overflow-y-auto sidebar-scrollbar p-4">
             <div id="historyList">
                 <p class="text-gray-500 text-sm">Loading...</p>
             </div>
         </div>
-        <div class="p-4 border-t">
+        <div class="p-4 border-t space-y-2">
+            <button onclick="loadHistoryFromBackend()" class="w-full bg-blue-100 text-blue-700 py-2 px-4 rounded hover:bg-blue-200 transition text-sm flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                Refresh
+            </button>
             <button onclick="clearHistory()" class="w-full bg-red-100 text-red-700 py-2 px-4 rounded hover:bg-red-200 transition text-sm">
-                Clear History
+                Clear All History
             </button>
         </div>
     </div>
 
     <!-- Main Content -->
-    <div class="container mx-auto px-4 py-8 max-w-4xl">
+    <div class="flex-1 overflow-y-auto">
+        <div class="container mx-auto px-6 py-8 max-w-5xl">
         <!-- Header -->
-        <header class="mb-8 flex justify-between items-start">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-800 mb-2">Property Data Collector</h1>
-                <p class="text-gray-600">Paste a property URL or text to automatically extract structured data</p>
+        <header class="mb-8">
+            <div class="flex items-center justify-between">
+                <div id="headerTitle">
+                    <h1 class="text-3xl font-bold text-gray-800 mb-2">Property Data Collector</h1>
+                    <p class="text-gray-600">Paste a property URL or text to automatically extract structured data</p>
+                </div>
+                <button id="backToSearchBtn" onclick="resetForm()" class="hidden bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-4 rounded-lg transition flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    Back to Search
+                </button>
             </div>
-            <button onclick="toggleSidebar()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                History
-            </button>
         </header>
 
         <!-- Input Section -->
-        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div id="inputSection" class="bg-white rounded-lg shadow-md p-6 mb-6">
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                     Input Type
@@ -93,6 +132,21 @@
                 </div>
             </div>
 
+            <!-- Website Source Selector -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Source Website
+                </label>
+                <select id="sourceWebsite" 
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white">
+                    <option value="encuentra24">Encuentra24</option>
+                    <option value="crrealestate">CR Real Estate</option>
+                    <option value="coldwellbanker">Coldwell Banker</option>
+                    <option value="other">Other / Manual</option>
+                </select>
+                <p class="mt-1 text-xs text-gray-500">Select the website you're scraping from</p>
+            </div>
+
             <!-- URL Input -->
             <div id="urlInput" class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -100,13 +154,8 @@
                 </label>
                 <input type="url" id="propertyUrl" 
                        placeholder="https://encuentra24.com/property/..."
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                
-                <!-- URL History -->
-                <div id="urlHistory" class="mt-2 hidden">
-                    <label class="block text-xs font-medium text-gray-500 mb-1">Recent URLs:</label>
-                    <div id="urlHistoryList" class="space-y-1 max-h-32 overflow-y-auto"></div>
-                </div>
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                       onchange="autoDetectWebsite()">
             </div>
 
             <!-- Text Input -->
@@ -120,7 +169,10 @@
             </div>
 
             <button onclick="processProperty()" 
-                    class="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition duration-200 font-semibold">
+                    class="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition duration-200 font-semibold flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
                 Process Property
             </button>
         </div>
@@ -130,16 +182,23 @@
             <div class="bg-white rounded-lg shadow-md p-8 text-center">
                 <div class="spinner"></div>
                 <p class="text-gray-600 mt-4">Processing property data...</p>
-                <p class="text-sm text-gray-500 mt-2">This may take 10-30 seconds</p>
+                <p class="text-sm text-gray-500 mt-2">Scraping from <span id="loadingWebsite" class="font-semibold"></span></p>
+                <p class="text-xs text-gray-400 mt-1">This may take 10-30 seconds</p>
             </div>
         </div>
 
         <!-- Results Section -->
         <div id="resultsSection" class="hidden">
             <div class="bg-white rounded-lg shadow-md p-6">
-                <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center justify-between mb-4">
                     <h2 class="text-2xl font-bold text-gray-800">Extracted Property Data</h2>
                     <span id="confidenceBadge" class="px-3 py-1 rounded-full text-sm font-semibold"></span>
+                </div>
+                
+                <!-- Source Website Badge -->
+                <div class="mb-6 flex items-center gap-2 text-sm">
+                    <span class="text-gray-600">Source:</span>
+                    <span id="sourceWebsiteBadge" class="px-3 py-1 bg-gray-100 rounded-full font-medium"></span>
                 </div>
 
                 <!-- Property Details Grid -->
@@ -158,8 +217,8 @@
                         ✎ Edit Details
                     </button>
                     <button onclick="resetForm()" 
-                            class="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition">
-                        ✕ Discard
+                            class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition">
+                        + New Property
                     </button>
                 </div>
             </div>
@@ -170,53 +229,279 @@
                 <p id="errorMessage" class="text-red-700"></p>
             </div>
         </div>
+        </div>
     </div>
 
     <script>
         let extractedProperty = null;
         const API_BASE = '/api/v1';
-        const URL_HISTORY_KEY = 'property_url_history';
-        const MAX_HISTORY = 10;
+
+        // Website configurations
+        const WEBSITES = {
+            'encuentra24': {
+                name: 'Encuentra24',
+                icon: `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>`,
+                color: '#10b981'
+            },
+            'crrealestate': {
+                name: 'CR Real Estate',
+                icon: `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd"></path></svg>`,
+                color: '#3b82f6'
+            },
+            'coldwellbanker': {
+                name: 'Coldwell Banker',
+                icon: `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clip-rule="evenodd"></path><path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z"></path></svg>`,
+                color: '#8b5cf6'
+            },
+            'other': {
+                name: 'Other Sources',
+                icon: `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"></path></svg>`,
+                color: '#6b7280'
+            }
+        };
 
         // Load data on page load
         window.addEventListener('DOMContentLoaded', function() {
-            loadUrlHistory();
             loadHistoryFromBackend();
         });
 
-        // Sidebar functions
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('-translate-x-full');
+        function getWebsiteFromUrl(url) {
+            if (!url) return 'other';
+            
+            const urlLower = url.toLowerCase();
+            
+            if (urlLower.includes('encuentra24')) return 'encuentra24';
+            if (urlLower.includes('crrealestate') || urlLower.includes('cr-realestate')) return 'crrealestate';
+            if (urlLower.includes('coldwellbanker')) return 'coldwellbanker';
+            
+            return 'other';
+        }
+
+        function autoDetectWebsite() {
+            const url = document.getElementById('propertyUrl').value;
+            if (url) {
+                const detected = getWebsiteFromUrl(url);
+                document.getElementById('sourceWebsite').value = detected;
+            }
+        }
+
+        function getCategoryFromUrl(url) {
+            if (!url) return 'other';
+            
+            const urlLower = url.toLowerCase();
+            
+            // Detectar categorías de Encuentra24
+            if (urlLower.includes('proyectos-nuevos')) return 'proyectos-nuevos';
+            if (urlLower.includes('venta-de-propiedades-casas') || urlLower.includes('venta-casas')) return 'venta-casas';
+            if (urlLower.includes('venta-de-propiedades-apartamentos') || urlLower.includes('venta-apartamentos')) return 'venta-apartamentos';
+            if (urlLower.includes('venta-de-propiedades-negocios')) return 'venta-negocios';
+            if (urlLower.includes('venta-de-propiedades-lotes-y-terrenos') || urlLower.includes('lotes')) return 'venta-lotes';
+            if (urlLower.includes('venta-de-propiedades-fincas')) return 'venta-fincas';
+            if (urlLower.includes('alquiler-casas')) return 'alquiler-casas';
+            if (urlLower.includes('alquiler-apartamentos')) return 'alquiler-apartamentos';
+            if (urlLower.includes('alquiler-locales-comerciales')) return 'alquiler-locales';
+            
+            // Detectar categorías de Coldwell Banker (basado en URL patterns)
+            if (urlLower.includes('coldwellbanker')) {
+                // Tipo de propiedad en la URL
+                if (urlLower.includes('house-for-sale') || urlLower.includes('casa-en-venta')) return 'venta-casas';
+                if (urlLower.includes('apartment-for-sale') || urlLower.includes('apartamento-en-venta')) return 'venta-apartamentos';
+                if (urlLower.includes('land-for-sale') || urlLower.includes('terreno-en-venta') || urlLower.includes('lote-en-venta')) return 'venta-lotes';
+                if (urlLower.includes('farm-for-sale') || urlLower.includes('finca-en-venta')) return 'venta-fincas';
+                if (urlLower.includes('commercial-for-sale') || urlLower.includes('comercial-en-venta')) return 'venta-negocios';
+                if (urlLower.includes('house-for-rent') || urlLower.includes('casa-alquiler')) return 'alquiler-casas';
+                if (urlLower.includes('apartment-for-rent') || urlLower.includes('apartamento-alquiler')) return 'alquiler-apartamentos';
+                if (urlLower.includes('commercial-for-rent') || urlLower.includes('local-alquiler')) return 'alquiler-locales';
+                // Default Coldwell Banker properties to "Houses for Sale" if no specific category
+                return 'venta-casas';
+            }
+            
+            return 'other';
+        }
+
+        function getWebsiteFromProperty(prop) {
+            // Use source_website field if available (returns the value directly)
+            if (prop.source_website) {
+                return prop.source_website;
+            }
+            
+            // Fallback to URL detection
+            return getWebsiteFromUrl(prop.source_url);
+        }
+
+        function toggleWebsiteGroup(website) {
+            const group = document.getElementById(`group-${website}`);
+            if (group) {
+                group.classList.toggle('collapsed');
+            }
         }
 
         async function loadHistoryFromBackend() {
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = '<p class="text-gray-500 text-sm">Loading properties...</p>';
+            
             try {
-                const response = await fetch(`${API_BASE}/properties/?page_size=20&ordering=-created_at`);
+                const response = await fetch(`${API_BASE}/properties/?page_size=100&ordering=-created_at`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 const data = await response.json();
                 
                 const historyList = document.getElementById('historyList');
                 
                 if (data.results && data.results.length > 0) {
-                    historyList.innerHTML = data.results.map(prop => `
-                        <div class="mb-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition cursor-pointer" onclick="loadPropertyFromHistory('${prop.id}')">
-                            <div class="flex justify-between items-start mb-1">
-                                <h3 class="font-semibold text-sm text-gray-800 truncate flex-1">${prop.property_name || 'Untitled'}</h3>
-                                <span class="text-xs text-gray-500 ml-2">${new Date(prop.created_at).toLocaleDateString()}</span>
+                    // Group properties by category (detected from URL)
+                    const groupedByCategory = {};
+                    
+                    data.results.forEach(prop => {
+                        const category = getCategoryFromUrl(prop.source_url);
+                        if (!groupedByCategory[category]) {
+                            groupedByCategory[category] = [];
+                        }
+                        groupedByCategory[category].push(prop);
+                    });
+                    
+                    // Category configurations with icons
+                    const CATEGORIES = {
+                        'proyectos-nuevos': {
+                            name: 'New Projects',
+                            icon: `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V8a2 2 0 00-2-2h-5L9 4H4zm7 5a1 1 0 00-2 0v1H8a1 1 0 000 2h1v1a1 1 0 002 0v-1h1a1 1 0 000-2h-1V9z" clip-rule="evenodd"></path></svg>`,
+                            color: '#8b5cf6'
+                        },
+                        'venta-casas': {
+                            name: 'Houses for Sale',
+                            icon: `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>`,
+                            color: '#10b981'
+                        },
+                        'venta-apartamentos': {
+                            name: 'Apartments for Sale',
+                            icon: `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd"></path></svg>`,
+                            color: '#3b82f6'
+                        },
+                        'venta-negocios': {
+                            name: 'Businesses for Sale',
+                            icon: `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clip-rule="evenodd"></path><path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z"></path></svg>`,
+                            color: '#f59e0b'
+                        },
+                        'venta-lotes': {
+                            name: 'Lots/Land',
+                            icon: `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path></svg>`,
+                            color: '#059669'
+                        },
+                        'venta-fincas': {
+                            name: 'Farms for Sale',
+                            icon: `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 3.5a1.5 1.5 0 013 0V4a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-.5a1.5 1.5 0 000 3h.5a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-.5a1.5 1.5 0 00-3 0v.5a1 1 0 01-1 1H6a1 1 0 01-1-1v-3a1 1 0 00-1-1h-.5a1.5 1.5 0 010-3H4a1 1 0 001-1V6a1 1 0 011-1h3a1 1 0 001-1v-.5z"></path></svg>`,
+                            color: '#84cc16'
+                        },
+                        'alquiler-casas': {
+                            name: 'Houses for Rent',
+                            icon: `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"></path><path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0015 7h-1z"></path></svg>`,
+                            color: '#06b6d4'
+                        },
+                        'alquiler-apartamentos': {
+                            name: 'Apartments for Rent',
+                            icon: `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M11 17a1 1 0 001.447.894l4-2A1 1 0 0017 15V9.236a1 1 0 00-1.447-.894l-4 2a1 1 0 00-.553.894V17zM15.211 6.276a1 1 0 000-1.788l-4.764-2.382a1 1 0 00-.894 0L4.789 4.488a1 1 0 000 1.788l4.764 2.382a1 1 0 00.894 0l4.764-2.382zM4.447 8.342A1 1 0 003 9.236V15a1 1 0 00.553.894l4 2A1 1 0 009 17v-5.764a1 1 0 00-.553-.894l-4-2z"></path></svg>`,
+                            color: '#0ea5e9'
+                        },
+                        'alquiler-locales': {
+                            name: 'Commercial for Rent',
+                            icon: `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M13 7H7v6h6V7z"></path><path fill-rule="evenodd" d="M7 2a1 1 0 012 0v1h2V2a1 1 0 112 0v1h2a2 2 0 012 2v2h1a1 1 0 110 2h-1v2h1a1 1 0 110 2h-1v2a2 2 0 01-2 2h-2v1a1 1 0 11-2 0v-1H9v1a1 1 0 11-2 0v-1H5a2 2 0 01-2-2v-2H2a1 1 0 110-2h1V9H2a1 1 0 010-2h1V5a2 2 0 012-2h2V2zM5 5h10v10H5V5z" clip-rule="evenodd"></path></svg>`,
+                            color: '#8b5cf6'
+                        },
+                        'other': {
+                            name: 'Other',
+                            icon: `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"></path></svg>`,
+                            color: '#6b7280'
+                        }
+                    };
+                    
+                    // Sort categories by priority
+                    const categoryPriority = [
+                        'proyectos-nuevos', 'venta-casas', 'venta-apartamentos', 
+                        'venta-negocios', 'venta-lotes', 'venta-fincas',
+                        'alquiler-casas', 'alquiler-apartamentos', 'alquiler-locales',
+                        'other'
+                    ];
+                    
+                    const sortedCategories = Object.keys(groupedByCategory).sort((a, b) => {
+                        return categoryPriority.indexOf(a) - categoryPriority.indexOf(b);
+                    });
+                    
+                    // Generate HTML for each category group
+                    let html = '';
+                    
+                    sortedCategories.forEach(category => {
+                        const properties = groupedByCategory[category];
+                        const config = CATEGORIES[category] || CATEGORIES.other;
+                        
+                        html += `
+                            <div class="website-group" id="group-${category}">
+                                <div class="website-header" onclick="toggleWebsiteGroup('${category}')">
+                                    <div style="color: ${config.color}">${config.icon}</div>
+                                    <span class="font-semibold text-gray-800 text-sm">${config.name}</span>
+                                    <span class="property-count">(${properties.length})</span>
+                                    <svg class="w-4 h-4 text-gray-500 transform transition-transform" style="margin-left: 4px;">
+                                        <path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+                                    </svg>
+                                </div>
+                                <div class="property-list space-y-2">
+                                    ${properties.map(prop => `
+                                        <div class="ml-4 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition cursor-pointer border-l-2" 
+                                             style="border-color: ${config.color}"
+                                             onclick="loadPropertyFromHistory('${prop.id}')">
+                                            <div class="flex justify-between items-start mb-1">
+                                                <h3 class="font-semibold text-xs text-gray-800 truncate flex-1" title="${prop.property_name || 'Untitled'}">
+                                                    ${(prop.property_name || 'Untitled').substring(0, 40)}${(prop.property_name || '').length > 40 ? '...' : ''}
+                                                </h3>
+                                                <span class="text-xs text-gray-400 ml-2" style="font-size: 0.65rem;">
+                                                    ${new Date(prop.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                                </span>
+                                            </div>
+                                            <p class="text-xs text-gray-600 mb-1 truncate">${prop.location || 'N/A'}</p>
+                                            <div class="flex justify-between items-center">
+                                                <span class="text-sm font-bold" style="color: ${config.color}">
+                                                    $${prop.price_usd ? parseFloat(prop.price_usd).toLocaleString() : 'N/A'}
+                                                </span>
+                                                <span class="text-xs px-2 py-0.5 bg-white rounded" style="font-size: 0.65rem;">
+                                                    ${prop.property_type || 'N/A'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
                             </div>
-                            <p class="text-xs text-gray-600 mb-1">${prop.location || 'N/A'}</p>
-                            <div class="flex justify-between items-center">
-                                <span class="text-sm font-bold text-blue-600">$${prop.price_usd ? parseFloat(prop.price_usd).toLocaleString() : 'N/A'}</span>
-                                <span class="text-xs text-gray-500">${prop.property_type || 'N/A'}</span>
-                            </div>
-                        </div>
-                    `).join('');
+                        `;
+                    });
+                    
+                    historyList.innerHTML = html;
                 } else {
-                    historyList.innerHTML = '<p class="text-gray-500 text-sm">No properties saved yet</p>';
+                    historyList.innerHTML = `
+                        <div class="text-center py-8">
+                            <svg class="w-16 h-16 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <p class="text-gray-500 text-sm">No properties saved yet</p>
+                            <p class="text-gray-400 text-xs mt-1">Start by processing a property URL</p>
+                        </div>
+                    `;
                 }
             } catch (error) {
                 console.error('Error loading history:', error);
-                document.getElementById('historyList').innerHTML = '<p class="text-red-500 text-sm">Error loading history</p>';
+                historyList.innerHTML = `
+                    <div class="text-center py-8">
+                        <svg class="w-16 h-16 mx-auto text-red-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <p class="text-red-500 text-sm font-semibold">Error loading properties</p>
+                        <p class="text-gray-500 text-xs mt-2">Make sure Django server is running</p>
+                        <p class="text-gray-400 text-xs mt-1">Run: python manage.py runserver</p>
+                        <button onclick="loadHistoryFromBackend()" class="mt-3 text-blue-600 hover:text-blue-800 text-xs font-medium">
+                            Try Again
+                        </button>
+                    </div>
+                `;
             }
         }
 
@@ -225,10 +510,11 @@
                 const response = await fetch(`${API_BASE}/properties/${propertyId}/`);
                 const property = await response.json();
                 
-                // Populate form with source URL if available
-                if (property.source_url) {
-                    document.getElementById('propertyUrl').value = property.source_url;
-                }
+                // Hide input form, title, show results, show back button
+                document.getElementById('inputSection').classList.add('hidden');
+                document.getElementById('headerTitle').classList.add('hidden');
+                document.getElementById('loadingSpinner').classList.add('hidden');
+                document.getElementById('backToSearchBtn').classList.remove('hidden');
                 
                 // Display the property
                 displayResults({ 
@@ -236,7 +522,8 @@
                     extraction_confidence: property.extraction_confidence || 0.9
                 });
                 
-                toggleSidebar();
+                // Scroll to results
+                document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
             } catch (error) {
                 alert('Error loading property: ' + error.message);
             }
@@ -262,49 +549,7 @@
             }
         }
 
-        function loadUrlHistory() {
-            const history = getUrlHistory();
-            if (history.length > 0) {
-                const historyContainer = document.getElementById('urlHistory');
-                const historyList = document.getElementById('urlHistoryList');
-                
-                historyContainer.classList.remove('hidden');
-                historyList.innerHTML = '';
-                
-                history.forEach(url => {
-                    const div = document.createElement('div');
-                    div.className = 'text-xs text-blue-600 hover:text-blue-800 cursor-pointer truncate';
-                    div.textContent = url;
-                    div.onclick = () => {
-                        document.getElementById('propertyUrl').value = url;
-                    };
-                    historyList.appendChild(div);
-                });
-            }
-        }
 
-        function getUrlHistory() {
-            const history = localStorage.getItem(URL_HISTORY_KEY);
-            return history ? JSON.parse(history) : [];
-        }
-
-        function addUrlToHistory(url) {
-            let history = getUrlHistory();
-            
-            // Remove if already exists
-            history = history.filter(u => u !== url);
-            
-            // Add to beginning
-            history.unshift(url);
-            
-            // Keep only MAX_HISTORY items
-            if (history.length > MAX_HISTORY) {
-                history = history.slice(0, MAX_HISTORY);
-            }
-            
-            localStorage.setItem(URL_HISTORY_KEY, JSON.stringify(history));
-            loadUrlHistory();
-        }
 
         function toggleInputType() {
             const inputType = document.querySelector('input[name="inputType"]:checked').value;
@@ -324,6 +569,7 @@
             const inputType = document.querySelector('input[name="inputType"]:checked').value;
             const url = document.getElementById('propertyUrl').value;
             const text = document.getElementById('propertyText').value;
+            const sourceWebsite = document.getElementById('sourceWebsite').value;
 
             // Validation
             if (inputType === 'url' && !url) {
@@ -335,18 +581,22 @@
                 return;
             }
 
-            // Add URL to history if processing URL
-            if (inputType === 'url') {
-                addUrlToHistory(url);
-            }
-
-            // Show loading
+            // Show loading with website name
+            const websiteNames = {
+                'encuentra24': 'Encuentra24',
+                'crrealestate': 'CR Real Estate',
+                'coldwellbanker': 'Coldwell Banker',
+                'other': 'Custom Source'
+            };
+            document.getElementById('loadingWebsite').textContent = websiteNames[sourceWebsite] || 'Unknown';
             document.getElementById('loadingSpinner').classList.remove('hidden');
             document.getElementById('resultsSection').classList.add('hidden');
 
             try {
                 const endpoint = inputType === 'url' ? `${API_BASE}/ingest/url/` : `${API_BASE}/ingest/text/`;
-                const body = inputType === 'url' ? { url } : { text };
+                const body = inputType === 'url' 
+                    ? { url, source_website: sourceWebsite } 
+                    : { text, source_website: sourceWebsite };
 
                 const token = localStorage.getItem('authToken'); // Assume token is stored
 
@@ -379,6 +629,12 @@
             const property = data.property;
             const confidence = data.extraction_confidence;
 
+            // DEBUG: Log property data to console
+            console.log('🔍 Property Data Received:', property);
+            console.log('📍 Coordinates:', property.latitude, property.longitude);
+            console.log('🆔 Listing ID:', property.listing_id);
+            console.log('📊 Status:', property.listing_status);
+
             // Show results section
             document.getElementById('resultsSection').classList.remove('hidden');
             document.getElementById('errorSection').classList.add('hidden');
@@ -396,12 +652,43 @@
                 badge.className = 'px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800';
             }
 
+            // Set source website badge
+            const websiteBadge = document.getElementById('sourceWebsiteBadge');
+            const websiteInfo = {
+                'encuentra24': { 
+                    name: 'Encuentra24',
+                    icon: `<svg class="w-4 h-4 inline-block mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>`,
+                    color: 'bg-green-100 text-green-800' 
+                },
+                'crrealestate': { 
+                    name: 'CR Real Estate',
+                    icon: `<svg class="w-4 h-4 inline-block mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd"></path></svg>`,
+                    color: 'bg-blue-100 text-blue-800' 
+                },
+                'coldwellbanker': { 
+                    name: 'Coldwell Banker',
+                    icon: `<svg class="w-4 h-4 inline-block mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clip-rule="evenodd"></path><path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z"></path></svg>`,
+                    color: 'bg-purple-100 text-purple-800' 
+                },
+                'other': { 
+                    name: 'Other',
+                    icon: `<svg class="w-4 h-4 inline-block mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"></path></svg>`,
+                    color: 'bg-gray-100 text-gray-800' 
+                }
+            };
+            const website = property.source_website || 'other';
+            const info = websiteInfo[website] || websiteInfo.other;
+            websiteBadge.innerHTML = info.icon + info.name;
+            websiteBadge.className = `px-3 py-1 rounded-full font-medium ${info.color}`;
+
             // Populate property details
             const detailsContainer = document.getElementById('propertyDetails');
             detailsContainer.innerHTML = '';
 
             const fields = [
                 { label: 'Property Name', value: property.property_name },
+                { label: 'Listing ID', value: property.listing_id },
+                { label: 'Listing Status', value: property.listing_status },
                 { label: 'Price (USD)', value: property.price_usd ? `$${parseFloat(property.price_usd).toLocaleString()}` : 'N/A' },
                 { label: 'Type', value: property.property_type_display || property.property_type },
                 { 
@@ -414,36 +701,46 @@
                 { label: 'Bedrooms', value: property.bedrooms },
                 { label: 'Bathrooms', value: property.bathrooms },
                 { label: 'Square Meters', value: property.square_meters },
+                { label: 'Lot Size (m²)', value: property.lot_size_m2 },
+                { label: 'Date Listed', value: property.date_listed },
                 { label: 'Status', value: property.status_display || property.status },
             ];
 
             fields.forEach(field => {
-                if (field.value) {
-                    const div = document.createElement('div');
-                    div.className = 'border-l-4 border-blue-500 pl-4 py-2';
-                    
-                    // Special handling for location with map link
-                    if (field.isLocation && field.lat && field.lng) {
-                        const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${field.lat},${field.lng}`;
-                        div.innerHTML = `
-                            <p class="text-sm text-gray-600">${field.label}</p>
-                            <p class="text-lg font-semibold text-gray-800">${field.value}</p>
-                            <a href="${mapsUrl}" target="_blank" class="inline-flex items-center mt-1 text-sm text-blue-600 hover:text-blue-800">
-                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                </svg>
-                                Ver en Google Maps
-                            </a>
-                        `;
-                    } else {
-                        div.innerHTML = `
-                            <p class="text-sm text-gray-600">${field.label}</p>
-                            <p class="text-lg font-semibold text-gray-800">${field.value}</p>
-                        `;
-                    }
-                    detailsContainer.appendChild(div);
+                // Always show field, use "N/A" if no value
+                const displayValue = field.value || 'N/A';
+                
+                const div = document.createElement('div');
+                div.className = 'border-l-4 border-blue-500 pl-4 py-2';
+                
+                // Special handling for location with map link
+                if (field.isLocation && field.lat && field.lng) {
+                    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${field.lat},${field.lng}`;
+                    div.innerHTML = `
+                        <p class="text-sm text-gray-600">${field.label}</p>
+                        <p class="text-lg font-semibold text-gray-800">${displayValue}</p>
+                        <a href="${mapsUrl}" target="_blank" class="inline-flex items-center mt-1 text-sm text-blue-600 hover:text-blue-800">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            Ver en Google Maps (${field.lat}, ${field.lng})
+                        </a>
+                    `;
+                } else if (field.isLocation && displayValue !== 'N/A') {
+                    // Location without coordinates
+                    div.innerHTML = `
+                        <p class="text-sm text-gray-600">${field.label}</p>
+                        <p class="text-lg font-semibold text-gray-800">${displayValue}</p>
+                        <p class="text-xs text-gray-500 mt-1">⚠️ Coordenadas no disponibles</p>
+                    `;
+                } else {
+                    div.innerHTML = `
+                        <p class="text-sm text-gray-600">${field.label}</p>
+                        <p class="text-lg font-semibold ${displayValue === 'N/A' ? 'text-gray-400 italic' : 'text-gray-800'}">${displayValue}</p>
+                    `;
                 }
+                detailsContainer.appendChild(div);
             });
 
             // Add description if available
@@ -517,7 +814,13 @@
             document.getElementById('propertyUrl').value = '';
             document.getElementById('propertyText').value = '';
             document.getElementById('resultsSection').classList.add('hidden');
+            document.getElementById('inputSection').classList.remove('hidden');
+            document.getElementById('headerTitle').classList.remove('hidden');
+            document.getElementById('backToSearchBtn').classList.add('hidden');
             extractedProperty = null;
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     </script>
 </body>

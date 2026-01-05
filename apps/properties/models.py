@@ -47,6 +47,21 @@ class PropertyStatus:
     ]
 
 
+class SourceWebsite:
+    """Source website constants."""
+    ENCUENTRA24 = 'encuentra24'
+    CR_REALESTATE = 'crrealestate'
+    COLDWELL_BANKER = 'coldwellbanker'
+    OTHER = 'other'
+    
+    CHOICES = [
+        (ENCUENTRA24, _('Encuentra24')),
+        (CR_REALESTATE, _('CR Real Estate')),
+        (COLDWELL_BANKER, _('Coldwell Banker')),
+        (OTHER, _('Other')),
+    ]
+
+
 class Property(models.Model):
     """
     Real estate property model with vector embeddings for semantic search.
@@ -210,12 +225,52 @@ class Property(models.Model):
     )
     
     # Metadata and tracking
+    source_website = models.CharField(
+        _('Source Website'),
+        max_length=50,
+        choices=SourceWebsite.CHOICES,
+        default=SourceWebsite.OTHER,
+        help_text=_('Website where property was found')
+    )
+    
     source_url = models.URLField(
         _('Source URL'),
         max_length=500,
         null=True,
         blank=True,
         help_text=_('Original listing URL')
+    )
+    
+    # Listing identification
+    listing_id = models.CharField(
+        _('Listing ID'),
+        max_length=50,
+        null=True,
+        blank=True,
+        help_text=_('Public listing ID from source website')
+    )
+    
+    internal_property_id = models.CharField(
+        _('Internal Property ID'),
+        max_length=50,
+        null=True,
+        blank=True,
+        help_text=_('Internal property ID from source website')
+    )
+    
+    listing_status = models.CharField(
+        _('Listing Status'),
+        max_length=50,
+        null=True,
+        blank=True,
+        help_text=_('Status from source website (Active, Published, Sold, Pending)')
+    )
+    
+    date_listed = models.DateField(
+        _('Date Listed'),
+        null=True,
+        blank=True,
+        help_text=_('Date property was listed on source website')
     )
     
     raw_html = models.TextField(

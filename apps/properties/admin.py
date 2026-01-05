@@ -11,8 +11,8 @@ class PropertyImageInline(admin.TabularInline):
 @admin.register(Property)
 class PropertyAdmin(admin.ModelAdmin):
     list_display = ('property_name', 'tenant', 'property_type', 'price_usd', 
-                    'location', 'status', 'is_active', 'created_at')
-    list_filter = ('status', 'property_type', 'is_active', 'tenant', 'created_at')
+                    'location', 'source_website', 'status', 'is_active', 'created_at')
+    list_filter = ('status', 'property_type', 'source_website', 'is_active', 'tenant', 'created_at')
     search_fields = ('property_name', 'location', 'description')
     readonly_fields = ('id', 'extraction_confidence', 'extracted_at', 
                       'last_verified', 'created_at', 'updated_at')
@@ -38,7 +38,7 @@ class PropertyAdmin(admin.ModelAdmin):
             'fields': ('user_roles',)
         }),
         ('Source & Tracking', {
-            'fields': ('source_url', 'extraction_confidence', 'field_confidence',
+            'fields': ('source_website', 'source_url', 'extraction_confidence', 'field_confidence',
                       'extracted_at', 'last_verified', 'verified_by')
         }),
         ('Search & RAG', {

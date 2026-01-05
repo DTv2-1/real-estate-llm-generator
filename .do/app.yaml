@@ -1,0 +1,218 @@
+# =============================================================================
+# DIGITAL OCEAN APP PLATFORM CONFIGURATION
+# =============================================================================
+name: kp-real-estate-llm
+region: nyc
+
+# Django Backend API
+services:
+  - name: web
+    github:
+      repo: 1di210299/real-estate-llm-generator
+      branch: main
+      deploy_on_push: true
+    
+    source_dir: /
+    
+    build_command: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+    
+    run_command: |
+      python manage.py migrate --noinput
+      python manage.py collectstatic --noinput
+      gunicorn config.wsgi:application --bind 0.0.0.0:8080 --workers 2 --threads 2 --timeout 120
+    
+    environment_slug: python
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    
+    http_port: 8080
+    
+    routes:
+      - path: /api
+      - path: /admin
+      - path: /static
+    
+    envs:
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.production
+      
+      - key: DEBUG
+        value: "False"
+      
+      - key: SECRET_KEY
+        value: ${SECRET_KEY}
+        type: SECRET
+      
+      - key: ALLOWED_HOSTS
+        value: ${APP_DOMAIN}
+      
+      - key: DATABASE_URL
+        value: ${db.DATABASE_URL}
+      
+      - key: REDIS_URL
+        value: ${redis.REDIS_URL}
+      
+      - key: OPENAI_API_KEY
+        value: ${OPENAI_API_KEY}
+        type: SECRET
+      
+      - key: OPENAI_MODEL_CHAT
+        value: gpt-4o-mini
+      
+      - key: OPENAI_MODEL_COMPLEX
+        value: gpt-4o
+      
+      - key: SECURE_SSL_REDIRECT
+        value: "True"
+      
+      - key: SECURE_HSTS_SECONDS
+        value: "31536000"
+      
+      - key: SESSION_COOKIE_SECURE
+        value: "True"
+      
+      - key: CSRF_COOKIE_SECURE
+        value: "True"
+      
+      - key: CELERY_BROKER_URL
+        value: ${redis.REDIS_URL}
+      
+      - key: CELERY_RESULT_BACKEND
+        value: ${redis.REDIS_URL}
+    
+    health_check:
+      http_path: /api/health/
+      initial_delay_seconds: 60
+      period_seconds: 30
+      timeout_seconds: 10
+      success_threshold: 1
+      failure_threshold: 3
+
+  # Static Frontend (opcional - si quieres servir el HTML desde App Platform)
+  - name: frontend
+    github:
+      repo: 1di210299/real-estate-llm-generator
+      branch: main
+      deploy_on_push: true
+    
+    source_dir: /web
+    
+    build_command: npm install
+    run_command: node server.js
+    
+    environment_slug: node-js
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    
+    http_port: 3000
+    
+    routes:
+      - path: /
+    
+    envs:
+      - key: NODE_VERSION
+        value: "18.17.0"
+      
+      - key: API_URL
+        value: https://${web.PUBLIC_URL}
+
+  # Celery Worker para tareas en background
+  - name: celery-worker
+    github:
+      repo: 1di210299/real-estate-llm-generator
+      branch: main
+      deploy_on_push: true
+    
+    source_dir: /
+    
+    build_command: pip install -r requirements.txt
+    
+    run_command: celery -A config worker --loglevel=info --concurrency=2
+    
+    environment_slug: python
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    
+    envs:
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.production
+      
+      - key: DATABASE_URL
+        value: ${db.DATABASE_URL}
+      
+      - key: REDIS_URL
+        value: ${redis.REDIS_URL}
+      
+      - key: CELERY_BROKER_URL
+        value: ${redis.REDIS_URL}
+      
+      - key: CELERY_RESULT_BACKEND
+        value: ${redis.REDIS_URL}
+      
+      - key: OPENAI_API_KEY
+        value: ${OPENAI_API_KEY}
+        type: SECRET
+
+# PostgreSQL Database
+databases:
+  - name: db
+    engine: PG
+    version: "15"
+    production: false  # Set to true for production
+    cluster_name: kp-real-estate-db
+    db_name: real_estate
+    db_user: postgres
+
+# Redis for caching and Celery
+databases:
+  - name: redis
+    engine: REDIS
+    version: "7"
+    production: false  # Set to true for production
+
+# Static Files (opcional)
+static_sites:
+  - name: static
+    github:
+      repo: 1di210299/real-estate-llm-generator
+      branch: main
+      deploy_on_push: true
+    
+    source_dir: /static
+    output_dir: /
+    
+    routes:
+      - path: /static
+
+# Workers (Celery Beat para tareas programadas)
+workers:
+  - name: celery-beat
+    github:
+      repo: 1di210299/real-estate-llm-generator
+      branch: main
+      deploy_on_push: true
+    
+    source_dir: /
+    
+    build_command: pip install -r requirements.txt
+    
+    run_command: celery -A config beat --loglevel=info
+    
+    environment_slug: python
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    
+    envs:
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.production
+      
+      - key: DATABASE_URL
+        value: ${db.DATABASE_URL}
+      
+      - key: REDIS_URL
+        value: ${redis.REDIS_URL}
+      
+      - key: CELERY_BROKER_URL
+        value: ${redis.REDIS_URL}
