@@ -101,7 +101,7 @@ static_sites:
       deploy_on_push: true
     
     source_dir: /data-collector-frontend
-    build_command: npm run build
+    build_command: npm install && npm run build
     output_dir: dist
     
     routes:
@@ -109,25 +109,6 @@ static_sites:
     
     envs:
       - key: VITE_API_URL
-        value: https://${web.PUBLIC_URL}
-    
-    build_command: npm install
-    run_command: node server.js
-    
-    environment_slug: node-js
-    instance_count: 1
-    instance_size_slug: basic-xxs
-    
-    http_port: 3000
-    
-    routes:
-      - path: /
-    
-    envs:
-      - key: NODE_VERSION
-        value: "18.17.0"
-      
-      - key: API_URL
         value: https://${web.PUBLIC_URL}
 
   # Celery Worker para tareas en background
@@ -172,31 +153,15 @@ databases:
   - name: db
     engine: PG
     version: "15"
-    production: false  # Set to true for production
+    production: false
     cluster_name: kp-real-estate-db
     db_name: real_estate
     db_user: postgres
 
-# Redis for caching and Celery
-databases:
   - name: redis
     engine: REDIS
     version: "7"
-    production: false  # Set to true for production
-
-# Static Files (opcional)
-static_sites:
-  - name: static
-    github:
-      repo: 1di210299/real-estate-llm-generator
-      branch: main
-      deploy_on_push: true
-    
-    source_dir: /static
-    output_dir: /
-    
-    routes:
-      - path: /static
+    production: false
 
 # Workers (Celery Beat para tareas programadas)
 workers:
