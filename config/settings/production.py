@@ -61,5 +61,5 @@ CACHES['default']['TIMEOUT'] = 3600 * 24  # 24 hours
 # CORS - specify exact origins
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
-    origin.rstrip('/') for origin in env.list('CORS_ALLOWED_ORIGINS')
+    origin.rstrip('/') for origin in env.list('CORS_ALLOWED_ORIGINS', default=[])
 ]
