@@ -10,12 +10,11 @@ import re
 DEBUG = False
 
 # Custom ALLOWED_HOSTS validation for internal IPs
-class AllowInternalIPs:
+class AllowInternalIPs(list):
+    """Inherits from list to pass Django's type validation"""
     def __init__(self, allowed_hosts):
+        super().__init__(allowed_hosts)
         self.allowed_hosts = allowed_hosts
-        
-    def __iter__(self):
-        return iter(self.allowed_hosts)
     
     def __contains__(self, host):
         # Remove port if present
