@@ -1,5 +1,3 @@
-import React from 'react';
-
 interface PropertyData {
   id?: string;
   property_name?: string;
