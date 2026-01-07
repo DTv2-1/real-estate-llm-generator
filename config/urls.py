@@ -7,6 +7,8 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from core.utils.health import health_check
+from apps.ingestion.views import IngestURLView, IngestTextView, IngestBatchView, SavePropertyView
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -20,6 +22,13 @@ urlpatterns = [
     path('conversations/', include('apps.conversations.urls')),
     path('chat/', include('apps.chat.urls')),
     path('ingest/', include('apps.ingestion.urls')),
+    
+    # Rutas adicionales sin prefijo para ingress path stripping
+    # Cuando ingress match /ingest, forward como /url/, /text/, etc
+    path('url/', IngestURLView.as_view(), name='ingest-url-direct'),
+    path('text/', IngestTextView.as_view(), name='ingest-text-direct'),
+    path('batch/', IngestBatchView.as_view(), name='ingest-batch-direct'),
+    path('save/', SavePropertyView.as_view(), name='save-property-direct'),
 ]
 
 # Serve static and media files in development

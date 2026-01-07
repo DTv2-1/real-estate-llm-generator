@@ -21,11 +21,15 @@ class TenantMiddleware(MiddlewareMixin):
         print(f"🔍 TenantMiddleware - Method: {request.method}")
         print(f"🔍 TenantMiddleware - Headers: {dict(request.headers)}")
         
-        # Skip tenant check for admin, auth, health, static, ingest, and properties endpoints
+        # Skip tenant check for admin, auth, health, static, ingest, properties, and direct ingestion endpoints
         if (request.path.startswith('/admin/') or 
             request.path.startswith('/auth/') or
             request.path.startswith('/ingest/') or
             request.path.startswith('/properties/') or
+            request.path.startswith('/url/') or       # Direct ingestion route (after path stripping)
+            request.path.startswith('/text/') or      # Direct ingestion route (after path stripping)
+            request.path.startswith('/batch/') or     # Direct ingestion route (after path stripping)
+            request.path.startswith('/save/') or      # Direct ingestion route (after path stripping)
             request.path.startswith('/health/') or
             request.path.startswith('/static/') or
             request.path.startswith('/media/')):
