@@ -32,7 +32,7 @@ fi
 
 # Test 2: Get JWT Token (Buyer)
 echo -e "\n${BLUE}[Test 2/8]${NC} Getting JWT token for buyer..."
-TOKEN_RESPONSE=$(curl -s -X POST $API_URL/api/v1/auth/token/ \
+TOKEN_RESPONSE=$(curl -s -X POST $API_URL/auth/token/ \
     -H "Content-Type: application/json" \
     -d "{\"username\": \"$BUYER_USER\", \"password\": \"$PASSWORD\"}")
 
@@ -48,7 +48,7 @@ fi
 
 # Test 3: List Properties
 echo -e "\n${BLUE}[Test 3/8]${NC} Listing properties..."
-PROPERTIES=$(curl -s $API_URL/api/v1/properties/ \
+PROPERTIES=$(curl -s $API_URL/properties/ \
     -H "Authorization: Bearer $BUYER_TOKEN")
 
 PROPERTY_COUNT=$(echo $PROPERTIES | python3 -c "import sys, json; print(len(json.load(sys.stdin)['results']) if 'results' in json.load(sys.stdin) else 0)" 2>/dev/null || echo "0")
@@ -61,7 +61,7 @@ fi
 
 # Test 4: Property Statistics
 echo -e "\n${BLUE}[Test 4/8]${NC} Getting property statistics..."
-STATS=$(curl -s $API_URL/api/v1/properties/stats/ \
+STATS=$(curl -s $API_URL/properties/stats/ \
     -H "Authorization: Bearer $BUYER_TOKEN")
 
 if echo $STATS | grep -q "total_properties"; then
@@ -72,7 +72,7 @@ fi
 
 # Test 5: Chat Query (Buyer)
 echo -e "\n${BLUE}[Test 5/8]${NC} Testing chat with buyer role..."
-CHAT_RESPONSE=$(curl -s -X POST $API_URL/api/v1/chat/ \
+CHAT_RESPONSE=$(curl -s -X POST $API_URL/chat/ \
     -H "Authorization: Bearer $BUYER_TOKEN" \
     -H "Content-Type: application/json" \
     -d '{"message": "What properties are available in Tamarindo?"}')
@@ -87,13 +87,13 @@ fi
 
 # Test 6: Tourist Role (shouldn't see prices)
 echo -e "\n${BLUE}[Test 6/8]${NC} Testing tourist role (no price access)..."
-TOURIST_TOKEN_RESPONSE=$(curl -s -X POST $API_URL/api/v1/auth/token/ \
+TOURIST_TOKEN_RESPONSE=$(curl -s -X POST $API_URL/auth/token/ \
     -H "Content-Type: application/json" \
     -d "{\"username\": \"$TOURIST_USER\", \"password\": \"$PASSWORD\"}")
 
 TOURIST_TOKEN=$(echo $TOURIST_TOKEN_RESPONSE | python3 -c "import sys, json; print(json.load(sys.stdin)['access'])" 2>/dev/null)
 
-TOURIST_CHAT=$(curl -s -X POST $API_URL/api/v1/chat/ \
+TOURIST_CHAT=$(curl -s -X POST $API_URL/chat/ \
     -H "Authorization: Bearer $TOURIST_TOKEN" \
     -H "Content-Type: application/json" \
     -d '{"message": "What are fun things to do in Tamarindo?"}')
@@ -108,7 +108,7 @@ fi
 
 # Test 7: Text Ingestion
 echo -e "\n${BLUE}[Test 7/8]${NC} Testing property ingestion from text..."
-INGEST_RESPONSE=$(curl -s -X POST $API_URL/api/v1/ingest/text/ \
+INGEST_RESPONSE=$(curl -s -X POST $API_URL/ingest/text/ \
     -H "Authorization: Bearer $BUYER_TOKEN" \
     -H "Content-Type: application/json" \
     -d '{
@@ -125,7 +125,7 @@ fi
 
 # Test 8: Document List
 echo -e "\n${BLUE}[Test 8/8]${NC} Listing documents..."
-DOCUMENTS=$(curl -s $API_URL/api/v1/documents/ \
+DOCUMENTS=$(curl -s $API_URL/documents/ \
     -H "Authorization: Bearer $BUYER_TOKEN")
 
 DOCUMENT_COUNT=$(echo $DOCUMENTS | python3 -c "import sys, json; data = json.load(sys.stdin); print(len(data['results']) if 'results' in data else len(data) if isinstance(data, list) else 0)" 2>/dev/null || echo "0")

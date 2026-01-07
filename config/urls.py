@@ -12,14 +12,14 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('health/', health_check, name='health_check'),
     
-    # Sin /api/ prefix
-    path('v1/auth/', include('apps.users.urls')),
-    path('v1/tenants/', include('apps.tenants.urls')),
-    path('v1/properties/', include('apps.properties.urls')),
-    path('v1/documents/', include('apps.documents.urls')),
-    path('v1/conversations/', include('apps.conversations.urls')),
-    path('v1/chat/', include('apps.chat.urls')),
-    path('v1/ingest/', include('apps.ingestion.urls')),
+    # Rutas simples sin /v1/ prefix (lo más simple)
+    path('auth/', include('apps.users.urls')),
+    path('tenants/', include('apps.tenants.urls')),
+    path('properties/', include('apps.properties.urls')),
+    path('documents/', include('apps.documents.urls')),
+    path('conversations/', include('apps.conversations.urls')),
+    path('chat/', include('apps.chat.urls')),
+    path('ingest/', include('apps.ingestion.urls')),
 ]
 
 # Serve static and media files in development

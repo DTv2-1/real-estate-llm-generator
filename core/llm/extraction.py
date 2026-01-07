@@ -27,7 +27,16 @@ class PropertyExtractor:
     """
     
     def __init__(self):
-        self.client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
+        api_key = settings.OPENAI_API_KEY
+        logger.info(f"🔑 OPENAI_API_KEY configured: {'Yes' if api_key else 'No'}")
+        logger.info(f"🔑 API Key length: {len(api_key) if api_key else 0} chars")
+        logger.info(f"🔑 API Key preview: {api_key[:10]}..." if api_key and len(api_key) > 10 else "🔑 API Key: EMPTY or TOO SHORT")
+        
+        if not api_key:
+            logger.error("❌ OPENAI_API_KEY is empty! Check environment variables.")
+            raise ValueError("OPENAI_API_KEY environment variable is not set")
+        
+        self.client = openai.OpenAI(api_key=api_key)
         self.model = settings.OPENAI_MODEL_CHAT
         self.max_tokens = settings.OPENAI_MAX_TOKENS
         self.temperature = 0.1  # Low temperature for consistent extraction

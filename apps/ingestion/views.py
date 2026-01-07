@@ -25,7 +25,7 @@ class IngestURLView(APIView):
     """
     Endpoint to ingest property from URL.
     
-    POST /api/v1/ingest/url
+    POST /ingest/url
     {
         "url": "https://encuentra24.com/property/123"
     }
@@ -167,7 +167,7 @@ class IngestTextView(APIView):
     """
     Endpoint to ingest property from text.
     
-    POST /api/v1/ingest/text
+    POST /ingest/text
     {
         "text": "Beautiful 3-bedroom villa in Tamarindo..."
     }
@@ -235,7 +235,7 @@ class IngestBatchView(APIView):
     """
     Endpoint to ingest multiple properties at once.
     
-    POST /api/v1/ingest/batch
+    POST /ingest/batch
     {
         "urls": ["https://...", "https://..."],
         "async": true
@@ -329,7 +329,7 @@ class SavePropertyView(APIView):
     """
     Endpoint to save extracted property data to database.
     
-    POST /api/v1/ingest/save
+    POST /ingest/save
     {
         "property_data": { ... extracted property fields ... }
     }

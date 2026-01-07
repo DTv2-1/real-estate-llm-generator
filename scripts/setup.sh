@@ -107,7 +107,7 @@ echo "  • Tourist: sarah_tourist / testpass123"
 echo "  • Staff: mike_staff / testpass123"
 
 echo -e "\n${BLUE}URLs:${NC}"
-echo "  • API: http://localhost:8000/api/v1/"
+echo "  • API: http://localhost:8000/"
 echo "  • Admin: http://localhost:8000/admin/"
 echo "  • Data Collector: http://localhost:8000/static/data_collector/index.html"
 echo "  • Health Check: http://localhost:8000/health/"
@@ -118,7 +118,7 @@ echo "  • QUICKSTART.md - Quick start guide"
 echo "  • API_TESTING.md - API endpoint testing examples"
 
 echo -e "\n${BLUE}Quick Test:${NC}"
-echo "  curl -X POST http://localhost:8000/api/v1/auth/token/ \\"
+echo "  curl -X POST http://localhost:8000/auth/token/ \\"
 echo "    -H 'Content-Type: application/json' \\"
 echo "    -d '{\"username\": \"john_buyer\", \"password\": \"testpass123\"}'"
 

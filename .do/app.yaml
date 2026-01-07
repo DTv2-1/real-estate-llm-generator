@@ -12,12 +12,17 @@ ingress:
       name: web
     match:
       path:
-        prefix: /api
+        prefix: /properties
   - component:
       name: web
     match:
       path:
-        prefix: /v1
+        prefix: /ingest
+  - component:
+      name: web
+    match:
+      path:
+        prefix: /auth
   - component:
       name: web
     match:

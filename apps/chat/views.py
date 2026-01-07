@@ -19,7 +19,7 @@ class ChatView(APIView):
     """
     Main chat endpoint with RAG.
     
-    POST /api/v1/chat
+    POST /chat
     {
         "message": "What's the ROI for Villa Mar?",
         "conversation_id": "uuid" (optional),
@@ -147,7 +147,7 @@ class ConversationListView(APIView):
     """
     List user's conversations.
     
-    GET /api/v1/chat/conversations
+    GET /chat/conversations
     """
     
     permission_classes = [IsAuthenticated]
@@ -184,7 +184,7 @@ class ConversationDetailView(APIView):
     """
     Get conversation with messages.
     
-    GET /api/v1/chat/conversations/{id}
+    GET /chat/conversations/{id}
     """
     
     permission_classes = [IsAuthenticated]

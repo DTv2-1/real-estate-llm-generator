@@ -12,7 +12,7 @@ class MockHandler(http.server.SimpleHTTPRequestHandler):
         super().__init__(*args, directory=DIRECTORY, **kwargs)
 
     def do_POST(self):
-        if self.path == '/api/v1/ingest/url/':
+        if self.path == '/ingest/url/':
             content_length = int(self.headers['Content-Length'])
             post_data = self.rfile.read(content_length)
             
@@ -54,7 +54,7 @@ class MockHandler(http.server.SimpleHTTPRequestHandler):
 
 print(f"🚀 Mock Server running at http://localhost:{PORT}")
 print("📂 Serving files from:", DIRECTORY)
-print("⚡️ API Endpoint ready: /api/v1/ingest/url/")
+print("⚡️ API Endpoint ready: /ingest/url/")
 
 with socketserver.TCPServer(("", PORT), MockHandler) as httpd:
     try:

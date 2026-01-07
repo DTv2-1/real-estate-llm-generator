@@ -14,7 +14,7 @@ class RegisterView(generics.CreateAPIView):
     """
     User registration endpoint.
     
-    POST /api/v1/auth/register
+    POST /auth/register
     {
         "username": "john",
         "email": "john@example.com",
@@ -51,8 +51,8 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
     """
     Get or update user profile.
     
-    GET /api/v1/auth/profile
-    PATCH /api/v1/auth/profile
+    GET /auth/profile
+    PATCH /auth/profile
     """
     
     permission_classes = [IsAuthenticated]
