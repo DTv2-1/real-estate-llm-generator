@@ -14,7 +14,8 @@ ALLOWED_HOSTS = ['*']
 
 # Security settings
 SECURE_SSL_REDIRECT = True
-SECURE_REDIRECT_EXEMPT = [r'^api/health/$']  # Allow health checks without SSL
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_REDIRECT_EXEMPT = [r'^health/$', r'^api/health/$']
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 SECURE_BROWSER_XSS_FILTER = True
