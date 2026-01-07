@@ -71,26 +71,72 @@ class WebScraper:
         async with async_playwright() as p:
             browser = await p.chromium.launch(
                 headless=settings.PLAYWRIGHT_HEADLESS,
-                args=['--disable-blink-features=AutomationControlled']
+                args=[
+                    '--disable-blink-features=AutomationControlled',
+                    '--disable-dev-shm-usage',
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-web-security',
+                    '--disable-features=IsolateOrigins,site-per-process'
+                ]
             )
             
             try:
                 context = await browser.new_context(
-                    user_agent=self.user_agent,
+                    user_agent='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
                     viewport={'width': 1920, 'height': 1080},
                     locale='es-CR',
-                    timezone_id='America/Costa_Rica'
+                    timezone_id='America/Costa_Rica',
+                    extra_http_headers={
+                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                        'Accept-Language': 'es-CR,es;q=0.9,en;q=0.8',
+                        'Accept-Encoding': 'gzip, deflate, br',
+                        'DNT': '1',
+                        'Connection': 'keep-alive',
+                        'Upgrade-Insecure-Requests': '1',
+                        'Sec-Fetch-Dest': 'document',
+                        'Sec-Fetch-Mode': 'navigate',
+                        'Sec-Fetch-Site': 'none',
+                        'Sec-Fetch-User': '?1',
+                        'Cache-Control': 'max-age=0'
+                    }
                 )
                 
-                # Add stealth scripts
+                # Add stealth scripts to hide automation
                 await context.add_init_script("""
-                    Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
+                    // Overwrite the `plugins` property to use a custom getter.
+                    Object.defineProperty(navigator, 'webdriver', {
+                        get: () => undefined
+                    });
+                    
+                    // Overwrite the `plugins` property to use a custom getter.
+                    Object.defineProperty(navigator, 'plugins', {
+                        get: () => [1, 2, 3, 4, 5]
+                    });
+                    
+                    // Overwrite the `languages` property to use a custom getter.
+                    Object.defineProperty(navigator, 'languages', {
+                        get: () => ['es-CR', 'es', 'en-US', 'en']
+                    });
+                    
+                    // Pass the Chrome Test.
+                    window.chrome = {
+                        runtime: {}
+                    };
+                    
+                    // Pass the Permissions Test.
+                    const originalQuery = window.navigator.permissions.query;
+                    window.navigator.permissions.query = (parameters) => (
+                        parameters.name === 'notifications' ?
+                            Promise.resolve({ state: Notification.permission }) :
+                            originalQuery(parameters)
+                    );
                 """)
                 
                 page = await context.new_page()
                 
                 # Navigate with longer timeout and less strict wait
-                await page.goto(url, wait_until='domcontentloaded', timeout=60000)
+                await page.goto(url, wait_until='networkidle', timeout=60000)
                 
                 # Wait a bit for any lazy-loaded content
                 await page.wait_for_timeout(2000)
