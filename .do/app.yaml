@@ -122,7 +122,7 @@ services:
     value: ${APP_URL}
   - key: PORT
     scope: RUN_TIME
-    value: "8080"
+    value: "3000"
   environment_slug: node-js
   github:
     branch: main
@@ -135,7 +135,7 @@ services:
     period_seconds: 30
     success_threshold: 1
     timeout_seconds: 5
-  http_port: 8080
+  http_port: 3000
   instance_count: 1
   instance_size_slug: basic-xxs
   name: frontend
