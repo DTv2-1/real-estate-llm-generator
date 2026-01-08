@@ -8,51 +8,51 @@ databases:
   version: "17"
 ingress:
   rules:
-  - component:
-      name: web
-    match:
+  - match:
       path:
-        prefix: /chat/
-  - component:
+        prefix: /chat
+    component:
       name: web
-    match:
+  - match:
       path:
-        prefix: /properties/
-  - component:
+        prefix: /properties
+    component:
       name: web
-    match:
+  - match:
       path:
-        prefix: /conversations/
-  - component:
+        prefix: /conversations
+    component:
       name: web
-    match:
+  - match:
       path:
-        prefix: /documents/
-  - component:
+        prefix: /documents
+    component:
       name: web
-    match:
+  - match:
       path:
-        prefix: /ingest/
-  - component:
+        prefix: /ingest
+    component:
       name: web
-    match:
+  - match:
       path:
-        prefix: /health/
-  - component:
+        prefix: /health
+    component:
       name: web
-    match:
+  - match:
       path:
-        prefix: /admin/
-  - component:
+        prefix: /admin
+    component:
       name: web
-    match:
+  - match:
       path:
-        prefix: /static/
-  - component:
-      name: frontend
-    match:
+        prefix: /static
+    component:
+      name: web
+  - match:
       path:
         prefix: /
+    component:
+      name: frontend
 name: kp-realestate
 region: nyc
 services:
