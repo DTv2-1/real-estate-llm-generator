@@ -31,7 +31,7 @@ ingress:
 name: kp-realestate
 region: nyc
 services:
-- dockerfile_path: Dockerfile
+- dockerfile_path: ./backend/Dockerfile
   source_dir: ./backend
   envs:
   - key: DJANGO_SETTINGS_MODULE
