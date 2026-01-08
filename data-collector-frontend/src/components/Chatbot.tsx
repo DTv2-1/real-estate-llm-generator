@@ -33,7 +33,9 @@ interface ApiResponse {
   cached?: boolean;
 }
 
-const API_URL = 'http://localhost:8000/chat/';
+const API_URL = import.meta.env.VITE_API_URL 
+  ? `${import.meta.env.VITE_API_URL}/chat/`
+  : 'http://localhost:8000/chat/';
 
 const EXAMPLE_QUERIES = [
   { text: '¿Propiedades en Tamarindo?', icon: '🏖️', label: 'Playas' },
@@ -124,7 +126,7 @@ Puedes preguntar sobre:
       const errorMessage: Message = {
         id: Date.now().toString(),
         role: 'assistant',
-        content: `Lo siento, hubo un error al procesar tu solicitud. Por favor verifica que el servidor esté corriendo en http://localhost:8000\n\nError: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        content: `Lo siento, hubo un error al procesar tu solicitud.\n\nError: ${error instanceof Error ? error.message : 'Unknown error'}`,
         timestamp: new Date(),
       };
 

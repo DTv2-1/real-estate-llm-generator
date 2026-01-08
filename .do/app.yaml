@@ -17,6 +17,21 @@ ingress:
       name: web
     match:
       path:
+        prefix: /chat
+  - component:
+      name: web
+    match:
+      path:
+        prefix: /conversations
+  - component:
+      name: web
+    match:
+      path:
+        prefix: /documents
+  - component:
+      name: web
+    match:
+      path:
         prefix: /ingest
   - component:
       name: web
