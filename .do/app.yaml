@@ -12,42 +12,42 @@ ingress:
       name: web
     match:
       path:
-        prefix: /chat
+        prefix: /chat/
   - component:
       name: web
     match:
       path:
-        prefix: /properties
+        prefix: /properties/
   - component:
       name: web
     match:
       path:
-        prefix: /conversations
+        prefix: /conversations/
   - component:
       name: web
     match:
       path:
-        prefix: /documents
+        prefix: /documents/
   - component:
       name: web
     match:
       path:
-        prefix: /ingest
+        prefix: /ingest/
   - component:
       name: web
     match:
       path:
-        prefix: /health
+        prefix: /health/
   - component:
       name: web
     match:
       path:
-        prefix: /admin
+        prefix: /admin/
   - component:
       name: web
     match:
       path:
-        prefix: /static
+        prefix: /static/
   - component:
       name: frontend
     match:
