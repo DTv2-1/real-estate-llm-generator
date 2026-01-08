@@ -18,11 +18,18 @@ export default function Dashboard() {
             <button className="card-button">Acceder →</button>
           </div>
           
-          <div className="dashboard-card disabled">
+          <div className="dashboard-card" onClick={() => navigate('/properties')}>
+            <div className="card-icon">🏘️</div>
+            <h2>Propiedades</h2>
+            <p>Ver propiedades indexadas</p>
+            <button className="card-button">Acceder →</button>
+          </div>
+          
+          <div className="dashboard-card" onClick={() => navigate('/chatbot')}>
             <div className="card-icon">💬</div>
             <h2>Chatbot IA</h2>
             <p>Asistente virtual inmobiliario</p>
-            <button className="card-button" disabled>Próximamente</button>
+            <button className="card-button">Acceder →</button>
           </div>
         </div>
         

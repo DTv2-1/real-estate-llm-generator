@@ -1,0 +1,36 @@
+{
+  "actorSpecification": 1,
+  "name": "real-estate-scraper",
+  "title": "Costa Rica Real Estate Scraper",
+  "description": "Scrapes real estate listings from Costa Rica websites using Playwright with Cloudflare bypass and LLM data extraction",
+  "version": "1.0",
+  "meta": {
+    "templateId": "python-playwright"
+  },
+  "input": "./input_schema.json",
+  "dockerfile": "./Dockerfile",
+  "readme": "./README.md",
+  "storages": {
+    "dataset": {
+      "actorSpecification": 1,
+      "title": "Extracted Listings",
+      "views": {
+        "overview": {
+          "title": "Overview",
+          "transformation": {
+            "fields": [
+              "url",
+              "title",
+              "extracted_data.price",
+              "extracted_data.beds",
+              "extracted_data.location"
+            ]
+          },
+          "display": {
+            "component": "table"
+          }
+        }
+      }
+    }
+  }
+}

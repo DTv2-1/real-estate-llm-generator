@@ -27,7 +27,9 @@ class ChatView(APIView):
     }
     """
     
-    permission_classes = [IsAuthenticated]
+    # Temporarily allow access without authentication for testing
+    # permission_classes = [IsAuthenticated]
+    permission_classes = []
     
     def post(self, request):
         """Process chat message with RAG."""
@@ -43,13 +45,31 @@ class ChatView(APIView):
             )
         
         try:
+            # For testing without auth, use first available tenant/user
+            if request.user and request.user.is_authenticated:
+                user = request.user
+                tenant = request.user.tenant
+                user_role = request.user.role
+            else:
+                # Anonymous access for testing
+                from apps.tenants.models import Tenant
+                from apps.users.models import CustomUser
+                
+                tenant = Tenant.objects.first()
+                user = CustomUser.objects.filter(tenant=tenant).first()
+                user_role = 'client' if user else 'client'
+                
+                if not tenant:
+                    return Response(
+                        {'error': 'No tenant configured. Please run migrations and create test data.'},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    )
             # Get or create conversation
             if conversation_id:
                 try:
                     conversation = Conversation.objects.get(
                         id=conversation_id,
-                        user=request.user,
-                        tenant=request.user.tenant
+                        tenant=tenant
                     )
                 except Conversation.DoesNotExist:
                     return Response(
@@ -62,9 +82,9 @@ class ChatView(APIView):
                 title = message_text[:100] + ('...' if len(message_text) > 100 else '')
                 
                 conversation = Conversation.objects.create(
-                    tenant=request.user.tenant,
-                    user=request.user,
-                    user_role=request.user.role,
+                    tenant=tenant,
+                    user=user if user else None,
+                    user_role=user_role,
                     title=title
                 )
                 logger.info(f"Created new conversation: {conversation.id}")
@@ -78,12 +98,13 @@ class ChatView(APIView):
             
             # Initialize RAG pipeline
             rag = RAGPipeline(
-                tenant_id=str(request.user.tenant_id),
-                user_role=request.user.role
+                tenant_id=str(tenant.id),
+                user_role=user_role
             )
             
             # Query RAG
-            logger.info(f"Processing query for user {request.user.username}")
+            username = user.username if user else 'anonymous'
+            logger.info(f"Processing query for user {username}")
             result = rag.query(
                 query=message_text,
                 conversation=conversation,
@@ -114,7 +135,8 @@ class ChatView(APIView):
                     'excerpt': doc['content'][:200] + '...' if len(doc['content']) > 200 else doc['content'],
                     'relevance_score': round(doc['relevance_score'], 3),
                     'source_reference': doc.get('source_reference', 'N/A'),
-                    'updated_at': doc['freshness_date']
+                    'updated_at': doc['freshness_date'],
+                    'metadata': doc.get('metadata', {})
                 })
             
             return Response({

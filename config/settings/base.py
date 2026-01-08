@@ -243,6 +243,11 @@ SCRAPING_USER_AGENT = env('SCRAPING_USER_AGENT',
 SCRAPING_RATE_LIMIT_PER_SECOND = env.int('SCRAPING_RATE_LIMIT_PER_SECOND', default=1)
 PLAYWRIGHT_HEADLESS = env.bool('PLAYWRIGHT_HEADLESS', default=True)
 
+# Residential Proxy for Cloudflare-protected sites (optional)
+# Format: http://username:password@proxy-server.com:port
+# Example providers: BrightData, Smartproxy, Oxylabs, ProxyEmpire
+RESIDENTIAL_PROXY_URL = env('RESIDENTIAL_PROXY_URL', default=None)
+
 # Multi-Tenancy
 TENANT_ISOLATION_ENABLED = env.bool('TENANT_ISOLATION_ENABLED', default=True)
 DEFAULT_TENANT_ID = env('DEFAULT_TENANT_ID', default=None)

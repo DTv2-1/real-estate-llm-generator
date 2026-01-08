@@ -54,6 +54,17 @@ class WebScraper:
         're.cr',
     ]
     
+    # Sites with Cloudflare or strong anti-bot (require residential proxy)
+    CLOUDFLARE_PROTECTED_DOMAINS = [
+        'encuentra24.com',  # Has Cloudflare protection
+        # Add more as needed: 'example.com', 'another-site.com'
+    ]
+    
+    # Sites that need external scraping service (ultra-protected)
+    EXTERNAL_SERVICE_DOMAINS = [
+        # Add sites that fail even with proxies: 'ultra-protected.com'
+    ]
+    
     # Pool of realistic user agents
     USER_AGENTS = [
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
@@ -68,10 +79,22 @@ class WebScraper:
         self.user_agent = settings.SCRAPING_USER_AGENT
         self.rate_limit = settings.SCRAPING_RATE_LIMIT_PER_SECOND
         self.last_request_time = {}
+        
+        # Proxy configuration (optional - only for Cloudflare-protected sites)
+        self.residential_proxy = getattr(settings, 'RESIDENTIAL_PROXY_URL', None)
+        logger.info(f"🔧 Scraper initialized - Residential proxy: {'✅ Configured' if self.residential_proxy else '❌ Not configured'}")
     
     def _get_random_user_agent(self):
         """Get a random user agent from the pool."""
         return random.choice(self.USER_AGENTS)
+    
+    def _needs_residential_proxy(self, url: str) -> bool:
+        """Check if URL requires residential proxy for Cloudflare bypass."""
+        domain = urlparse(url).netloc
+        needs_proxy = any(protected_domain in domain for protected_domain in self.CLOUDFLARE_PROTECTED_DOMAINS)
+        if needs_proxy:
+            logger.info(f"🛡️ Cloudflare-protected site detected: {domain} - Using residential proxy")
+        return needs_proxy and self.residential_proxy is not None
     
     async def _should_use_playwright(self, url: str) -> bool:
         """Determine if URL requires Playwright (JavaScript rendering)."""
@@ -113,7 +136,16 @@ class WebScraper:
                 # Random delay before starting (2-5 seconds)
                 await asyncio.sleep(random.uniform(2, 5))
                 
+                # Check if this site needs residential proxy
+                proxy_config = None
+                if self._needs_residential_proxy(url):
+                    proxy_config = {
+                        'server': self.residential_proxy
+                    }
+                    logger.info(f"🌐 Using residential proxy for: {url}")
+                
                 context = await browser.new_context(
+                    proxy=proxy_config,
                     user_agent=self._get_random_user_agent(),
                     viewport={'width': 1920, 'height': 1080},
                     locale='es-CR',

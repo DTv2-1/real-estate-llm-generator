@@ -22,6 +22,7 @@ class PropertyListSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     source_website_display = serializers.CharField(source='get_source_website_display', read_only=True)
     primary_image = serializers.SerializerMethodField()
+    has_embedding = serializers.SerializerMethodField()
     
     class Meta:
         model = Property
@@ -30,7 +31,8 @@ class PropertyListSerializer(serializers.ModelSerializer):
             'price_usd', 'bedrooms', 'bathrooms', 'square_meters',
             'location', 'latitude', 'longitude', 'status', 'status_display', 
             'source_website', 'source_website_display', 'source_url', 
-            'listing_id', 'listing_status', 'primary_image', 'created_at'
+            'listing_id', 'listing_status', 'primary_image', 'description',
+            'has_embedding', 'created_at'
         ]
     
     def get_primary_image(self, obj):
@@ -40,6 +42,10 @@ class PropertyListSerializer(serializers.ModelSerializer):
             return primary.image_url
         first = obj.images.first()
         return first.image_url if first else None
+    
+    def get_has_embedding(self, obj):
+        """Check if property has embedding."""
+        return obj.embedding is not None
 
 
 class PropertyDetailSerializer(serializers.ModelSerializer):

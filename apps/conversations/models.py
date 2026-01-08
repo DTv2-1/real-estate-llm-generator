@@ -32,7 +32,9 @@ class Conversation(models.Model):
         CustomUser,
         on_delete=models.CASCADE,
         related_name='conversations',
-        verbose_name=_('User')
+        verbose_name=_('User'),
+        null=True,
+        blank=True
     )
     
     user_role = models.CharField(
