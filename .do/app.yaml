@@ -32,7 +32,7 @@ name: kp-realestate
 region: nyc
 services:
 - dockerfile_path: Dockerfile
-  source_dir: /backend
+  source_dir: backend
   envs:
   - key: DJANGO_SETTINGS_MODULE
     scope: RUN_AND_BUILD_TIME
@@ -115,4 +115,4 @@ services:
   instance_size_slug: basic-xxs
   name: frontend
   run_command: npm start
-  source_dir: /frontend
+  source_dir: frontend
