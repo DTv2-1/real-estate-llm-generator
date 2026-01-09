@@ -12,9 +12,9 @@ from apps.tenants.models import Tenant
 from apps.users.models import CustomUser
 
 from core.scraping.scraper import scrape_url, ScraperError
+from core.scraping.extractors import get_extractor, EXTRACTORS
 from core.llm.extraction import extract_property_data, ExtractionError
 from core.utils.website_detector import detect_source_website
-from core.utils.html_cleaner import clean_html_for_extraction
 from apps.properties.models import Property
 from apps.properties.serializers import PropertyDetailSerializer
 
@@ -65,7 +65,10 @@ class IngestURLView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            # Step 2: Detect source website (needed for HTML cleaning)
+            html_content = scraped_data.get('html', scraped_data.get('text', ''))
+            logger.info(f"Original HTML size: {len(html_content)} chars")
+            
+            # Step 2: Detect source website and get appropriate extractor
             if source_website_override:
                 source_website = source_website_override
                 logger.info(f"Step 2: Using user-selected source website: {source_website}")
@@ -73,30 +76,39 @@ class IngestURLView(APIView):
                 source_website = detect_source_website(url)
                 logger.info(f"Step 2: Auto-detected source website: {source_website}")
             
-            # Step 3: Clean HTML to reduce size before LLM extraction
-            html_content = scraped_data.get('html', scraped_data.get('text', ''))
-            logger.info(f"Original HTML size: {len(html_content)} chars")
+            # Step 3: Get site-specific extractor
+            extractor = get_extractor(url)
+            extractor_name = extractor.__class__.__name__
+            logger.info(f"Step 3: Using extractor: {extractor_name} for {extractor.site_name}")
             
-            # Clean HTML based on website
-            cleaning_result = clean_html_for_extraction(html_content, source_website)
-            cleaned_html = cleaning_result['cleaned_html']
+            # Check if we have a site-specific extractor (not BaseExtractor)
+            use_site_extractor = extractor_name != 'BaseExtractor'
             
-            logger.info(f"✂️ HTML Cleaning Results:")
-            logger.info(f"  - Original size: {cleaning_result['original_size']:,} chars")
-            logger.info(f"  - Cleaned size: {cleaning_result['cleaned_size']:,} chars")
-            logger.info(f"  - Reduction: {cleaning_result['reduction_percent']}% ({cleaning_result['reduction_bytes']:,} bytes)")
-            logger.info(f"  - Token savings: ~{cleaning_result['estimated_token_savings']:,} tokens")
-            logger.info(f"  - Cost savings: ~${cleaning_result['estimated_cost_savings_usd']}")
+            if use_site_extractor:
+                logger.info(f"✓ Using site-specific extractor - no LLM needed")
+                
+                # Extract using site-specific rules (fast, free, precise)
+                extracted_data = extractor.extract(html_content, url)
+                logger.info(f"Extraction complete using {extractor_name}")
+                logger.info(f"Extracted fields: {[k for k, v in extracted_data.items() if v is not None]}")
+                
+                extraction_method = 'site_specific'
+                extraction_confidence = 0.95  # High confidence for rule-based extraction
+                
+            else:
+                logger.info(f"⚠ No site-specific extractor available - falling back to LLM")
+                
+                # Fallback to LLM-based extraction (slower, costs tokens, less precise)
+                # The PropertyExtractor._clean_content() method will use BeautifulSoup
+                # to intelligently extract relevant sections before sending to LLM
+                logger.info("Extracting property data with LLM...")
+                extracted_data = extract_property_data(html_content, url=url)
+                logger.info(f"Extraction complete. Confidence: {extracted_data.get('extraction_confidence')}")
+                
+                extraction_method = 'llm_based'
+                extraction_confidence = extracted_data.get('extraction_confidence', 0.5)
             
-            # Step 4: Extract property data with LLM (using cleaned HTML)
-            logger.info("Step 4: Extracting property data with LLM...")
-            logger.info(f"Cleaned HTML preview (first 500 chars): {cleaned_html[:500]}")
-            
-            extracted_data = extract_property_data(cleaned_html, url=url)
-            logger.info(f"Extraction complete. Confidence: {extracted_data.get('extraction_confidence')}")
-            logger.info(f"Extracted fields with values: {[k for k, v in extracted_data.items() if v is not None and k not in ['tenant', 'user_roles']]}")
-            
-            # Step 5: Add source website and tenant
+            # Step 4: Add source website and tenant
             extracted_data['source_website'] = source_website
             
             tenant = Tenant.objects.first()
@@ -109,7 +121,7 @@ class IngestURLView(APIView):
             logger.info(f"User roles: {extracted_data['user_roles']}")
             
             # Remove fields that are not in the Property model
-            metadata_fields = ['tokens_used', 'raw_html', 'confidence_reasoning']
+            metadata_fields = ['tokens_used', 'raw_html', 'confidence_reasoning', 'extracted_at', 'field_confidence']
             for field in metadata_fields:
                 extracted_data.pop(field, None)
             
@@ -132,10 +144,11 @@ class IngestURLView(APIView):
             # Return extracted data without saving to database
             response_data = {
                 'status': 'success',
-                'message': 'Property data extracted successfully (not saved yet)',
+                'message': f'Property data extracted successfully using {extraction_method} (not saved yet)',
                 'property': extracted_data,
-                'extraction_confidence': extracted_data.get('extraction_confidence', 0),
-                'field_confidence': extracted_data.get('field_confidence', {}),
+                'extraction_method': extraction_method,
+                'extraction_confidence': extraction_confidence,
+                'extractor_used': extractor_name,
             }
             
             logger.info(f"=== Request completed successfully ===")

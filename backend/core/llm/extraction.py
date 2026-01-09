@@ -43,14 +43,66 @@ class PropertyExtractor:
     
     def _clean_content(self, content: str) -> str:
         """Clean and truncate content for LLM processing."""
+        from bs4 import BeautifulSoup
+        
+        # Parse HTML
+        soup = BeautifulSoup(content, 'html.parser')
+        
+        # Extract key sections
+        important_text = []
+        
+        # 1. Title and meta description
+        title = soup.find('title')
+        if title:
+            important_text.append(f"TITLE: {title.get_text(strip=True)}")
+        
+        meta_desc = soup.find('meta', attrs={'name': 'description'})
+        if meta_desc and meta_desc.get('content'):
+            important_text.append(f"META DESCRIPTION: {meta_desc['content']}")
+        
+        # 2. Property details sections (common patterns)
+        detail_patterns = [
+            {'class': lambda x: x and ('show__' in x or 'product' in x or 'detail' in x or 'property' in x)},
+            {'id': lambda x: x and ('detail' in x.lower() or 'overview' in x.lower())},
+            {'class': lambda x: x and any(word in str(x).lower() for word in ['price', 'bedroom', 'bathroom', 'sqft', 'acres', 'lot'])},
+        ]
+        
+        for pattern in detail_patterns:
+            elements = soup.find_all(**pattern)
+            for elem in elements:
+                text = elem.get_text(separator=' ', strip=True)
+                if text and len(text) > 10:  # Skip very short snippets
+                    important_text.append(text)
+        
+        # 3. Structured data (JSON-LD, microdata)
+        scripts = soup.find_all('script', type='application/ld+json')
+        for script in scripts:
+            if script.string:
+                important_text.append(f"STRUCTURED DATA: {script.string}")
+        
+        # 4. Description/content paragraphs
+        paragraphs = soup.find_all('p', class_=lambda x: x and ('description' in str(x).lower() or 'copy' in str(x).lower()))
+        for p in paragraphs:
+            text = p.get_text(separator=' ', strip=True)
+            if len(text) > 50:  # Skip short paragraphs
+                important_text.append(f"DESCRIPTION: {text}")
+        
+        # 5. All remaining text as fallback
+        if not important_text:
+            # If no structured sections found, get all text
+            important_text.append(soup.get_text(separator=' ', strip=True))
+        
+        # Combine all extracted text
+        combined = '\n\n'.join(important_text)
+        
         # Remove excessive whitespace
-        content = ' '.join(content.split())
+        combined = ' '.join(combined.split())
         
-        # Truncate if too long (max ~15K tokens = ~60K chars)
-        if len(content) > 60000:
-            content = content[:60000] + "...[truncated]"
+        # Truncate if still too long (max ~100K chars for better coverage)
+        if len(combined) > 100000:
+            combined = combined[:100000] + "...[truncated]"
         
-        return content
+        return combined
     
     def _validate_extraction(self, data: Dict) -> Dict:
         """Validate and clean extracted data."""
