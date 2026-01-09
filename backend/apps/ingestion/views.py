@@ -14,6 +14,7 @@ from apps.users.models import CustomUser
 from core.scraping.scraper import scrape_url, ScraperError
 from core.scraping.extractors import get_extractor, EXTRACTORS
 from core.llm.extraction import extract_property_data, ExtractionError
+from core.llm.embeddings import generate_property_embedding
 from core.utils.website_detector import detect_source_website
 from apps.properties.models import Property
 from apps.properties.serializers import PropertyDetailSerializer
@@ -394,6 +395,20 @@ class SavePropertyView(APIView):
             logger.info(f"✓ Property saved successfully: {property_obj.id}")
             logger.info(f"  - Name: {property_obj.property_name}")
             logger.info(f"  - Price: ${property_obj.price_usd}")
+            
+            # Generate embeddings for semantic search
+            logger.info("🔮 Generating embeddings for property...")
+            try:
+                embedding = generate_property_embedding(property_obj)
+                if embedding:
+                    property_obj.embedding = embedding
+                    property_obj.save(update_fields=['embedding'])
+                    logger.info(f"✅ Embedding generated successfully (dimension: {len(embedding)})")
+                else:
+                    logger.warning("⚠️ Failed to generate embedding - property saved without embedding")
+            except Exception as e:
+                logger.error(f"❌ Error generating embedding: {e}", exc_info=True)
+                logger.warning("⚠️ Property saved but embedding generation failed")
             
             # Return serialized property
             serializer = PropertyDetailSerializer(property_obj)
