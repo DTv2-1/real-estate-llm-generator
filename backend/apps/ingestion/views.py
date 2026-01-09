@@ -448,9 +448,22 @@ class SavePropertyView(APIView):
             for field in evidence_fields:
                 property_data.pop(field, None)
             
+            # Separate ManyToMany fields (must be set after object creation)
+            images_data = property_data.pop('images', [])
+            amenities_data = property_data.pop('amenities', [])
+            
             # Create Property
             logger.info("Creating Property object from saved data...")
             property_obj = Property.objects.create(**property_data)
+            
+            # Set ManyToMany relationships after creation
+            if images_data:
+                logger.info(f"Setting {len(images_data)} images...")
+                property_obj.images.set(images_data)
+            
+            if amenities_data:
+                logger.info(f"Setting {len(amenities_data)} amenities...")
+                property_obj.amenities.set(amenities_data)
             
             logger.info(f"✓ Property saved successfully: {property_obj.id}")
             logger.info(f"  - Name: {property_obj.property_name}")
