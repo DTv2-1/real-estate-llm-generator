@@ -83,6 +83,7 @@ function App() {
   console.log('🌐 [API CONFIG] API_BASE será usado en todas las requests:', API_BASE)
 
   const CATEGORIES: Record<string, CategoryConfig> = {
+    'nuevos-proyectos': {
       name: 'New Projects',
       icon: '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V8a2 2 0 00-2-2h-5L9 4H4zm7 5a1 1 0 00-2 0v1H8a1 1 0 000 2h1v1a1 1 0 002 0v-1h1a1 1 0 000-2h-1V9z" clip-rule="evenodd"></path></svg>',
       color: '#8b5cf6'
