@@ -500,6 +500,8 @@ class SavePropertyView(APIView):
             
             # Check for duplicate by source_url
             source_url = property_data.get('source_url')
+            logger.info(f"🔍 Checking for duplicate - source_url: {source_url}")
+            
             if source_url:
                 existing = Property.objects.filter(
                     source_url=source_url,
@@ -507,13 +509,19 @@ class SavePropertyView(APIView):
                 ).first()
                 
                 if existing:
-                    logger.warning(f"⚠️ Property already exists with this URL: {source_url}")
+                    logger.warning(f"⚠️ DUPLICATE DETECTED - Property already exists:")
+                    logger.warning(f"   - URL: {source_url}")
+                    logger.warning(f"   - Existing ID: {existing.id}")
+                    logger.warning(f"   - Existing Name: {existing.property_name}")
                     return Response({
                         'status': 'error',
                         'message': f'This property already exists in the database (ID: {existing.id})',
                         'property_id': str(existing.id),
+                        'property_name': existing.property_name,
                         'duplicate': True
                     }, status=status.HTTP_409_CONFLICT)
+                else:
+                    logger.info(f"✅ No duplicate found - OK to save")
             
             # Separate ManyToMany fields (must be set after object creation)
             images_data = property_data.pop('images', [])

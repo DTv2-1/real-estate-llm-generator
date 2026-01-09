@@ -334,12 +334,22 @@ function App() {
 
       const data = await response.json()
       
+      console.log('Save response status:', response.status)
+      console.log('Save response data:', data)
+      
+      if (response.status === 409) {
+        // Duplicate property
+        alert(`⚠️ Duplicate Property Detected\n\nThis property already exists in the database:\n\nName: ${data.property_name || 'Unknown'}\nID: ${data.property_id}\n\nThe property was NOT saved again.`)
+        return
+      }
+      
       if (response.ok && data.status === 'success') {
         alert(`✓ Property saved successfully!\n\nProperty ID: ${data.property_id}\nName: ${data.property.property_name}`)
         loadHistoryFromBackend()
         resetForm()
       } else {
-        alert(`Error saving property: ${data.error || 'Unknown error'}`)
+        console.error('Save error details:', data)
+        alert(`Error saving property: ${data.message || data.error || 'Unknown error'}`)
       }
     } catch (error) {
       alert(`Network error: ${(error as Error).message}`)
