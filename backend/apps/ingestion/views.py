@@ -484,6 +484,23 @@ class SavePropertyView(APIView):
             for field in fields_to_remove:
                 property_data.pop(field, None)
             
+            # Check for duplicate by source_url
+            source_url = property_data.get('source_url')
+            if source_url:
+                existing = Property.objects.filter(
+                    source_url=source_url,
+                    tenant=property_data.get('tenant')
+                ).first()
+                
+                if existing:
+                    logger.warning(f"⚠️ Property already exists with this URL: {source_url}")
+                    return Response({
+                        'status': 'error',
+                        'message': f'This property already exists in the database (ID: {existing.id})',
+                        'property_id': str(existing.id),
+                        'duplicate': True
+                    }, status=status.HTTP_409_CONFLICT)
+            
             # Separate ManyToMany fields (must be set after object creation)
             images_data = property_data.pop('images', [])
             amenities_data = property_data.pop('amenities', [])

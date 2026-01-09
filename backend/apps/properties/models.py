@@ -367,6 +367,14 @@ class Property(models.Model):
             models.Index(fields=['price_usd']),
             models.Index(fields=['-created_at']),
         ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['tenant', 'source_url'],
+                name='unique_property_per_tenant',
+                condition=models.Q(source_url__isnull=False),
+                violation_error_message='This property URL already exists for this tenant'
+            )
+        ]
     
     def __str__(self):
         return f"{self.property_name} - ${self.price_usd:,.0f}"
