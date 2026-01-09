@@ -259,6 +259,11 @@ PLAYWRIGHT_HEADLESS = env.bool('PLAYWRIGHT_HEADLESS', default=True)
 # Example providers: BrightData, Smartproxy, Oxylabs, ProxyEmpire
 RESIDENTIAL_PROXY_URL = env('RESIDENTIAL_PROXY_URL', default=None)
 
+# Scrapfly API for advanced anti-bot bypass (replaces residential proxies)
+# Get your API key from: https://scrapfly.io/dashboard
+SCRAPFLY_API_KEY = env('SCRAPFLY_API_KEY', default=None)
+SCRAPFLY_ENABLED = env.bool('SCRAPFLY_ENABLED', default=True)
+
 # Multi-Tenancy
 TENANT_ISOLATION_ENABLED = env.bool('TENANT_ISOLATION_ENABLED', default=True)
 DEFAULT_TENANT_ID = env('DEFAULT_TENANT_ID', default=None)

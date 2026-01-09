@@ -17,8 +17,7 @@ Complete Django-based Real Estate chatbot system with RAG (Retrieval Augmented G
 │   ├── docker-compose.yml
 │   ├── docker-compose.production.yml
 │   └── nginx/
-├── tools/               # Utility scripts & actors
-│   ├── apify_actor/
+├── tools/               # Utility scripts
 │   └── scripts/
 ├── documentation/       # Docs, evaluation & architecture
 │   ├── docs/
@@ -36,7 +35,7 @@ This system provides two main components:
 
 ### 1. **Data Collection Tool**
 - Web interface for extracting property data from URLs or text
-- Automatic scraping using Playwright (JS-heavy sites) or httpx
+- Automatic scraping using Scrapfly (Cloudflare bypass) or Playwright
 - LLM-powered extraction (GPT-4o-mini)
 - Structured data validation and storage
 

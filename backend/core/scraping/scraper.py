@@ -16,6 +16,13 @@ from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
+try:
+    from scrapfly import ScrapflyClient, ScrapeConfig, ScrapeApiResponse
+    SCRAPFLY_AVAILABLE = True
+except ImportError:
+    SCRAPFLY_AVAILABLE = False
+    logger.warning("Scrapfly SDK not installed. Run: pip install scrapfly-sdk")
+
 
 async def reverse_geocode(lat: float, lng: float) -> Optional[str]:
     """
@@ -80,7 +87,19 @@ class WebScraper:
         self.rate_limit = settings.SCRAPING_RATE_LIMIT_PER_SECOND
         self.last_request_time = {}
         
-        # Proxy configuration (optional - only for Cloudflare-protected sites)
+        # Scrapfly configuration (preferred for Cloudflare bypass)
+        self.scrapfly_enabled = getattr(settings, 'SCRAPFLY_ENABLED', False) and SCRAPFLY_AVAILABLE
+        self.scrapfly_api_key = getattr(settings, 'SCRAPFLY_API_KEY', None)
+        
+        if self.scrapfly_enabled and self.scrapfly_api_key:
+            self.scrapfly_client = ScrapflyClient(key=self.scrapfly_api_key)
+            logger.info("🚀 Scrapfly enabled - Anti-bot bypass ready")
+        else:
+            self.scrapfly_client = None
+            if not SCRAPFLY_AVAILABLE:
+                logger.info("⚠️ Scrapfly SDK not available - install with: pip install scrapfly-sdk")
+        
+        # Proxy configuration (fallback for Cloudflare-protected sites)
         self.residential_proxy = getattr(settings, 'RESIDENTIAL_PROXY_URL', None)
         logger.info(f"🔧 Scraper initialized - Residential proxy: {'✅ Configured' if self.residential_proxy else '❌ Not configured'}")
     
@@ -88,13 +107,25 @@ class WebScraper:
         """Get a random user agent from the pool."""
         return random.choice(self.USER_AGENTS)
     
-    def _needs_residential_proxy(self, url: str) -> bool:
-        """Check if URL requires residential proxy for Cloudflare bypass."""
+    def _needs_cloudflare_bypass(self, url: str) -> bool:
+        """Check if URL requires Cloudflare bypass (Scrapfly or proxy)."""
         domain = urlparse(url).netloc
-        needs_proxy = any(protected_domain in domain for protected_domain in self.CLOUDFLARE_PROTECTED_DOMAINS)
-        if needs_proxy:
-            logger.info(f"🛡️ Cloudflare-protected site detected: {domain} - Using residential proxy")
-        return needs_proxy and self.residential_proxy is not None
+        needs_bypass = any(protected_domain in domain for protected_domain in self.CLOUDFLARE_PROTECTED_DOMAINS)
+        if needs_bypass:
+            logger.info(f"🛡️ Cloudflare-protected site detected: {domain}")
+        return needs_bypass
+    
+    def _should_use_scrapfly(self, url: str) -> bool:
+        """Determine if should use Scrapfly for this URL."""
+        if not self.scrapfly_enabled or not self.scrapfly_client:
+            return False
+        return self._needs_cloudflare_bypass(url)
+    
+    def _needs_residential_proxy(self, url: str) -> bool:
+        """Check if URL requires residential proxy (fallback if Scrapfly not available)."""
+        if self._should_use_scrapfly(url):
+            return False  # Scrapfly handles it
+        return self._needs_cloudflare_bypass(url) and self.residential_proxy is not None
     
     async def _should_use_playwright(self, url: str) -> bool:
         """Determine if URL requires Playwright (JavaScript rendering)."""
@@ -559,6 +590,68 @@ class WebScraper:
                 logger.error(f"Scraping error: {e}")
                 raise ScraperError(f"Error scraping {url}: {str(e)}")
     
+    async def _scrape_with_scrapfly(self, url: str) -> Dict[str, any]:
+        """Scrape using Scrapfly API for Cloudflare-protected sites."""
+        logger.info(f"🚀 Scraping with Scrapfly: {url}")
+        
+        try:
+            # Configure Scrapfly scrape
+            scrape_config = ScrapeConfig(
+                url=url,
+                # Anti-Scraping Protection (Cloudflare bypass)
+                asp=True,
+                # Use residential proxies from Costa Rica
+                country='cr',
+                # Enable JavaScript rendering
+                render_js=True,
+                # Wait for page to load
+                rendering_wait=3000,
+                # Timeout
+                timeout=60000,
+                # Retry on failure
+                retry=True,
+            )
+            
+            # Execute scrape
+            api_response: ScrapeApiResponse = self.scrapfly_client.scrape(scrape_config)
+            
+            # Extract HTML content
+            html_content = api_response.scrape_result['content']
+            
+            # Parse with BeautifulSoup for text extraction
+            soup = BeautifulSoup(html_content, 'html.parser')
+            text_content = soup.get_text(separator='\n', strip=True)
+            
+            # Extract images
+            images = []
+            for img in soup.find_all('img', limit=10):
+                src = img.get('src')
+                if src:
+                    images.append(src)
+            
+            # Get title
+            title_tag = soup.find('title')
+            title = title_tag.text if title_tag else ''
+            
+            # Log API cost
+            api_cost = api_response.context.get('api_cost', 0)
+            logger.info(f"✅ Scrapfly success - API cost: {api_cost} credits")
+            
+            return {
+                'success': True,
+                'html': html_content,
+                'text': text_content,
+                'title': title,
+                'images': images,
+                'url': url,
+                'method': 'scrapfly',
+                'api_cost': api_cost
+            }
+            
+        except Exception as e:
+            logger.error(f"Scrapfly error: {e}")
+            raise ScraperError(f"Scrapfly error scraping {url}: {str(e)}")
+    
     async def scrape(self, url: str) -> Dict[str, any]:
         """
         Main scrape method - automatically chooses best approach.
@@ -589,15 +682,24 @@ class WebScraper:
         import time
         self.last_request_time[domain] = time.time()
         
-        # Choose scraping method
-        if await self._should_use_playwright(url):
+        # Choose scraping method based on site requirements
+        # Priority: Scrapfly > Playwright > httpx
+        
+        if self._should_use_scrapfly(url):
+            # Use Scrapfly for Cloudflare-protected sites
+            logger.info(f"🚀 Using Scrapfly for Cloudflare bypass: {url}")
+            result = await self._scrape_with_scrapfly(url)
+        elif await self._should_use_playwright(url):
+            # Use Playwright for JS-heavy sites
+            logger.info(f"🎭 Using Playwright for JS rendering: {url}")
             result = await self._scrape_with_playwright(url)
         else:
             # Try httpx first, fallback to Playwright if fails
             try:
+                logger.info(f"📡 Using httpx for simple scraping: {url}")
                 result = await self._scrape_with_httpx(url)
             except ScraperError:
-                logger.info(f"httpx failed, trying Playwright for: {url}")
+                logger.info(f"⚠️ httpx failed, falling back to Playwright: {url}")
                 result = await self._scrape_with_playwright(url)
         
         return result
