@@ -6,7 +6,10 @@ from typing import Optional
 from bs4 import BeautifulSoup
 from decimal import Decimal
 import re
+import logging
 from .base import BaseExtractor
+
+logger = logging.getLogger(__name__)
 
 
 class BrevitasExtractor(BaseExtractor):
@@ -26,17 +29,35 @@ class BrevitasExtractor(BaseExtractor):
     
     def extract_price(self, soup: BeautifulSoup) -> Optional[Decimal]:
         """Extract price from show__price."""
+        # Try show__price class
         price_elem = soup.find(class_='show__price')
         if price_elem:
             text = price_elem.get_text(strip=True)
+            logger.info(f"[Brevitas] Found price element: {text}")
             # Remove $ and commas
             match = re.search(r'([\d,]+)', text)
             if match:
                 price_str = match.group(1).replace(',', '')
                 try:
-                    return Decimal(price_str)
+                    price = Decimal(price_str)
+                    logger.info(f"[Brevitas] Extracted price: ${price}")
+                    return price
                 except:
                     pass
+        
+        # Fallback: try to find any element with $ symbol
+        all_text = soup.get_text()
+        match = re.search(r'\$\s*([\d,]+)', all_text)
+        if match:
+            price_str = match.group(1).replace(',', '')
+            try:
+                price = Decimal(price_str)
+                logger.info(f"[Brevitas] Extracted price from text: ${price}")
+                return price
+            except:
+                pass
+        
+        logger.warning("[Brevitas] Could not find price")
         return super().extract_price(soup)
     
     def extract_bedrooms(self, soup: BeautifulSoup) -> Optional[int]:
