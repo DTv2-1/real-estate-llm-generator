@@ -16,7 +16,7 @@ from core.scraping.extractors import get_extractor, EXTRACTORS
 from core.llm.extraction import extract_property_data, ExtractionError
 from core.llm.embeddings import generate_property_embedding
 from core.utils.website_detector import detect_source_website
-from apps.properties.models import Property
+from apps.properties.models import Property, PropertyImage
 from apps.properties.serializers import PropertyDetailSerializer
 from .serializers import SupportedWebsiteSerializer
 
@@ -492,14 +492,24 @@ class SavePropertyView(APIView):
             logger.info("Creating Property object from saved data...")
             property_obj = Property.objects.create(**property_data)
             
-            # Set ManyToMany relationships after creation
+            # Create PropertyImage objects from URL list
             if images_data:
-                logger.info(f"Setting {len(images_data)} images...")
-                property_obj.images.set(images_data)
+                logger.info(f"Creating {len(images_data)} PropertyImage objects...")
+                for idx, image_url in enumerate(images_data):
+                    if isinstance(image_url, str):  # Only process if it's a URL string
+                        PropertyImage.objects.create(
+                            property=property_obj,
+                            image_url=image_url,
+                            order=idx,
+                            is_primary=(idx == 0)  # First image is primary
+                        )
+                logger.info(f"✓ Created {len(images_data)} images")
             
+            # Set amenities (ArrayField - can be set directly)
             if amenities_data:
                 logger.info(f"Setting {len(amenities_data)} amenities...")
-                property_obj.amenities.set(amenities_data)
+                property_obj.amenities = amenities_data
+                property_obj.save(update_fields=['amenities'])
             
             logger.info(f"✓ Property saved successfully: {property_obj.id}")
             logger.info(f"  - Name: {property_obj.property_name}")
