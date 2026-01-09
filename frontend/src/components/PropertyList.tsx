@@ -95,14 +95,18 @@ const API_URL = import.meta.env.VITE_API_URL
             </div>
 
             <div className="property-details">
-              <div className="detail-item">
-                <span className="detail-icon">📍</span>
-                <span className="detail-text">{property.location}</span>
-              </div>
-              <div className="detail-item">
-                <span className="detail-icon">🏠</span>
-                <span className="detail-text">{property.property_type}</span>
-              </div>
+              {property.location && (
+                <div className="detail-item">
+                  <span className="detail-icon">📍</span>
+                  <span className="detail-text">{property.location}</span>
+                </div>
+              )}
+              {property.property_type && (
+                <div className="detail-item">
+                  <span className="detail-icon">🏠</span>
+                  <span className="detail-text">{property.property_type}</span>
+                </div>
+              )}
               {property.bedrooms && (
                 <div className="detail-item">
                   <span className="detail-icon">🛏️</span>
