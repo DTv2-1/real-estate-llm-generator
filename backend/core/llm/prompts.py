@@ -229,10 +229,17 @@ PROPERTY_EXTRACTION_PROMPT = """You are a data extraction specialist. Extract pr
 2. For each field, include an "evidence" field showing where you found the information
 3. Use null for any field not found in the source
 4. Normalize all data:
-   - Prices: Convert to USD (if in colones, use rate: 1 USD = 520 CRC)
+   - Prices: Remove commas and convert to numeric USD (e.g., "$19,000" → 19000, "$250,000" → 250000)
+   - If price is in colones (₡ or CRC), convert to USD using rate: 1 USD = 520 CRC
    - Areas: Convert to square meters (if in sq ft, use: 1 sq ft = 0.092903 m²)
    - Coordinates: Extract from embedded maps if present
 5. DO NOT invent or assume information
+
+**CRITICAL - Number Formatting:**
+- Always return numbers WITHOUT commas
+- "$19,000" should be extracted as 19000 (not 19)
+- "$1,250,000" should be extracted as 1250000 (not 1250)
+- "566.71 m²" should be extracted as 566.71
 
 **Special Extraction Rules:**
 
@@ -348,6 +355,18 @@ PROPERTY_EXTRACTION_PROMPT = """You are a data extraction specialist. Extract pr
 - 0.7-0.8: Most fields clear, some ambiguity
 - 0.5-0.6: Many fields missing or unclear
 - Below 0.5: Very little information available
+
+**CRITICAL EXAMPLES - Price Extraction:**
+- Source text: "$19,000" → Extract as: 19000
+- Source text: "$250,000" → Extract as: 250000
+- Source text: "$1,250,000" → Extract as: 1250000
+- Source text: "₡9,880,000" → Extract as: 19000 (9880000 / 520)
+- Source text: "$850,000 USD" → Extract as: 850000
+
+**CRITICAL EXAMPLES - Area Extraction:**
+- Source text: "566.71 m²" → Extract as: 566.71
+- Source text: "1,500 sq ft" → Extract as: 139.35 (1500 × 0.092903)
+- Source text: "2,500 m2" → Extract as: 2500
 
 Now extract the property information from the following content:
 
