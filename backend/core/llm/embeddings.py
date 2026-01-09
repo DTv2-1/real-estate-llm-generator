@@ -101,8 +101,8 @@ def generate_property_embedding(property_obj) -> Optional[List[float]]:
         if property_obj.bathrooms:
             parts.append(f"Bathrooms: {property_obj.bathrooms}")
         
-        if property_obj.area_m2:
-            parts.append(f"Area: {property_obj.area_m2} m²")
+        if property_obj.square_meters:
+            parts.append(f"Area: {property_obj.square_meters} m²")
         
         if property_obj.lot_size_m2:
             parts.append(f"Lot size: {property_obj.lot_size_m2} m²")
