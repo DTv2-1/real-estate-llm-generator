@@ -403,7 +403,8 @@ class RAGPipeline:
             for i, doc in enumerate(retrieved_docs, 1):
                 context_parts.append(f"[Document {i}]")
                 context_parts.append(f"Type: {doc['content_type']}")
-                context_parts.append(f"Updated: {doc['freshness_date']}")
+                if doc.get('freshness_date'):
+                    context_parts.append(f"Updated: {doc['freshness_date']}")
                 if doc.get('source_reference'):
                     context_parts.append(f"Source: {doc['source_reference']}")
                 context_parts.append(f"Content: {doc['content']}")
