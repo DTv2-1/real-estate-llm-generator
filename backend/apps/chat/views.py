@@ -142,7 +142,7 @@ class ChatView(APIView):
                     'excerpt': doc['content'][:200] + '...' if len(doc['content']) > 200 else doc['content'],
                     'relevance_score': round(doc['relevance_score'], 3),
                     'source_reference': doc.get('source_reference', 'N/A'),
-                    'updated_at': doc['freshness_date'],
+                    'updated_at': doc.get('freshness_date'),
                     'metadata': doc.get('metadata', {})
                 })
             
