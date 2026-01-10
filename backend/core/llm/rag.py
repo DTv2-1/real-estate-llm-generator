@@ -20,6 +20,7 @@ from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 
 from apps.documents.models import Document
+from apps.properties.models import Property
 from apps.conversations.models import Conversation, Message
 from .prompts import get_system_prompt
 
@@ -91,14 +92,16 @@ class RAGPipeline:
         
         return embedding
     
-    def _vector_search(self, query_embedding: List[float], k: int = 10) -> List[Tuple[Document, float]]:
+    def _vector_search(self, query_embedding: List[float], k: int = 10) -> List[Tuple[any, float, str]]:
         """
-        Perform vector similarity search.
+        Perform vector similarity search on both documents and properties.
         
         Returns:
-            List of (Document, similarity_score) tuples
+            List of (object, similarity_score, type) tuples where type is 'document' or 'property'
         """
+        results = []
         
+        # Search documents
         documents = Document.objects.filter(
             tenant_id=self.tenant_id,
             is_active=True,
@@ -109,22 +112,42 @@ class RAGPipeline:
             similarity=1 - CosineDistance('embedding', query_embedding)
         ).order_by('-similarity')[:k]
         
-        results = [(doc, float(doc.similarity)) for doc in documents]
+        for doc in documents:
+            results.append((doc, float(doc.similarity), 'document'))
         
-        logger.info(f"Vector search found {len(results)} documents")
+        # Search properties
+        properties = Property.objects.filter(
+            tenant_id=self.tenant_id,
+            user_roles__contains=[self.user_role]
+        ).filter(
+            embedding__isnull=False
+        ).annotate(
+            similarity=1 - CosineDistance('embedding', query_embedding)
+        ).order_by('-similarity')[:k]
+        
+        for prop in properties:
+            results.append((prop, float(prop.similarity), 'property'))
+        
+        # Sort all results by similarity and take top k
+        results.sort(key=lambda x: x[1], reverse=True)
+        results = results[:k]
+        
+        logger.info(f"Vector search found {len(results)} items ({sum(1 for r in results if r[2]=='document')} docs, {sum(1 for r in results if r[2]=='property')} properties)")
         return results
     
-    def _keyword_search(self, query: str, k: int = 10) -> List[Tuple[Document, float]]:
+    def _keyword_search(self, query: str, k: int = 10) -> List[Tuple[any, float, str]]:
         """
-        Perform BM25-style keyword search using PostgreSQL full-text search.
+        Perform BM25-style keyword search using PostgreSQL full-text search on documents and properties.
         
         Returns:
-            List of (Document, relevance_score) tuples
+            List of (object, relevance_score, type) tuples
         """
-        from django.contrib.postgres.search import SearchQuery, SearchRank
+        from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
         
+        results = []
         search_query = SearchQuery(query, search_type='websearch')
         
+        # Search documents
         documents = Document.objects.filter(
             tenant_id=self.tenant_id,
             is_active=True,
@@ -135,9 +158,28 @@ class RAGPipeline:
             rank__gt=0
         ).order_by('-rank')[:k]
         
-        results = [(doc, float(doc.rank)) for doc in documents]
+        for doc in documents:
+            results.append((doc, float(doc.rank), 'document'))
         
-        logger.info(f"Keyword search found {len(results)} documents")
+        # Search properties (search in property_name and description)
+        properties = Property.objects.filter(
+            tenant_id=self.tenant_id,
+            user_roles__contains=[self.user_role]
+        ).annotate(
+            search=SearchVector('property_name', 'description', 'location'),
+            rank=SearchRank(SearchVector('property_name', 'description', 'location'), search_query)
+        ).filter(
+            rank__gt=0
+        ).order_by('-rank')[:k]
+        
+        for prop in properties:
+            results.append((prop, float(prop.rank), 'property'))
+        
+        # Sort all results by rank and take top k
+        results.sort(key=lambda x: x[1], reverse=True)
+        results = results[:k]
+        
+        logger.info(f"Keyword search found {len(results)} items ({sum(1 for r in results if r[2]=='document')} docs, {sum(1 for r in results if r[2]=='property')} properties)")
         return results
     
     def _hybrid_search(self, query: str, query_embedding: List[float], 
@@ -167,44 +209,94 @@ class RAGPipeline:
         doc_scores = {}
         
         # Add vector scores
-        for doc, score in vector_results:
-            doc_scores[doc.id] = {
-                'document': doc,
+        for obj, score, obj_type in vector_results:
+            key = f"{obj_type}_{obj.id}"
+            doc_scores[key] = {
+                'object': obj,
+                'type': obj_type,
                 'vector_score': score,
                 'keyword_score': 0.0
             }
         
         # Add keyword scores
-        for doc, score in keyword_results:
-            if doc.id in doc_scores:
-                doc_scores[doc.id]['keyword_score'] = score
+        for obj, score, obj_type in keyword_results:
+            key = f"{obj_type}_{obj.id}"
+            if key in doc_scores:
+                doc_scores[key]['keyword_score'] = score
             else:
-                doc_scores[doc.id] = {
-                    'document': doc,
+                doc_scores[key] = {
+                    'object': obj,
+                    'type': obj_type,
                     'vector_score': 0.0,
                     'keyword_score': score
                 }
         
         # Calculate combined scores
         combined_results = []
-        for doc_id, scores in doc_scores.items():
+        for key, scores in doc_scores.items():
             combined_score = (
                 alpha * scores['vector_score'] + 
                 (1 - alpha) * scores['keyword_score']
             )
             
-            doc = scores['document']
-            combined_results.append({
-                'id': str(doc.id),
-                'content': doc.content,
-                'metadata': doc.metadata,
-                'content_type': doc.content_type,
-                'source_reference': doc.source_reference,
-                'freshness_date': doc.freshness_date.isoformat(),
-                'relevance_score': combined_score,
-                'vector_score': scores['vector_score'],
-                'keyword_score': scores['keyword_score']
-            })
+            obj = scores['object']
+            obj_type = scores['type']
+            
+            if obj_type == 'document':
+                result = {
+                    'id': str(obj.id),
+                    'type': 'document',
+                    'content': obj.content,
+                    'metadata': obj.metadata,
+                    'content_type': obj.content_type,
+                    'source_reference': obj.source_reference,
+                    'freshness_date': obj.freshness_date.isoformat(),
+                    'relevance_score': combined_score,
+                    'vector_score': scores['vector_score'],
+                    'keyword_score': scores['keyword_score']
+                }
+            else:  # property
+                # Build property content for LLM
+                property_content = f"Property: {obj.property_name}\n"
+                if obj.price_usd:
+                    property_content += f"Price: ${obj.price_usd:,.2f} USD\n"
+                if obj.location:
+                    property_content += f"Location: {obj.location}\n"
+                if obj.property_type:
+                    property_content += f"Type: {obj.property_type}\n"
+                if obj.bedrooms:
+                    property_content += f"Bedrooms: {obj.bedrooms}\n"
+                if obj.bathrooms:
+                    property_content += f"Bathrooms: {obj.bathrooms}\n"
+                if obj.square_meters:
+                    property_content += f"Area: {obj.square_meters} m²\n"
+                if obj.description:
+                    property_content += f"Description: {obj.description}\n"
+                if obj.source_url:
+                    property_content += f"URL: {obj.source_url}\n"
+                
+                result = {
+                    'id': str(obj.id),
+                    'type': 'property',
+                    'content': property_content,
+                    'metadata': {
+                        'property_name': obj.property_name,
+                        'price_usd': float(obj.price_usd) if obj.price_usd else None,
+                        'location': obj.location,
+                        'property_type': obj.property_type,
+                        'bedrooms': obj.bedrooms,
+                        'bathrooms': float(obj.bathrooms) if obj.bathrooms else None,
+                        'square_meters': float(obj.square_meters) if obj.square_meters else None,
+                        'source_url': obj.source_url
+                    },
+                    'content_type': 'property',
+                    'source_reference': obj.source_url or f"Property {obj.property_name}",
+                    'relevance_score': combined_score,
+                    'vector_score': scores['vector_score'],
+                    'keyword_score': scores['keyword_score']
+                }
+            
+            combined_results.append(result)
         
         # Sort by combined score
         combined_results.sort(key=lambda x: x['relevance_score'], reverse=True)
@@ -216,8 +308,10 @@ class RAGPipeline:
         
         # Track retrieval
         for result in top_results:
-            doc = Document.objects.get(id=result['id'])
-            doc.increment_retrieved(relevance_score=Decimal(str(result['relevance_score'])))
+            if result.get('type') == 'document':
+                doc = Document.objects.get(id=result['id'])
+                doc.increment_retrieved(relevance_score=Decimal(str(result['relevance_score'])))
+            # Properties don't have retrieval tracking yet
         
         return top_results
     
