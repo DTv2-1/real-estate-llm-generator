@@ -57,28 +57,54 @@ class ChatView(APIView):
                 user = request.user
                 tenant = request.user.tenant
                 user_role = request.user.role
+                logger.info(f"✅ Authenticated user: {user.username}, tenant: {tenant}")
             else:
                 # Anonymous access for testing
                 from apps.tenants.models import Tenant
                 from apps.users.models import CustomUser
                 
+                logger.info("🔍 Anonymous user - looking for tenant...")
                 tenant = Tenant.objects.first()
-                user = CustomUser.objects.filter(tenant=tenant).first()
-                user_role = 'buyer'  # Changed from 'client' to match property user_roles
+                logger.info(f"🔍 Found tenant: {tenant}")
                 
                 if not tenant:
+                    logger.error("❌ No tenant found in database")
                     return Response(
                         {'error': 'No tenant configured. Please run migrations and create test data.'},
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR
                     )
+                
+                # Try to get a user for this tenant, or create one if needed
+                logger.info(f"🔍 Looking for user with tenant_id: {tenant.id}")
+                user = CustomUser.objects.filter(tenant=tenant).first()
+                logger.info(f"🔍 Found user: {user}")
+                
+                if not user:
+                    # Create a default user for testing
+                    logger.info(f"🔨 Creating test user for tenant: {tenant.slug}")
+                    user = CustomUser.objects.create(
+                        username=f'test_user_{tenant.slug}',
+                        email=f'test@{tenant.slug}.com',
+                        tenant=tenant,
+                        role='buyer',
+                        is_active=True
+                    )
+                    logger.info(f"✅ Created test user: {user.username}")
+                
+                user_role = 'buyer'  # Changed from 'client' to match property user_roles
+                logger.info(f"✅ Using anonymous mode - user: {user.username if user else None}, role: {user_role}")
+                
             # Get or create conversation
             if conversation_id:
+                logger.info(f"🔍 Looking for existing conversation: {conversation_id}")
                 try:
                     conversation = Conversation.objects.get(
                         id=conversation_id,
                         tenant=tenant
                     )
+                    logger.info(f"✅ Found conversation: {conversation.id}")
                 except Conversation.DoesNotExist:
+                    logger.error(f"❌ Conversation not found: {conversation_id}")
                     return Response(
                         {'error': 'Conversation not found'},
                         status=status.HTTP_404_NOT_FOUND
@@ -88,13 +114,14 @@ class ChatView(APIView):
                 # Generate title from first message
                 title = message_text[:100] + ('...' if len(message_text) > 100 else '')
                 
+                logger.info(f"🔨 Creating new conversation with title: {title}")
                 conversation = Conversation.objects.create(
                     tenant=tenant,
                     user=user if user else None,
                     user_role=user_role,
                     title=title
                 )
-                logger.info(f"Created new conversation: {conversation.id}")
+                logger.info(f"✅ Created new conversation: {conversation.id}")
             
             # Save user message
             user_message = Message.objects.create(
@@ -165,9 +192,13 @@ class ChatView(APIView):
             )
         
         except Exception as e:
-            logger.error(f"Unexpected error: {e}", exc_info=True)
+            logger.error(f"❌ Unexpected error in ChatView: {e}", exc_info=True)
+            logger.error(f"❌ Error type: {type(e).__name__}")
+            logger.error(f"❌ Error details: {str(e)}")
+            import traceback
+            logger.error(f"❌ Traceback:\n{traceback.format_exc()}")
             return Response(
-                {'error': 'An unexpected error occurred'},
+                {'error': f'An unexpected error occurred: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 

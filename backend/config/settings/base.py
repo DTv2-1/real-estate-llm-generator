@@ -86,9 +86,24 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database
-DATABASES = {
-    'default': env.db('DATABASE_URL', default='postgresql://postgres:postgres@localhost:5432/real_estate_llm')
-}
+# Priority: LOCAL_DB_* vars > DATABASE_URL > default
+if env('LOCAL_DB_NAME', default=None):
+    # Local development mode
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': env('LOCAL_DB_NAME'),
+            'USER': env('LOCAL_DB_USER'),
+            'PASSWORD': env('LOCAL_DB_PASSWORD', default=''),
+            'HOST': env('LOCAL_DB_HOST', default='localhost'),
+            'PORT': env('LOCAL_DB_PORT', default='5432'),
+        }
+    }
+else:
+    # Production mode (uses DATABASE_URL)
+    DATABASES = {
+        'default': env.db('DATABASE_URL', default='postgresql://postgres:postgres@localhost:5432/real_estate_llm')
+    }
 
 # Enable connection pooling
 # Enable connection pooling and Postgres options

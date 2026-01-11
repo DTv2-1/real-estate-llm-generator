@@ -4,18 +4,21 @@ import DataCollector from './components/DataCollector';
 import Chatbot from './components/Chatbot';
 import PropertyList from './components/PropertyList';
 import Header from './components/Header';
+import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
   return (
-    <BrowserRouter>
-      <Header />
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/data-collector" element={<DataCollector />} />
-        <Route path="/chatbot" element={<Chatbot />} />
-        <Route path="/properties" element={<PropertyList />} />
-      </Routes>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <Header />
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/data-collector" element={<DataCollector />} />
+          <Route path="/chatbot" element={<Chatbot />} />
+          <Route path="/properties" element={<PropertyList />} />
+        </Routes>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 
