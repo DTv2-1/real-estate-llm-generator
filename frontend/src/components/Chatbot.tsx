@@ -243,8 +243,8 @@ You can ask about:
   };
 
   // Helper to format inline elements like **bold**, `code`, etc.
-  const formatInlineElements = (text: string) => {
-    const parts: (string | JSX.Element)[] = [];
+  const formatInlineElements = (text: string): (string | React.ReactElement)[] => {
+    const parts: (string | React.ReactElement)[] = [];
     let currentIndex = 0;
     
     // Regex to match **bold**, `code`, or plain text
