@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useLanguage } from '../contexts/LanguageContext'
 import { useProgress } from '../hooks/useProgress'
 import { ProgressBar } from './ProgressBar'
 

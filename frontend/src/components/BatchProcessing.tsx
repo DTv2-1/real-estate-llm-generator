@@ -1,5 +1,4 @@
 import { useState, useRef } from 'react'
-import { useLanguage } from '../contexts/LanguageContext'
 
 interface BatchItem {
   id: string
