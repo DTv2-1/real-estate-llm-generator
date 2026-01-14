@@ -19,29 +19,333 @@ class Encuentra24Extractor(BaseExtractor):
         self.site_name = "encuentra24.com"
     
     def extract(self, html: str, url: Optional[str] = None):
-        """Override extract to include custom fields and AI enhancement."""
+        """Override extract to include custom fields and AI enhancement.
+        
+        OPTIMIZATION STRATEGY:
+        1. Extract relevant HTML sections (property details, amenities, etc.)
+        2. Pass compact semantic HTML to AI for intelligent extraction
+        3. AI uses HTML structure to identify fields accurately
+        """
         soup = BeautifulSoup(html, 'html.parser')
         
-        # Extract ALL relevant text from page (clean, no HTML tags)
-        full_text = self.extract_all_text(soup)
-        print(f"📝 Texto limpio extraído: {len(full_text)} caracteres (vs {len(html)} chars HTML)")
+        # STEP 1: Extract relevant HTML sections (semantic structure)
+        relevant_html = self.extract_relevant_html_sections(soup)
+        print(f"📦 HTML relevante extraído: {len(relevant_html)} caracteres")
         
-        # Extract construction stage from timeline
+        # STEP 2: Extract construction stage from timeline
         construction_stage = self.extract_construction_stage(soup)
         
-        # Use AI to process ALL the text and extract fields
-        ai_enhanced_data = self.enhance_with_ai(full_text, construction_stage)
+        # STEP 3: Use AI to extract all fields from semantic HTML
+        ai_enhanced_data = self.enhance_with_ai_html(relevant_html, construction_stage, url)
         
-        # Call parent extract
-        data = super().extract(html, url)
+        # STEP 4: Add custom fields
+        ai_enhanced_data['listing_id'] = self.extract_listing_id(soup)
+        ai_enhanced_data['date_listed'] = self.extract_date_listed(soup)
+        ai_enhanced_data['construction_stage'] = construction_stage
         
-        # Merge AI-enhanced data (AI data takes precedence)
-        data.update(ai_enhanced_data)
+        return ai_enhanced_data
+    
+    
+    def extract_relevant_html_sections(self, soup: BeautifulSoup) -> str:
+        """Extract only relevant HTML sections for AI processing.
         
-        # Add custom fields
-        data['listing_id'] = self.extract_listing_id(soup)
-        data['date_listed'] = self.extract_date_listed(soup)
-        data['construction_stage'] = construction_stage
+        Strategy: Find sections with property details, specs, amenities using:
+        - Common CSS class patterns (detail, info, spec, feature, amenity)
+        - Semantic HTML structures (dl/dt/dd, table, ul/li)
+        - Remove images, scripts, styles, and other noise
+        
+        Returns compact semantic HTML with property data structure intact.
+        """
+        relevant_sections = []
+        
+        # 1. Search by common class name patterns (case-insensitive)
+        patterns = [
+            'detail', 'info', 'spec', 'feature', 'amenity', 
+            'characteristic', 'attribute', 'insight', 'about',
+            'description', 'descripción'
+        ]
+        
+        for pattern in patterns:
+            sections = soup.find_all(class_=re.compile(pattern, re.I))
+            for section in sections:
+                # Skip if already added
+                if section not in relevant_sections:
+                    relevant_sections.append(section)
+        
+        # 2. Search by semantic HTML structures
+        relevant_sections.extend(soup.find_all(['dl', 'table']))
+        
+        # 3. Search for title/header
+        title = soup.find('h1')
+        if title and title not in relevant_sections:
+            relevant_sections.insert(0, title)
+        
+        # 4. Clean each section
+        cleaned_html = []
+        for section in relevant_sections[:15]:  # Limit to first 15 sections
+            # Clone section to avoid modifying original
+            section_copy = BeautifulSoup(str(section), 'html.parser')
+            
+            # Remove noise: scripts, styles, images, links to images
+            for tag in section_copy.find_all(['script', 'style', 'img', 'svg', 'iframe']):
+                tag.decompose()
+            
+            # Remove image links (a tags with img inside or image URLs)
+            for a_tag in section_copy.find_all('a'):
+                href = a_tag.get('href', '')
+                if any(ext in href.lower() for ext in ['.jpg', '.png', '.gif', '.webp', '.jpeg']):
+                    a_tag.decompose()
+                elif a_tag.find('img'):
+                    a_tag.decompose()
+            
+            # Get cleaned HTML
+            section_html = str(section_copy)
+            
+            # Skip if too small or empty
+            if len(section_html.strip()) > 20:
+                cleaned_html.append(section_html)
+        
+        # 5. Join sections and limit total size
+        combined_html = '\n'.join(cleaned_html)
+        
+        # Limit to reasonable size (~8KB max)
+        if len(combined_html) > 8000:
+            combined_html = combined_html[:8000]
+        
+        return combined_html
+    
+    def enhance_with_ai_html(self, relevant_html: str, construction_stage: str, url: Optional[str]) -> dict:
+        """Use OpenAI to extract property data from semantic HTML.
+        
+        The AI receives HTML structure which helps it accurately identify:
+        - Field labels and values (from dt/dd, th/td patterns)
+        - Lists and arrays (from ul/li patterns)
+        - Hierarchical data (from nested divs with classes)
+        
+        This prevents confusion like "Precio/M² $4,100" being mistaken for area.
+        """
+        try:
+            api_key = settings.OPENAI_API_KEY
+            if not api_key:
+                print("⚠️ OpenAI API key not configured, skipping AI enhancement")
+                return {}
+            
+            client = openai.OpenAI(api_key=api_key)
+            
+            # Detect listing type from URL
+            listing_type_hint = None
+            if url:
+                if 'venta' in url.lower() or 'sale' in url.lower():
+                    listing_type_hint = 'sale'
+                elif 'alquiler' in url.lower() or 'rent' in url.lower():
+                    listing_type_hint = 'rent'
+            
+            # Build optimized prompt
+            prompt = f"""Extract property data from this HTML structure. Use the semantic HTML tags and classes to identify fields accurately.
+
+HTML:
+{relevant_html}
+
+CONSTRUCTION STAGE: {construction_stage or 'Not specified'}
+URL HINT: listing_type is likely "{listing_type_hint}" (from URL pattern)
+
+Extract these fields in JSON format:
+{{
+  "title": "Property name/title",
+  "price_usd": <numeric USD price, NOT price per m²>,
+  "bedrooms": <integer or null>,
+  "bathrooms": <integer or null>,
+  "area_m2": <construction area in m², NOT price per m²>,
+  "lot_size_m2": <lot/land size in m²>,
+  "property_type": "Casa|Apartamento|Terreno|etc",
+  "listing_type": "sale|rent",
+  "location": "City, Province, Country",
+  "amenities": ["amenity1", "amenity2"],
+  "parking_spaces": <integer or null>,
+  "pool": <true/false>,
+  "description": "Brief summary in English (2-3 sentences)"
+}}
+
+CRITICAL:
+- Look for <dt>Parking</dt><dd>3</dd> patterns for exact values
+- "M² construcción" or "Construcción" = area_m2
+- "M² terreno" or "Terreno" = lot_size_m2
+- "Precio/M²" is NOT area_m2, ignore it
+- Use listing_type from URL hint if not found in HTML
+- Return valid JSON only"""
+            
+            # Save for debugging
+            try:
+                with open('ai_html_input.txt', 'w', encoding='utf-8') as f:
+                    f.write(f"=== PROMPT ===\n{prompt}\n\n=== HTML ===\n{relevant_html}")
+                print(f"💾 HTML y prompt guardados en: ai_html_input.txt")
+            except Exception as e:
+                print(f"⚠️ No se pudo guardar archivo: {e}")
+            
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "You are a real estate data extraction expert. Extract property information from HTML structure accurately. Return clean JSON."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0,
+                max_tokens=1200
+            )
+            
+            print(f"📊 Tokens usados: {response.usage.total_tokens} (prompt: {response.usage.prompt_tokens}, completion: {response.usage.completion_tokens})")
+            
+            # Parse response
+            content = response.choices[0].message.content.strip()
+            
+            # Remove markdown code blocks if present
+            if content.startswith('```'):
+                content = re.sub(r'^```(?:json)?\s*\n', '', content)
+                content = re.sub(r'\n```\s*$', '', content)
+            
+            extracted_data = json.loads(content)
+            print(f"✅ AI extrajo {len(extracted_data)} campos exitosamente")
+            
+            return extracted_data
+            
+        except json.JSONDecodeError as e:
+            print(f"❌ Error parsing AI response: {e}")
+            print(f"Response content: {content[:200]}")
+            return {}
+        except Exception as e:
+            print(f"❌ Error in AI enhancement: {e}")
+            return {}
+    
+    def extract_structured_html_data(self, soup: BeautifulSoup) -> dict:
+        """Extract structured data directly from HTML using CSS selectors.
+        
+        This method extracts precise data from d3-property-insight__attribute sections:
+        - Parking spaces
+        - Bedrooms
+        - Bathrooms
+        - Area m²
+        - Lot size
+        - Pool
+        - Floor
+        - Property type
+        
+        Returns exact values from HTML, no AI interpretation needed.
+        """
+        data = {}
+        
+        # Find all property insight attributes (the structured data sections)
+        attributes = soup.find_all('div', class_='d3-property-insight__attribute')
+        
+        for attr in attributes:
+            # Get the title (e.g., "Parking", "Recámaras", "Baños")
+            title_elem = attr.find('dt', class_='d3-property-insight__attribute-title')
+            value_elem = attr.find('dd', class_='d3-property-insight__attribute-value')
+            
+            if not title_elem or not value_elem:
+                continue
+            
+            title = title_elem.get_text(strip=True)
+            value = value_elem.get_text(strip=True)
+            
+            # Map to standard field names
+            if 'Parking' in title:
+                try:
+                    data['parking_spaces'] = int(value)
+                    print(f"✅ Parking extraído: {value}")
+                except ValueError:
+                    data['parking_spaces'] = value
+            
+            elif 'Recámara' in title or 'Habitación' in title:
+                try:
+                    data['bedrooms'] = int(value)
+                    print(f"✅ Recámaras extraídas: {value}")
+                except ValueError:
+                    data['bedrooms'] = value
+            
+            elif 'Baño' in title:
+                try:
+                    data['bathrooms'] = int(value)
+                    print(f"✅ Baños extraídos: {value}")
+                except ValueError:
+                    data['bathrooms'] = value
+            
+            elif 'M² construcción' in title or 'Construcción' in title:
+                # Extract numeric value from "400 M²" or "400"
+                try:
+                    numeric_value = re.search(r'[\d,]+', value.replace("'", ""))
+                    if numeric_value:
+                        area_str = numeric_value.group().replace(',', '')
+                        data['area_m2'] = int(area_str)
+                        print(f"✅ Área extraída: {area_str} m²")
+                except ValueError:
+                    pass
+            
+            elif 'M² terreno' in title or 'Terreno' in title:
+                try:
+                    numeric_value = re.search(r'[\d,]+', value.replace("'", ""))
+                    if numeric_value:
+                        lot_str = numeric_value.group().replace(',', '')
+                        data['lot_size_m2'] = int(lot_str)
+                        print(f"✅ Terreno extraído: {lot_str} m²")
+                except ValueError:
+                    pass
+            
+            elif 'Piscina' in title or 'Pool' in title:
+                data['pool'] = value.lower() in ['sí', 'si', 'yes', 'true', '1']
+                print(f"✅ Piscina extraída: {data['pool']}")
+            
+            elif 'Piso' in title or 'Floor' in title:
+                data['floor'] = value
+                print(f"✅ Piso extraído: {value}")
+            
+            elif 'Tipo' in title or 'Type' in title:
+                data['property_type'] = value
+                print(f"✅ Tipo extraído: {value}")
+        
+        # Also check d3-property-details__content section for price
+        content_div = soup.find('div', class_='d3-property-details__content')
+        if content_div:
+            labels = content_div.find_all('div', class_='d3-property-details__detail-label')
+            for label_div in labels:
+                label_text = label_div.get_text(strip=True)
+                detail_p = label_div.find('p', class_='d3-property-details__detail')
+                
+                if detail_p:
+                    detail_text = detail_p.get_text(strip=True)
+                    
+                    if 'Precio' in label_text and 'M²' not in label_text:
+                        # Extract price (e.g., "$400'000" -> 400000)
+                        try:
+                            price_clean = detail_text.replace("'", "").replace(",", "").replace("$", "").strip()
+                            numeric_value = re.search(r'\d+', price_clean)
+                            if numeric_value:
+                                data['price_usd'] = int(numeric_value.group())
+                                print(f"✅ Precio extraído: ${data['price_usd']}")
+                        except ValueError:
+                            pass
+        
+        # Extract title from h1
+        title_elem = soup.find('h1')
+        if title_elem:
+            data['title'] = title_elem.get_text(strip=True)
+            print(f"✅ Título extraído: {data['title'][:50]}...")
+        
+        # Extract location from breadcrumb or location section
+        location_section = soup.find('div', class_='d3-property-location')
+        if location_section:
+            location_text = location_section.get_text(strip=True)
+            if location_text:
+                data['location'] = location_text
+                print(f"✅ Ubicación extraída: {location_text}")
+        
+        # Detect listing type from URL or page structure
+        # URL patterns: /venta-de-propiedades/ = sale, /alquiler/ = rent
+        url_text = str(soup)
+        if 'venta-de-propiedades' in url_text or 'venta-casas' in url_text or 'venta-apartamentos' in url_text:
+            data['listing_type'] = 'sale'
+            print(f"✅ Tipo de listado extraído: sale (desde URL)")
+        elif 'alquiler' in url_text or 'rent' in url_text:
+            data['listing_type'] = 'rent'
+            print(f"✅ Tipo de listado extraído: rent (desde URL)")
         
         return data
     
@@ -172,8 +476,16 @@ class Encuentra24Extractor(BaseExtractor):
         
         return None
     
-    def enhance_with_ai(self, full_text: str, construction_stage: str) -> dict:
-        """Use OpenAI to process clean text and extract ALL fields."""
+    def enhance_with_ai(self, full_text: str, construction_stage: str, structured_data: dict) -> dict:
+        """Use OpenAI to process clean text and extract ONLY unstructured fields.
+        
+        This method only extracts fields that weren't found in structured HTML:
+        - Description (always from AI, needs summarization)
+        - Amenities (may be in free-form text)
+        - Complex fields that need interpretation
+        
+        Structured fields (parking, bedrooms, etc.) are skipped to save tokens.
+        """
         try:
             api_key = settings.OPENAI_API_KEY
             if not api_key:
@@ -182,151 +494,125 @@ class Encuentra24Extractor(BaseExtractor):
             
             client = openai.OpenAI(api_key=api_key)
             
-            # Limit text to reasonable size (GPT-4o-mini can handle this easily)
-            text_to_process = full_text[:8000] if len(full_text) > 8000 else full_text
+            # Limit text to reasonable size
+            text_to_process = full_text[:6000] if len(full_text) > 6000 else full_text
             
-            # Add construction stage to context
-            context = f"""{text_to_process}
+            # Build list of fields to extract (only what's missing)
+            fields_to_extract = []
+            
+            # Always extract description and amenities (unstructured)
+            fields_to_extract.append("description")
+            fields_to_extract.append("amenities")
+            
+            # Only ask AI for structured fields if not found in HTML
+            if 'title' not in structured_data:
+                fields_to_extract.append("title")
+            if 'price_usd' not in structured_data:
+                fields_to_extract.append("price_usd")
+            if 'bedrooms' not in structured_data:
+                fields_to_extract.append("bedrooms")
+            if 'bathrooms' not in structured_data:
+                fields_to_extract.append("bathrooms")
+            if 'area_m2' not in structured_data:
+                fields_to_extract.append("area_m2")
+            if 'lot_size_m2' not in structured_data:
+                fields_to_extract.append("lot_size_m2")
+            if 'property_type' not in structured_data:
+                fields_to_extract.append("property_type")
+            if 'listing_type' not in structured_data:
+                fields_to_extract.append("listing_type")
+            if 'location' not in structured_data:
+                fields_to_extract.append("location")
+            if 'parking_spaces' not in structured_data:
+                fields_to_extract.append("parking_spaces")
+            if 'pool' not in structured_data:
+                fields_to_extract.append("pool")
+            
+            print(f"🤖 AI extraerá {len(fields_to_extract)} campos: {', '.join(fields_to_extract)}")
+            
+            # Build optimized prompt
+            prompt = f"""Extract real estate property information from this Costa Rica listing.
 
-ETAPA DE CONSTRUCCIÓN: {construction_stage or 'No especificada'}
-"""
+PROPERTY TEXT:
+{text_to_process}
+
+CONSTRUCTION STAGE: {construction_stage or 'Not specified'}
+
+Extract ONLY these fields (in JSON format):
+{', '.join(fields_to_extract)}
+
+Guidelines:
+- Use null for missing values
+- listing_type: "sale" or "rent"
+- property_type: Casa, Apartamento, Terreno, Local Comercial, etc.
+- parking_spaces: integer or null
+- pool: true/false
+- amenities: array of strings
+- description: brief summary in English (2-3 sentences max)
+- area_m2: construction area in square meters
+- lot_size_m2: lot/land size in square meters
+
+Return valid JSON only."""
             
-            # Save text to file for inspection
+            # Save prompt for debugging
             try:
-                with open('ai_input_text.txt', 'w', encoding='utf-8') as f:
-                    f.write(context)
-                print(f"💾 Texto guardado en: ai_input_text.txt ({len(context)} caracteres)")
+                with open('ai_prompt_optimized.txt', 'w', encoding='utf-8') as f:
+                    f.write(prompt)
+                print(f"💾 Prompt optimizado guardado ({len(prompt)} caracteres vs {len(full_text)} original)")
             except Exception as e:
                 print(f"⚠️ No se pudo guardar archivo: {e}")
-            
-            prompt = """Analyze the real estate property information and extract/normalize the following fields in JSON format:
-
-{
-  "title": "Property name or descriptive title (max 100 chars)",
-  "price_usd": <numeric price in USD>,
-  "bedrooms": <number or null>,
-  "bathrooms": <number or null>,
-  "area_m2": <number or null>,
-  "lot_size_m2": <number or null>,
-  "property_type": "Casa|Apartamento|Terreno|Lote|Condominio|etc",
-  "listing_type": "sale|rent",
-  "location": "City, Province, Country",
-  "amenities": ["amenity1", "amenity2", ...],
-  "parking_spaces": <number or null>,
-  "pool": <boolean>,
-  "description": "Professional property description (2-3 sentences, max 500 chars)",
-  "model": "Property model if mentioned",
-  "construction_stage": "Planos|Preventa|En construcción|Listo"
-}
-
-CRITICAL INSTRUCTIONS:
-
-TITLE:
-- Extract the actual property/project NAME from the description (e.g., "A'Mar", "Vista del Mar", "Residencial Los Sueños")
-- If there's a project name, use format: "ProjectName - Property Type in Location"
-- Example: "A'Mar - Condominio en Jacó" NOT "Agendar una visita virtual"
-- If no project name, use: "Property Type in Location" (e.g., "Apartamento en San José")
-- Keep it concise and descriptive (max 100 chars)
-
-DESCRIPTION:
-- Write a professional, concise summary highlighting key selling points
-- Include: property name/type, location, size, main features, unique aspects
-- Focus on what makes this property attractive to buyers/renters
-- Use complete sentences, proper grammar
-- 2-3 sentences maximum (around 300-500 characters)
-- Example: "A'Mar is an exclusive 20-story beachfront condominium in Jacó offering 2-bedroom apartments from $179,000. Features resort-style amenities including pools, gym, pickleball court, and 24/7 security. Prime location steps from the beach with stunning ocean views."
-
-PRICE:
-- Extract the REAL sale/rent price (NOT price per m²)
-- Format "179'000" or "179,000" → convert to 179000
-- Ignore "Precio / m²" values
-
-OTHER FIELDS:
-- Parse bedrooms/bathrooms as integers
-- Extract ALL amenities mentioned (pool, gym, parking, security, BBQ area, etc.)
-- Use location from "Localización" field
-- Identify property type from "Categoria" or description
-"""
             
             response = client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
-                    {"role": "system", "content": "You are a real estate data extraction expert. Extract and normalize property information accurately. Always return valid JSON."},
-                    {"role": "user", "content": f"{prompt}\n\n{context}"}
+                    {"role": "system", "content": "You are a real estate data extraction expert. Extract property information accurately and return clean JSON."},
+                    {"role": "user", "content": prompt}
                 ],
                 temperature=0,
-                max_tokens=1500,
-                response_format={"type": "json_object"}
+                max_tokens=1500
             )
             
-            import json
-            ai_data = json.loads(response.choices[0].message.content)
+            print(f"📊 Tokens usados: {response.usage.total_tokens} (prompt: {response.usage.prompt_tokens}, completion: {response.usage.completion_tokens})")
             
-            # Convert AI response to expected format
-            cleaned_data = {}
+            # Parse response
+            content = response.choices[0].message.content.strip()
             
-            if ai_data.get('title'):
-                cleaned_data['title'] = ai_data['title']
+            # Remove markdown code blocks if present
+            if content.startswith('```'):
+                content = re.sub(r'^```(?:json)?\s*\n', '', content)
+                content = re.sub(r'\n```\s*$', '', content)
             
-            if ai_data.get('price_usd'):
-                try:
-                    cleaned_data['price_usd'] = Decimal(str(ai_data['price_usd']))
-                except:
-                    pass
+            extracted_data = json.loads(content)
+            print(f"✅ AI extrajo {len(extracted_data)} campos exitosamente")
             
-            if ai_data.get('bedrooms'):
-                try:
-                    cleaned_data['bedrooms'] = int(ai_data['bedrooms'])
-                except:
-                    pass
+            return extracted_data
             
-            if ai_data.get('bathrooms'):
-                try:
-                    cleaned_data['bathrooms'] = Decimal(str(ai_data['bathrooms']))
-                except:
-                    pass
-            
-            if ai_data.get('area_m2'):
-                try:
-                    cleaned_data['area_m2'] = Decimal(str(ai_data['area_m2']))
-                except:
-                    pass
-            
-            if ai_data.get('lot_size_m2'):
-                try:
-                    cleaned_data['lot_size_m2'] = Decimal(str(ai_data['lot_size_m2']))
-                except:
-                    pass
-            
-            if ai_data.get('property_type'):
-                cleaned_data['property_type'] = ai_data['property_type']
-            
-            if ai_data.get('listing_type'):
-                cleaned_data['listing_type'] = ai_data['listing_type']
-            
-            if ai_data.get('location'):
-                cleaned_data['location'] = ai_data['location']
-            
-            if ai_data.get('amenities') and isinstance(ai_data['amenities'], list):
-                cleaned_data['amenities'] = ai_data['amenities']
-            
-            if ai_data.get('parking_spaces'):
-                try:
-                    cleaned_data['parking_spaces'] = int(ai_data['parking_spaces'])
-                except:
-                    pass
-            
-            if ai_data.get('description'):
-                cleaned_data['description'] = ai_data['description']
-            
-            print(f"✅ AI enhanced data: {len(cleaned_data)} fields extracted")
-            return cleaned_data
-            
-        except Exception as e:
-            print(f"❌ AI enhancement error: {e}")
-            import traceback
-            traceback.print_exc()
+        except json.JSONDecodeError as e:
+            print(f"❌ Error parsing AI response: {e}")
+            print(f"Response content: {content[:200]}")
             return {}
+        except Exception as e:
+            print(f"❌ Error in AI enhancement: {e}")
+            return {}
+    
+    def extract_listing_id(self, soup: BeautifulSoup) -> Optional[str]:
+        """Extract listing ID from URL or page."""
+        # Try to find in URL (e.g., /31786735 at the end)
+        canonical = soup.find('link', {'rel': 'canonical'})
+        if canonical and canonical.get('href'):
+            url = canonical['href']
+            match = re.search(r'/(\d+)$', url)
+            if match:
+                return match.group(1)
+        return None
+    
+    def extract_date_listed(self, soup: BeautifulSoup) -> Optional[str]:
+        """Extract listing date if available."""
+        # Look for date in meta tags or structured data
+        date_meta = soup.find('meta', {'property': 'article:published_time'})
+        if date_meta and date_meta.get('content'):
+            return date_meta['content']
+        return None
     
     def _dict_to_text(self, d: dict) -> str:
         """Convert dict to readable text format."""
