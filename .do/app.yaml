@@ -98,8 +98,7 @@ services:
     value: gpt-4o
   - key: SCRAPFLY_API_KEY
     scope: RUN_AND_BUILD_TIME
-    type: SECRET
-    value: EV[1:placeholder-replace-with-real-key:YourScrapflyAPIKeyGoesHere]
+    value: scp-live-f1d660b7d3bd4feda0576f4c97abb111
   - key: SECURE_SSL_REDIRECT
     scope: RUN_AND_BUILD_TIME
     value: "True"
