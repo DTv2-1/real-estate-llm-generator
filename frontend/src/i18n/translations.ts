@@ -214,7 +214,6 @@ export interface Translations {
     clearTooltip: string;
     statistics: string;
     total: string;
-    processing: string;
     completed: string;
     errors: string;
     exportResults: string;
