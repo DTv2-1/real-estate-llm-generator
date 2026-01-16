@@ -98,3 +98,4 @@ scraped_data/
 .DS_Store
 .AppleDouble
 .LSOverride
+frontend/bun.lock

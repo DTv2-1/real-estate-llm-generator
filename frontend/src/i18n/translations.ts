@@ -15,7 +15,7 @@ export interface Translations {
     backendStatus: string;
     connected: string;
   };
-  
+
   // Header
   header: {
     logo: string;
@@ -23,7 +23,7 @@ export interface Translations {
     chatbot: string;
     properties: string;
   };
-  
+
   // Sidebar
   sidebar: {
     savedProperties: string;
@@ -32,7 +32,7 @@ export interface Translations {
     refresh: string;
     clearAll: string;
   };
-  
+
   // Categories
   categories: {
     newProjects: string;
@@ -46,7 +46,7 @@ export interface Translations {
     commercialForRent: string;
     other: string;
   };
-  
+
   // PropertyList
   propertyList: {
     loading: string;
@@ -77,7 +77,7 @@ export interface Translations {
     and: string;
     withPool: string;
   };
-  
+
   // DataCollector
   dataCollector: {
     title: string;
@@ -153,7 +153,7 @@ export interface Translations {
     tip2: string;
     tip3: string;
   };
-  
+
   // Chatbot
   chatbot: {
     welcome: string;
@@ -177,14 +177,14 @@ export interface Translations {
     queryBedrooms: string;
     queryLuxury: string;
   };
-  
+
   // ErrorBoundary
   error: {
     somethingWrong: string;
     unexpectedError: string;
     reload: string;
   };
-  
+
   // Common
   common: {
     na: string;
@@ -198,7 +198,166 @@ export interface Translations {
     close: string;
     back: string;
   };
+
+  // BatchProcessing
+  batchProcessing: {
+    title: string;
+    subtitle: string;
+    urlList: string;
+    urlsLabel: string;
+    urlsPlaceholder: string;
+    process: string;
+    stop: string;
+    processing: string;
+    processingOf: string;
+    clear: string;
+    clearTooltip: string;
+    statistics: string;
+    total: string;
+    processing: string;
+    completed: string;
+    errors: string;
+    exportResults: string;
+    googleSheets: string;
+    exportToSheets: string;
+    database: string;
+    saveToDatabase: string;
+    excelFile: string;
+    downloadExcel: string;
+    exportNow: string;
+    savesPermanently: string;
+    downloadLocal: string;
+    exportsToCloud: string;
+    resultsProcessing: string;
+    enterSheetLink: string;
+    noCompletedResults: string;
+    noResultsToExport: string;
+    noResultsToSave: string;
+    noResultsToDownload: string;
+    propertiesExported: string;
+    propertiesSaved: string;
+    propertiesDownloaded: string;
+    errorExporting: string;
+    errorSaving: string;
+    errorDownloading: string;
+    verifySheetShared: string;
+    enterAtLeastOneUrl: string;
+    maxUrlsPerBatch: string;
+    readyToProcess: string;
+    pasteUrlsAndProcess: string;
+    automatic: string;
+    fast: string;
+    precise: string;
+  };
+
+  // GoogleSheets
+  googleSheets: {
+    title: string;
+    subtitle: string;
+    createNewTemplate: string;
+    createTemplateDesc: string;
+    sheetTitle: string;
+    sheetTitlePlaceholder: string;
+    createTemplate: string;
+    creating: string;
+    templateCreated: string;
+    spreadsheetId: string;
+    openGoogleSheet: string;
+    nextSteps: string;
+    step1OpenSheet: string;
+    step2ShareSheet: string;
+    step3PasteUrls: string;
+    step4WritePending: string;
+    step5ProcessBelow: string;
+    processExistingSheet: string;
+    processExistingDesc: string;
+    sheetIdOrUrl: string;
+    sheetIdPlaceholder: string;
+    canPasteIdOrUrl: string;
+    emailNotification: string;
+    emailPlaceholder: string;
+    receiveEmailWhenDone: string;
+    useResultsSheet: string;
+    useResultsSheetDesc: string;
+    resultsSheetId: string;
+    requiredSteps: string;
+    createNewSheet: string;
+    shareWithAccount: string;
+    giveEditorPermissions: string;
+    copyIdHere: string;
+    processSheet: string;
+    processing: string;
+    whatHappens: string;
+    readsAllPending: string;
+    processesAutomatic: string;
+    updatesRealtime: string;
+    sendsEmail: string;
+    openThisSheet: string;
+    resultsSheetCreated: string;
+    sheetTitleLabel: string;
+    viewResultsInSheets: string;
+    functionBlocked: string;
+    requiresWorkspace: string;
+    blockedMessage: string;
+    useFreeAlternative: string;
+    freeAlternativeDesc: string;
+    quickGuide: string;
+    guideStep1: string;
+    guideStep2: string;
+    guideStep3: string;
+    guideStep4: string;
+    createManualSheet: string;
+    howItWorks: string;
+    step1Create: string;
+    step1CreateDesc: string;
+    step2AddUrls: string;
+    step2AddUrlsDesc: string;
+    step3Process: string;
+    step3ProcessDesc: string;
+    enterTemplateTitle: string;
+    enterSheetId: string;
+    enterValidEmail: string;
+    enterResultsSheetId: string;
+    templateCreatedSuccess: string;
+    errorCreatingTemplate: string;
+    networkError: string;
+    errorProcessingSheet: string;
+    completedProcessed: string;
+    resultsSheetCreatedMsg: string;
+  };
+
+  // Tutorial
+  tutorial: {
+    chooseWebsite: string;
+    step1Title: string;
+    step1Subtitle: string;
+    step1Point1: string;
+    step1Point2: string;
+    step1Point3: string;
+    example: string;
+    next: string;
+    skip: string;
+    pasteHere: string;
+    step2Title: string;
+    step2Subtitle: string;
+    clickHere: string;
+    step3Title: string;
+    step3Subtitle: string;
+    step3Point1: string;
+    step3Point2: string;
+    step3Point3: string;
+    step4Title: string;
+    step4Subtitle: string;
+    step4Point1Title: string;
+    step4Point1Desc: string;
+    step4Point2Title: string;
+    step4Point2Desc: string;
+    step4Point3Title: string;
+    step4Point3Desc: string;
+    understood: string;
+  };
 }
+
 
 export const translations: Record<Language, Translations> = {
   es: {
@@ -387,6 +546,157 @@ Puedes preguntar sobre:
       close: 'Cerrar',
       back: 'Volver',
     },
+    batchProcessing: {
+      title: 'Procesamiento en Lote',
+      subtitle: 'Extrae datos de múltiples propiedades automáticamente',
+      urlList: 'Lista de URLs',
+      urlsLabel: 'URLs de Propiedades',
+      urlsPlaceholder: 'https://encuentra24.com/property/...\nhttps://brevitas.com/property/...\nhttps://coldwellbankercostarica.com/...',
+      process: 'PROCESAR',
+      stop: 'DETENER',
+      processing: 'Procesando...',
+      processingOf: 'de',
+      clear: 'Limpiar todo',
+      clearTooltip: 'Limpiar todo',
+      statistics: 'Estadísticas',
+      total: 'Total',
+      completed: 'Completadas',
+      errors: 'Errores',
+      exportResults: 'Exportar Resultados',
+      googleSheets: 'Google Sheets',
+      exportToSheets: 'Exporta automáticamente a una hoja de cálculo en la nube',
+      database: 'Base de Datos',
+      saveToDatabase: 'Guarda permanentemente en PostgreSQL',
+      excelFile: 'Archivo Excel',
+      downloadExcel: 'Descarga un archivo .xlsx local',
+      exportNow: 'Exportar Ahora',
+      savesPermanently: 'Guarda permanentemente en PostgreSQL',
+      downloadLocal: 'Descarga un archivo .csv local',
+      exportsToCloud: 'Exporta automáticamente a una hoja de cálculo en la nube',
+      resultsProcessing: 'Resultados del Procesamiento',
+      enterSheetLink: 'Por favor ingresa el link del Google Sheet',
+      noCompletedResults: 'No hay resultados completados',
+      noResultsToExport: 'No hay resultados completados para exportar',
+      noResultsToSave: 'No hay resultados completados para guardar',
+      noResultsToDownload: 'No hay resultados completados para descargar',
+      propertiesExported: 'propiedades exportadas exitosamente a Google Sheets',
+      propertiesSaved: 'propiedades guardadas exitosamente en la base de datos',
+      propertiesDownloaded: 'propiedades descargadas en formato CSV',
+      errorExporting: 'Error al exportar a Google Sheets',
+      errorSaving: 'Error al guardar en la base de datos',
+      errorDownloading: 'Error al descargar el archivo',
+      verifySheetShared: 'Verifica que el sheet esté compartido correctamente.',
+      enterAtLeastOneUrl: 'Por favor ingresa al menos una URL',
+      maxUrlsPerBatch: 'Máximo 50 URLs por lote',
+      readyToProcess: 'Listo para procesar',
+      pasteUrlsAndProcess: 'Pega las URLs de las propiedades en el panel izquierdo y presiona PROCESAR para comenzar',
+      automatic: 'Automático',
+      fast: 'Rápido',
+      precise: 'Preciso',
+    },
+    googleSheets: {
+      title: 'Integración con Google Sheets',
+      subtitle: 'Gestiona múltiples propiedades desde Google Sheets',
+      createNewTemplate: 'Crear Nuevo Template',
+      createTemplateDesc: 'Crea un nuevo Google Sheet con las columnas configuradas automáticamente',
+      sheetTitle: 'Título del Sheet',
+      sheetTitlePlaceholder: 'Propiedades Enero 2026',
+      createTemplate: 'CREAR TEMPLATE',
+      creating: 'CREANDO...',
+      templateCreated: 'Template Creado',
+      spreadsheetId: 'Spreadsheet ID:',
+      openGoogleSheet: 'Abrir Google Sheet',
+      nextSteps: '📋 Próximos pasos:',
+      step1OpenSheet: 'Abre el link del Google Sheet',
+      step2ShareSheet: 'Compártelo con la cuenta de servicio',
+      step3PasteUrls: 'Pega las URLs en la columna A',
+      step4WritePending: 'Escribe "Pendiente" en la columna C',
+      step5ProcessBelow: 'Procesa usando la sección de abajo →',
+      processExistingSheet: 'Procesar Sheet Existente',
+      processExistingDesc: 'Procesa todas las URLs con status "Pendiente" de un Google Sheet',
+      sheetIdOrUrl: 'Google Sheet ID o URL',
+      sheetIdPlaceholder: '1abc123xyz o https://docs.google.com/spreadsheets/d/...',
+      canPasteIdOrUrl: 'Puedes pegar el ID o la URL completa del sheet',
+      emailNotification: 'Email para notificación',
+      emailPlaceholder: 'asistente@example.com',
+      receiveEmailWhenDone: 'Recibirás un email cuando el procesamiento termine',
+      useResultsSheet: '📊 Usar Google Sheet de Resultados',
+      useResultsSheetDesc: 'Escribe los resultados en un Google Sheet separado para fácil revisión y análisis. Crea el sheet manualmente y compártelo con la service account primero.',
+      resultsSheetId: '📋 Google Sheet ID de Resultados',
+      requiredSteps: '⚠️ Pasos requeridos:',
+      createNewSheet: 'Crea un Google Sheet nuevo con headers (ver documentación)',
+      shareWithAccount: 'Comparte con:',
+      giveEditorPermissions: 'Dale permisos de Editor',
+      copyIdHere: 'Copia el ID del sheet aquí',
+      processSheet: 'PROCESAR SHEET',
+      processing: 'PROCESANDO...',
+      whatHappens: '⚡ Qué sucede:',
+      readsAllPending: 'Lee todas las filas con "Pendiente"',
+      processesAutomatic: 'Procesa cada URL automáticamente',
+      updatesRealtime: 'Actualiza el status en tiempo real',
+      sendsEmail: 'Envía email con resultados al terminar',
+      openThisSheet: 'Abrir este Sheet en Google',
+      resultsSheetCreated: 'Google Sheet de Resultados Creado',
+      sheetTitleLabel: 'Título:',
+      viewResultsInSheets: 'Ver Resultados en Google Sheets',
+      functionBlocked: 'Función Bloqueada',
+      requiresWorkspace: 'REQUIERE GOOGLE WORKSPACE',
+      blockedMessage: 'La creación automática de Google Sheets solo funciona con cuentas de Google Workspace (servicio de pago).',
+      useFreeAlternative: 'Usa la Alternativa Gratuita',
+      freeAlternativeDesc: 'Crea tu sheet en sheets.google.com y procésalo con Sección 2',
+      quickGuide: 'Guía Rápida:',
+      guideStep1: 'Nuevo sheet → Headers: URL|Status|etc',
+      guideStep2: 'URLs en columna A → "Pendiente" en C',
+      guideStep3: 'Compartir con service account',
+      guideStep4: '¡Usar Sección 2!',
+      createManualSheet: 'Crear Sheet Manual (Gratis)',
+      howItWorks: '¿Cómo funciona?',
+      step1Create: '1. Crear Template',
+      step1CreateDesc: 'Crea un Google Sheet con las columnas ya configuradas. Solo necesitas el título.',
+      step2AddUrls: '2. Agregar URLs',
+      step2AddUrlsDesc: 'Abre el sheet, pega URLs en columna A y escribe "Pendiente" en columna C.',
+      step3Process: '3. Procesar',
+      step3ProcessDesc: 'Pega el ID del sheet, tu email, y presiona procesar. Recibirás email cuando termine.',
+      enterTemplateTitle: 'Por favor ingresa un título para el template',
+      enterSheetId: 'Por favor ingresa el ID del Google Sheet',
+      enterValidEmail: 'Por favor ingresa un email válido',
+      enterResultsSheetId: 'Por favor ingresa el ID del Google Sheet de resultados o desactiva la opción',
+      templateCreatedSuccess: '¡Template creado! Abre el link, compártelo con la cuenta de servicio, y pega tus URLs.',
+      errorCreatingTemplate: 'Error al crear template',
+      networkError: 'Error de red:',
+      errorProcessingSheet: 'Error al procesar sheet',
+      completedProcessed: '✅ Completado! Procesadas:',
+      resultsSheetCreatedMsg: 'Se creó un Google Sheet con los resultados.',
+    },
+    tutorial: {
+      chooseWebsite: 'ELIGE UN SITIO WEB',
+      step1Title: 'Copia el enlace de la propiedad',
+      step1Subtitle: 'Desde Encuentra24, Brevitas o Coldwell Banker',
+      step1Point1: '1. Abre Encuentra24, Brevitas o Coldwell Banker',
+      step1Point2: '2. Busca una propiedad que te interese',
+      step1Point3: '3. Copia la URL completa desde el navegador',
+      example: 'Ejemplo:',
+      next: 'Siguiente',
+      skip: 'Saltar',
+      pasteHere: '¡PEGA AQUÍ EL ENLACE!',
+      step2Title: 'Pega el enlace',
+      step2Subtitle: 'Ctrl+V o Cmd+V en el campo resaltado',
+      clickHere: '¡HAZ CLIC AQUÍ!',
+      step3Title: 'Procesa la propiedad',
+      step3Subtitle: 'Haz clic en el botón resaltado',
+      step3Point1: 'El proceso toma 10-30 segundos',
+      step3Point2: 'Verás una barra de progreso en tiempo real',
+      step3Point3: 'Se extraerán automáticamente todos los datos',
+      step4Title: 'Revisa y guarda los datos',
+      step4Subtitle: 'Verifica que los datos extraídos sean correctos antes de guardar',
+      step4Point1Title: 'Verifica los datos',
+      step4Point1Desc: 'Precio, ubicación, habitaciones, baños, etc.',
+      step4Point2Title: 'Haz clic en "Guardar"',
+      step4Point2Desc: 'Si todo se ve bien, guarda la propiedad en la base de datos',
+      step4Point3Title: '¡Listo para la siguiente!',
+      step4Point3Desc: 'Repite el proceso con otra propiedad',
+      understood: '¡Entendido! Comenzar a usar',
+    },
   },
   en: {
     dashboard: {
@@ -573,6 +883,157 @@ You can ask about:
       delete: 'Delete',
       close: 'Close',
       back: 'Back',
+    },
+    batchProcessing: {
+      title: 'Batch Processing',
+      subtitle: 'Automatically extract data from multiple properties',
+      urlList: 'URL List',
+      urlsLabel: 'Property URLs',
+      urlsPlaceholder: 'https://encuentra24.com/property/...\nhttps://brevitas.com/property/...\nhttps://coldwellbankercostarica.com/...',
+      process: 'PROCESS',
+      stop: 'STOP',
+      processing: 'Processing...',
+      processingOf: 'of',
+      clear: 'Clear all',
+      clearTooltip: 'Clear all',
+      statistics: 'Statistics',
+      total: 'Total',
+      completed: 'Completed',
+      errors: 'Errors',
+      exportResults: 'Export Results',
+      googleSheets: 'Google Sheets',
+      exportToSheets: 'Automatically export to a cloud spreadsheet',
+      database: 'Database',
+      saveToDatabase: 'Save permanently to PostgreSQL',
+      excelFile: 'Excel File',
+      downloadExcel: 'Download a local .xlsx file',
+      exportNow: 'Export Now',
+      savesPermanently: 'Save permanently to PostgreSQL',
+      downloadLocal: 'Download a local .csv file',
+      exportsToCloud: 'Automatically export to a cloud spreadsheet',
+      resultsProcessing: 'Processing Results',
+      enterSheetLink: 'Please enter the Google Sheet link',
+      noCompletedResults: 'No completed results',
+      noResultsToExport: 'No completed results to export',
+      noResultsToSave: 'No completed results to save',
+      noResultsToDownload: 'No completed results to download',
+      propertiesExported: 'properties successfully exported to Google Sheets',
+      propertiesSaved: 'properties successfully saved to database',
+      propertiesDownloaded: 'properties downloaded in CSV format',
+      errorExporting: 'Error exporting to Google Sheets',
+      errorSaving: 'Error saving to database',
+      errorDownloading: 'Error downloading file',
+      verifySheetShared: 'Verify the sheet is shared correctly.',
+      enterAtLeastOneUrl: 'Please enter at least one URL',
+      maxUrlsPerBatch: 'Maximum 50 URLs per batch',
+      readyToProcess: 'Ready to process',
+      pasteUrlsAndProcess: 'Paste property URLs in the left panel and press PROCESS to begin',
+      automatic: 'Automatic',
+      fast: 'Fast',
+      precise: 'Precise',
+    },
+    googleSheets: {
+      title: 'Google Sheets Integration',
+      subtitle: 'Manage multiple properties from Google Sheets',
+      createNewTemplate: 'Create New Template',
+      createTemplateDesc: 'Create a new Google Sheet with columns automatically configured',
+      sheetTitle: 'Sheet Title',
+      sheetTitlePlaceholder: 'Properties January 2026',
+      createTemplate: 'CREATE TEMPLATE',
+      creating: 'CREATING...',
+      templateCreated: 'Template Created',
+      spreadsheetId: 'Spreadsheet ID:',
+      openGoogleSheet: 'Open Google Sheet',
+      nextSteps: '📋 Next steps:',
+      step1OpenSheet: 'Open the Google Sheet link',
+      step2ShareSheet: 'Share it with the service account',
+      step3PasteUrls: 'Paste URLs in column A',
+      step4WritePending: 'Write "Pending" in column C',
+      step5ProcessBelow: 'Process using the section below →',
+      processExistingSheet: 'Process Existing Sheet',
+      processExistingDesc: 'Process all URLs with "Pending" status from a Google Sheet',
+      sheetIdOrUrl: 'Google Sheet ID or URL',
+      sheetIdPlaceholder: '1abc123xyz or https://docs.google.com/spreadsheets/d/...',
+      canPasteIdOrUrl: 'You can paste the ID or the complete sheet URL',
+      emailNotification: 'Email notification',
+      emailPlaceholder: 'assistant@example.com',
+      receiveEmailWhenDone: 'You will receive an email when processing is complete',
+      useResultsSheet: '📊 Use Results Google Sheet',
+      useResultsSheetDesc: 'Write results to a separate Google Sheet for easy review and analysis. Create the sheet manually and share it with the service account first.',
+      resultsSheetId: '📋 Results Google Sheet ID',
+      requiredSteps: '⚠️ Required steps:',
+      createNewSheet: 'Create a new Google Sheet with headers (see documentation)',
+      shareWithAccount: 'Share with:',
+      giveEditorPermissions: 'Give Editor permissions',
+      copyIdHere: 'Copy the sheet ID here',
+      processSheet: 'PROCESS SHEET',
+      processing: 'PROCESSING...',
+      whatHappens: '⚡ What happens:',
+      readsAllPending: 'Reads all rows with "Pending"',
+      processesAutomatic: 'Processes each URL automatically',
+      updatesRealtime: 'Updates status in real-time',
+      sendsEmail: 'Sends email with results when done',
+      openThisSheet: 'Open this Sheet in Google',
+      resultsSheetCreated: 'Results Google Sheet Created',
+      sheetTitleLabel: 'Title:',
+      viewResultsInSheets: 'View Results in Google Sheets',
+      functionBlocked: 'Function Blocked',
+      requiresWorkspace: 'REQUIRES GOOGLE WORKSPACE',
+      blockedMessage: 'Automatic creation of Google Sheets only works with Google Workspace accounts (paid service).',
+      useFreeAlternative: 'Use the Free Alternative',
+      freeAlternativeDesc: 'Create your sheet at sheets.google.com and process it with Section 2',
+      quickGuide: 'Quick Guide:',
+      guideStep1: 'New sheet → Headers: URL|Status|etc',
+      guideStep2: 'URLs in column A → "Pending" in C',
+      guideStep3: 'Share with service account',
+      guideStep4: 'Use Section 2!',
+      createManualSheet: 'Create Manual Sheet (Free)',
+      howItWorks: 'How does it work?',
+      step1Create: '1. Create Template',
+      step1CreateDesc: 'Create a Google Sheet with columns already configured. You only need the title.',
+      step2AddUrls: '2. Add URLs',
+      step2AddUrlsDesc: 'Open the sheet, paste URLs in column A and write "Pending" in column C.',
+      step3Process: '3. Process',
+      step3ProcessDesc: 'Paste the sheet ID, your email, and press process. You will receive email when done.',
+      enterTemplateTitle: 'Please enter a title for the template',
+      enterSheetId: 'Please enter the Google Sheet ID',
+      enterValidEmail: 'Please enter a valid email',
+      enterResultsSheetId: 'Please enter the results Google Sheet ID or disable the option',
+      templateCreatedSuccess: 'Template created! Open the link, share it with the service account, and paste your URLs.',
+      errorCreatingTemplate: 'Error creating template',
+      networkError: 'Network error:',
+      errorProcessingSheet: 'Error processing sheet',
+      completedProcessed: '✅ Completed! Processed:',
+      resultsSheetCreatedMsg: 'A Google Sheet with the results was created.',
+    },
+    tutorial: {
+      chooseWebsite: 'CHOOSE A WEBSITE',
+      step1Title: 'Copy the property link',
+      step1Subtitle: 'From Encuentra24, Brevitas or Coldwell Banker',
+      step1Point1: '1. Open Encuentra24, Brevitas or Coldwell Banker',
+      step1Point2: '2. Find a property you\'re interested in',
+      step1Point3: '3. Copy the full URL from the browser',
+      example: 'Example:',
+      next: 'Next',
+      skip: 'Skip',
+      pasteHere: 'PASTE THE LINK HERE!',
+      step2Title: 'Paste the link',
+      step2Subtitle: 'Ctrl+V or Cmd+V in the highlighted field',
+      clickHere: 'CLICK HERE!',
+      step3Title: 'Process the property',
+      step3Subtitle: 'Click on the highlighted button',
+      step3Point1: 'The process takes 10-30 seconds',
+      step3Point2: 'You will see a real-time progress bar',
+      step3Point3: 'All data will be automatically extracted',
+      step4Title: 'Review and save the data',
+      step4Subtitle: 'Verify that the extracted data is correct before saving',
+      step4Point1Title: 'Verify the data',
+      step4Point1Desc: 'Price, location, bedrooms, bathrooms, etc.',
+      step4Point2Title: 'Click "Save"',
+      step4Point2Desc: 'If everything looks good, save the property to the database',
+      step4Point3Title: 'Ready for the next one!',
+      step4Point3Desc: 'Repeat the process with another property',
+      understood: 'Got it! Start using',
     },
   },
 };
