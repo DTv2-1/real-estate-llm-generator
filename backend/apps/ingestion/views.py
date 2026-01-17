@@ -630,7 +630,7 @@ class IngestBatchView(APIView):
                                 'notes': f"Property ID: {str(property_obj.id)}",
                                 'property_id': str(property_obj.id)
                             }
-                            sheets_service.append_result_row(results_sheet_id, result_row_data)
+                            sheets_service.upsert_result_row(results_sheet_id, result_row_data)
                         except Exception as e:
                             logger.error(f"Failed to write to Google Sheets: {e}")
                     
@@ -652,7 +652,7 @@ class IngestBatchView(APIView):
                                 'notes': str(e),
                                 'property_id': ''
                             }
-                            sheets_service.append_result_row(results_sheet_id, error_row_data)
+                            sheets_service.upsert_result_row(results_sheet_id, error_row_data)
                         except Exception as sheet_error:
                             logger.error(f"Failed to write error to Google Sheets: {sheet_error}")
             
