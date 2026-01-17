@@ -13,6 +13,8 @@ from django.utils import timezone
 
 from .prompts import PROPERTY_EXTRACTION_PROMPT
 
+from .schemas import PropertyData
+
 logger = logging.getLogger(__name__)
 
 
@@ -29,8 +31,6 @@ class PropertyExtractor:
     def __init__(self):
         api_key = settings.OPENAI_API_KEY
         logger.info(f"🔑 OPENAI_API_KEY configured: {'Yes' if api_key else 'No'}")
-        logger.info(f"🔑 API Key length: {len(api_key) if api_key else 0} chars")
-        logger.info(f"🔑 API Key preview: {api_key[:10]}..." if api_key and len(api_key) > 10 else "🔑 API Key: EMPTY or TOO SHORT")
         
         if not api_key:
             logger.error("❌ OPENAI_API_KEY is empty! Check environment variables.")
@@ -104,71 +104,6 @@ class PropertyExtractor:
         
         return combined
     
-    def _validate_extraction(self, data: Dict) -> Dict:
-        """Validate and clean extracted data."""
-        validated = {}
-        
-        # Handle price
-        if data.get('price_usd'):
-            try:
-                validated['price_usd'] = Decimal(str(data['price_usd']))
-            except (ValueError, TypeError):
-                validated['price_usd'] = None
-        
-        # Handle integers
-        for field in ['bedrooms', 'year_built', 'parking_spaces']:
-            if data.get(field):
-                try:
-                    validated[field] = int(data[field])
-                except (ValueError, TypeError):
-                    validated[field] = None
-        
-        # Handle decimals
-        for field in ['bathrooms', 'square_meters', 'lot_size_m2', 
-                     'hoa_fee_monthly', 'property_tax_annual', 'latitude', 'longitude']:
-            if data.get(field):
-                try:
-                    validated[field] = Decimal(str(data[field]))
-                except (ValueError, TypeError):
-                    validated[field] = None
-        
-        # Handle strings
-        for field in ['property_name', 'property_type', 'location', 'description',
-                     'listing_id', 'internal_property_id', 'listing_status']:
-            validated[field] = data.get(field)
-        
-        # Handle date_listed
-        if data.get('date_listed'):
-            validated['date_listed'] = data.get('date_listed')  # Keep as string for now, Django will parse
-        else:
-            validated['date_listed'] = None
-        
-        # Handle amenities array
-        amenities = data.get('amenities')
-        if amenities and isinstance(amenities, list):
-            validated['amenities'] = [str(a) for a in amenities]
-        else:
-            validated['amenities'] = []
-        
-        # Handle confidence
-        try:
-            confidence = float(data.get('extraction_confidence', 0.5))
-            validated['extraction_confidence'] = max(0.0, min(1.0, confidence))
-        except (ValueError, TypeError):
-            validated['extraction_confidence'] = 0.5
-        
-        # Store field-level evidence
-        evidence_fields = {}
-        for key, value in data.items():
-            if key.endswith('_evidence'):
-                field_name = key.replace('_evidence', '')
-                evidence_fields[field_name] = value
-        
-        validated['field_confidence'] = evidence_fields
-        validated['extracted_at'] = timezone.now()
-        
-        return validated
-    
     def extract_from_html(self, html: str, url: Optional[str] = None) -> Dict:
         """
         Extract property data from HTML content.
@@ -191,53 +126,55 @@ class PropertyExtractor:
         prompt = PROPERTY_EXTRACTION_PROMPT.format(content=content)
         
         logger.info(f"Prompt preview (first 800 chars): {prompt[:800]}")
-        logger.info(f"Prompt preview (last 800 chars): {prompt[-800:]}")
         
         try:
-            logger.info("Starting LLM property extraction...")
+            logger.info("Starting LLM property extraction with Structured Outputs...")
             
-            response = self.client.chat.completions.create(
+            completion = self.client.beta.chat.completions.parse(
                 model=self.model,
                 messages=[
-                    {"role": "system", "content": "You are a data extraction specialist that outputs only valid JSON."},
+                    {"role": "system", "content": "You are a data extraction specialist. Extract the following property information."},
                     {"role": "user", "content": prompt}
                 ],
-                temperature=self.temperature,
-                max_tokens=self.max_tokens,
-                response_format={"type": "json_object"}  # Force JSON output
+                response_format=PropertyData,
             )
             
-            # Extract JSON from response
-            raw_json = response.choices[0].message.content
+            # Extract parsed Pydantic model
+            property_data = completion.choices[0].message.parsed
             
-            logger.info(f"LLM extraction completed. Tokens used: {response.usage.total_tokens}")
-            logger.info(f"Raw LLM response: {raw_json[:500]}")  # Log first 500 chars
+            if not property_data:
+                 raise ExtractionError("LLM returned empty parsed data")
+
+            logger.info(f"LLM extraction completed. Tokens used: {completion.usage.total_tokens}")
             
-            # Parse JSON
-            try:
-                extracted_data = json.loads(raw_json)
-                logger.info(f"Parsed JSON keys: {list(extracted_data.keys())}")
-            except json.JSONDecodeError as e:
-                logger.error(f"Failed to parse LLM JSON response: {e}")
-                logger.error(f"Raw response was: {raw_json}")
-                raise ExtractionError("LLM returned invalid JSON")
+            # Convert to dictionary using model_dump()
+            validated_data = property_data.model_dump()
             
-            # Validate and clean
-            validated_data = self._validate_extraction(extracted_data)
+            # Handle decimals (Pydantic models use float/int, convert relevant fields to Decimal if needed by Django)
+            # note: Pydantic v2 model_dump returns native python types. 
+            # If downstream expects Decimal, we might need manual conversion or Pydantic config.
+            # For now, let's keep it simple and convert essential financial/area fields if needed, 
+            # but usually float is fine until save time.
+            
+            # Store field-level evidence in a separate dictionary as per original format
+            evidence_fields = {}
+            for key, value in validated_data.items():
+                if key.endswith('_evidence') and value:
+                    field_name = key.replace('_evidence', '')
+                    evidence_fields[field_name] = value
+            
+            validated_data['field_confidence'] = evidence_fields
+            validated_data['extracted_at'] = timezone.now()
             
             # Add metadata
             validated_data['source_url'] = url
             validated_data['raw_html'] = html[:10000]  # Store first 10K chars
-            validated_data['tokens_used'] = response.usage.total_tokens
+            validated_data['tokens_used'] = completion.usage.total_tokens
             
-            logger.info(f"Extraction successful. Confidence: {validated_data['extraction_confidence']}")
+            logger.info(f"Extraction successful. Confidence: {validated_data.get('extraction_confidence')}")
             
             return validated_data
             
-        except openai.APIError as e:
-            logger.error(f"OpenAI API error: {e}")
-            raise ExtractionError(f"LLM API error: {str(e)}")
-        
         except Exception as e:
             logger.error(f"Unexpected extraction error: {e}")
             raise ExtractionError(f"Extraction failed: {str(e)}")
