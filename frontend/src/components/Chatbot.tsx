@@ -519,6 +519,8 @@ export default function Chatbot() {
         <div className="chatbot-messages">
           {/* Example queries at top */}
           {messages.length === 1 && (
+            <>
+
               <div className="welcome-hero">
                 <div className="welcome-icon">
                   <Icons.bot />
@@ -526,7 +528,7 @@ export default function Chatbot() {
                 <h2>{t.chatbot.welcome}</h2>
                 <p className="welcome-subtitle">{t.chatbot.welcomeSubtitle || 'I can help you analyze properties, compare prices, and manage real estate data.'}</p>
               </div>
-              
+
               <div className="example-queries">
                 <h3>{t.chatbot.tryAsking}</h3>
                 <div className="example-queries-grid">
@@ -545,7 +547,7 @@ export default function Chatbot() {
                     );
                   })}
                 </div>
-              </div>
+              </div></>
           )}
 
           {/* Messages */}
