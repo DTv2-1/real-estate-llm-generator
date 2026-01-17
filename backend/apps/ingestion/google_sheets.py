@@ -155,6 +155,110 @@ class GoogleSheetsService:
             logger.error(f"Error creating results spreadsheet: {e}")
             raise
     
+    def upsert_result_row(
+        self,
+        spreadsheet_id: str,
+        result_data: Dict[str, Any]
+    ) -> bool:
+        """
+        Update existing row if URL exists, otherwise append new row.
+        
+        Args:
+            spreadsheet_id: ID of the results spreadsheet
+            result_data: Dictionary with property data and processing result
+            
+        Returns:
+            True if successful
+        """
+        try:
+            target_url = result_data.get('url', '').strip()
+            if not target_url:
+                logger.warning("⚠️ [UPSERT] Skipping row with empty URL")
+                return False
+
+            # 1. Read all URLs from Column A to check existence
+            # We assume 'Resultados' sheet name based on create_results_spreadsheet
+            # If standard sheet, might be 'Sheet1', but let's try 'Resultados' first for current batch flow, or default to first sheet
+            
+            # Note: create_results_spreadsheet uses 'Resultados'.
+            # batch_export uses 'Sheet1' in some places. 
+            # Ideally we should detect sheet name or pass it, but for now let's try 'Resultados' 
+            # and fallback to 'Sheet1' if that fails or returns empty in a way that suggests it doesn't exist?
+            # Actually, `append_result_row` hardcodes 'Resultados!A:L'. So we Stick to 'Resultados'.
+            
+            sheet_range = 'Resultados!A:A' 
+            
+            try:
+                result = self.sheets_api.values().get(
+                    spreadsheetId=spreadsheet_id, 
+                    range=sheet_range
+                ).execute()
+                rows = result.get('values', [])
+                existing_urls = [r[0].strip() if r else '' for r in rows]
+            except HttpError:
+                # Fallback to Sheet1 if Resultados doesn't exist (e.g. manual sheet)
+                sheet_range = 'Sheet1!A:A'
+                result = self.sheets_api.values().get(
+                    spreadsheetId=spreadsheet_id, 
+                    range=sheet_range
+                ).execute()
+                rows = result.get('values', [])
+                existing_urls = [r[0].strip() if r else '' for r in rows]
+
+            # 2. Check for duplicate
+            try:
+                # 1-based index, so +1.
+                # headers are checking logic? usually row 1 is header.
+                row_index = existing_urls.index(target_url) + 1
+                logger.info(f"🔄 [UPSERT] Found existing URL at row {row_index} - Updating...")
+                
+                # 3. Update existing row
+                # We reuse the update logic but for the specific row structure of "Resultados" sheet:
+                # A: URL, B: Title, C: Price, D: Beds, E: Baths, F: Area, G: Location, H: Type, I: Status, J: Date, K: Notes, L: ID
+                
+                property_data = result_data.get('property_data', {})
+                price = property_data.get('price')
+                if price is not None: price = float(price)
+                area = property_data.get('area')
+                if area is not None: area = float(area)
+
+                row_values = [
+                    result_data.get('url', ''),
+                    property_data.get('title', ''),
+                    price if price else '',
+                    property_data.get('bedrooms', ''),
+                    property_data.get('bathrooms', ''),
+                    area if area else '',
+                    property_data.get('location', ''),
+                    property_data.get('property_type', ''),
+                    result_data.get('status', 'Procesado'),
+                    datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                    result_data.get('notes', ''),
+                    result_data.get('property_id', '')
+                ]
+                
+                # Determine range based on detected sheet name (Resultados vs Sheet1)
+                sheet_name = sheet_range.split('!')[0]
+                update_range = f'{sheet_name}!A{row_index}:L{row_index}'
+                
+                self.sheets_api.values().update(
+                    spreadsheetId=spreadsheet_id,
+                    range=update_range,
+                    valueInputOption='RAW',
+                    body={'values': [row_values]}
+                ).execute()
+                
+                return True
+                
+            except ValueError:
+                # URL not found in list -> Append
+                logger.info(f"➕ [UPSERT] URL not found - Appending new row...")
+                return self.append_result_row(spreadsheet_id, result_data)
+
+        except HttpError as e:
+            logger.error(f"Error during upsert: {e}")
+            return False
+
     def append_result_row(
         self,
         spreadsheet_id: str,
