@@ -3,11 +3,11 @@ Base extractor class for property data extraction.
 Also includes generic HTML cleaning utilities.
 """
 
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Any
 from bs4 import BeautifulSoup
 from decimal import Decimal
 import re
-
+from ..types import PropertyData
 
 def clean_html_generic(html: str) -> str:
     """
@@ -114,7 +114,7 @@ class BaseExtractor:
     def __init__(self):
         self.site_name = "generic"
     
-    def extract(self, html: str, url: Optional[str] = None) -> Dict:
+    def extract(self, html: str, url: Optional[str] = None) -> PropertyData:
         """
         Extract property data from HTML.
         

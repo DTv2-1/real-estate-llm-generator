@@ -34,3 +34,11 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 # Celery eager mode for synchronous testing
 CELERY_TASK_ALWAYS_EAGER = False  # Set to True to test without Celery worker
 CELERY_TASK_EAGER_PROPAGATES = True
+
+# Use SQLite for local development
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}

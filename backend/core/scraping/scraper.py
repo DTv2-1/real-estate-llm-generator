@@ -156,8 +156,18 @@ class WebScraper:
         """Scrape using Playwright for JavaScript-heavy sites."""
         logger.info(f"Scraping with Playwright: {url}")
         
-        async with async_playwright() as p:
-            browser = await p.chromium.launch(
+        MAX_RETRIES = 3
+        last_error = None
+        
+        for attempt in range(MAX_RETRIES):
+            try:
+                if attempt > 0:
+                    wait_time = attempt * 5
+                    logger.info(f"🔄 Retry attempt {attempt + 1}/{MAX_RETRIES} for {url} after {wait_time}s...")
+                    await asyncio.sleep(wait_time)
+
+                async with async_playwright() as p:
+                    browser = await p.chromium.launch(
                 headless=settings.PLAYWRIGHT_HEADLESS,
                 args=[
                     '--disable-blink-features=AutomationControlled',
@@ -451,13 +461,19 @@ class WebScraper:
                 }
                 
             except PlaywrightTimeout:
+                if attempt == MAX_RETRIES - 1:
+                    await browser.close()
+                    raise ScraperError(f"Timeout scraping {url}")
+                logger.warning(f"Timeout on attempt {attempt+1}, retrying...")
                 await browser.close()
-                raise ScraperError(f"Timeout scraping {url}")
             
             except Exception as e:
+                if attempt == MAX_RETRIES - 1:
+                    await browser.close()
+                    logger.error(f"Playwright error: {e}")
+                    raise ScraperError(f"Error scraping {url}: {str(e)}")
+                logger.warning(f"Error on attempt {attempt+1}: {e}, retrying...")
                 await browser.close()
-                logger.error(f"Playwright error: {e}")
-                raise ScraperError(f"Error scraping {url}: {str(e)}")
     
     async def _scrape_with_httpx(self, url: str) -> Dict[str, any]:
         """Scrape using httpx for static HTML pages."""

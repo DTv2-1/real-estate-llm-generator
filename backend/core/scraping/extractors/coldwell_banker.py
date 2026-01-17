@@ -9,6 +9,8 @@ import openai
 import json
 from django.conf import settings
 from .base import BaseExtractor
+from ..types import PropertyData
+from ..utils import JSONUtils, NumberUtils
 
 
 class ColdwellBankerExtractor(BaseExtractor):
@@ -18,7 +20,7 @@ class ColdwellBankerExtractor(BaseExtractor):
         super().__init__()
         self.site_name = "coldwellbankercostarica.com"
     
-    def extract(self, html: str, url: Optional[str] = None) -> dict:
+    def extract(self, html: str, url: Optional[str] = None) -> PropertyData:
         """
         Override extract to use AI enhancement with clean text extraction.
         This reduces token usage by 98%+ and improves data quality.
@@ -218,25 +220,13 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin markdown, sin ```json):
                 max_tokens=1500
             )
             
+            # Parse response with robust JSONUtils
             content = response.choices[0].message.content.strip()
-            
-            # Remove markdown code blocks if present
-            if content.startswith('```'):
-                content = content.split('```')[1]
-                if content.startswith('json'):
-                    content = content[4:]
-                content = content.strip()
-            
-            data = json.loads(content)
+            data = JSONUtils.parse_ai_response(content)
             
             print(f"✅ AI enhancement successful: {len(data)} campos extraídos")
-            
             return data
             
-        except json.JSONDecodeError as e:
-            print(f"❌ Error parsing AI response as JSON: {e}")
-            print(f"Response content: {content[:500]}")
-            return None
         except Exception as e:
             print(f"❌ Error in AI enhancement: {e}")
             return None
@@ -311,17 +301,14 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin markdown, sin ```json):
         if specs:
             text = specs.get_text()
             # Look for sq ft or m2
-            match = re.search(r'([\d,]+\.?\d*)\s*(sq\s*ft|sqft|m[²2])', text, re.IGNORECASE)
+            if 'sq' in text and 'ft' in text:
+                return NumberUtils.parse_area(text) # Automatically handles sqft conversion
+            
+            # Try plain m2
+            match = re.search(r'([\d,]+\.?\d*)\s*(m[²2]?)', text, re.IGNORECASE)
             if match:
-                value_str = match.group(1).replace(',', '')
-                try:
-                    value = Decimal(value_str)
-                    # Convert sq ft to m2 if needed
-                    if 'ft' in match.group(2).lower():
-                        value = value * Decimal('0.092903')
-                    return value
-                except:
-                    pass
+                val = NumberUtils.extract_float(match.group(1))
+                return Decimal(str(val)) if val else None
         
         return super().extract_area(soup)
     
