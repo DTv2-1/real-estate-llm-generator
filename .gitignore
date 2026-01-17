@@ -99,3 +99,4 @@ scraped_data/
 .AppleDouble
 .LSOverride
 frontend/bun.lock
+/qa
