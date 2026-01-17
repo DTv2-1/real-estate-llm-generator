@@ -42,7 +42,7 @@ export default function GoogleSheetsIntegration() {
     if (import.meta.env.MODE === 'production') {
       return import.meta.env.VITE_API_URL || window.location.origin
     }
-    return import.meta.env.VITE_API_URL || 'http://localhost:8080'
+    return import.meta.env.VITE_API_URL || 'http://localhost:8000'
   }
 
   const API_BASE = getApiBase()
@@ -147,11 +147,17 @@ export default function GoogleSheetsIntegration() {
           const total = data.total || 0
           const processed = data.processed || 0
           const failed = data.failed || 0
+          const tabs = data.tabs || []
           
-          let successMessage = `✅ Completado! Procesadas: ${processed}, Fallidas: ${failed}, Total: ${total}. Se envió email a ${notifyEmail}.`
+          let successMessage = `✅ Completado! Procesadas: ${processed}, Fallidas: ${failed}, Total: ${total}.`
+          
+          if (tabs.length > 0) {
+            successMessage += ' Se crearon ' + tabs.length + ' pestañas: '
+            successMessage += tabs.map((t: any) => `${t.name} (${t.count} items)`).join(', ')
+          }
           
           if (data.results_spreadsheet) {
-            successMessage += ' Se creó un Google Sheet con los resultados.'
+            successMessage += ' | Resultados en: ' + data.results_spreadsheet.spreadsheet_url
           }
           
           setMessage({ 

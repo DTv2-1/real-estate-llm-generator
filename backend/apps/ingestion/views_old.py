@@ -1145,17 +1145,33 @@ class GenerateEmbeddingsView(APIView):
 
 class ProcessGoogleSheetView(APIView):
     """
-    Endpoint to process properties from a Google Sheet.
+    Endpoint to process URLs from a Google Sheet with automatic classification and tab creation.
     
     POST /ingest/google-sheet/
     {
         "spreadsheet_id": "1abc...",
-        "notify_email": "assistant@example.com",
-        "async": true
+        "notify_email": "assistant@example.com"
     }
+    
+    This endpoint:
+    1. Reads URLs from the provided Google Sheet
+    2. Processes each URL (scraping + extraction + classification)
+    3. Creates Property objects in database
+    4. Automatically creates tabs in the sheet based on content_type + page_type
+    5. Exports results to appropriate tabs (e.g., "real_estate_specific", "tour_general")
     """
     
     permission_classes = [AllowAny]
+    
+    def _get_column_schema(self, content_type: str, page_type: str):
+        """Get column schema based on content type and page type."""
+        batch_view = BatchExportToSheetsView()
+        return batch_view._get_column_schema(content_type, page_type)
+    
+    def _extract_field_value(self, obj, key_path: str):
+        """Extract field value from Property object with nested key support."""
+        batch_view = BatchExportToSheetsView()
+        return batch_view._extract_field_value(obj, key_path)
     
     def post(self, request):
         """Process properties from Google Sheet."""
@@ -1358,36 +1374,212 @@ class ProcessGoogleSheetView(APIView):
             return Response(response_data, status=status.HTTP_202_ACCEPTED)
         
         else:
-            # Process synchronously
+            # Process synchronously with classification and auto-tabs
             try:
-                results = process_sheet_batch(
-                    spreadsheet_id=spreadsheet_id,
-                    process_callback=process_url,
-                    task_id=task_id,
-                    create_results_sheet=create_results_sheet,
-                    results_sheet_id=results_sheet_id
-                )
+                from asgiref.sync import async_to_sync
+                from channels.layers import get_channel_layer
+                
+                channel_layer = get_channel_layer()
+                
+                # Read URLs from the sheet
+                sheets_service = GoogleSheetsService()
+                pending_rows = sheets_service.read_pending_rows(spreadsheet_id)
+                
+                if not pending_rows:
+                    return Response({
+                        'status': 'completed',
+                        'total': 0,
+                        'processed': 0,
+                        'failed': 0,
+                        'message': 'No pending URLs to process',
+                        'tabs': []
+                    }, status=status.HTTP_200_OK)
+                
+                # Process all URLs and classify them
+                classified_results = {}  # {content_type_page_type: [objects]}
+                processed_count = 0
+                failed_count = 0
+                total_urls = len(pending_rows)
+                
+                for index, row in enumerate(pending_rows):
+                    try:
+                        url = row['url']
+                        logger.info(f"Processing {index + 1}/{total_urls}: {url}")
+                        
+                        # Process URL
+                        success, result = process_url(url, index, total_urls)
+                        
+                        if success:
+                            # Get the Property object to extract classification
+                            property_id = result.get('property_id')
+                            logger.info(f"✅ Success! Property ID: {property_id}")
+                            
+                            if property_id:
+                                try:
+                                    property_obj = Property.objects.get(id=property_id)
+                                    content_type = property_obj.content_type or 'unknown'
+                                    page_type = property_obj.page_type or 'general'
+                                    
+                                    logger.info(f"📊 Classification - content_type: '{content_type}', page_type: '{page_type}'")
+                                    
+                                    # Create tab name: tour_general, real_estate_specific, etc.
+                                    tab_key = f"{content_type}_{page_type}"
+                                    
+                                    logger.info(f"🏷️  Tab key created: '{tab_key}'")
+                                    
+                                    if tab_key not in classified_results:
+                                        classified_results[tab_key] = []
+                                        logger.info(f"📁 Created new classification group: '{tab_key}'")
+                                    
+                                    # Add property to its classification group
+                                    classified_results[tab_key].append(property_obj)
+                                    logger.info(f"➕ Added property to '{tab_key}' group (total: {len(classified_results[tab_key])})")
+                                    
+                                    # DO NOT update original sheet - keep URLs page intact
+                                    
+                                    processed_count += 1
+                                    
+                                except Property.DoesNotExist:
+                                    logger.error(f"Property {property_id} not found after creation")
+                                    failed_count += 1
+                            else:
+                                failed_count += 1
+                        else:
+                            # DO NOT update sheet with error - keep URLs page intact
+                            failed_count += 1
+                            
+                    except Exception as e:
+                        logger.error(f"Error processing row {row['row_index']}: {e}")
+                        # DO NOT update sheet with error - keep URLs page intact
+                        failed_count += 1
+                
+                # Now export each classification group to its own tab
+                tabs_created = []
+                
+                logger.info(f"\n{'='*80}")
+                logger.info(f"📤 EXPORTING CLASSIFIED RESULTS TO TABS")
+                logger.info(f"{'='*80}")
+                logger.info(f"Total classification groups: {len(classified_results)}")
+                for key, props in classified_results.items():
+                    logger.info(f"  - {key}: {len(props)} properties")
+                
+                if create_results_sheet and results_sheet_id:
+                    # Use provided results sheet
+                    target_spreadsheet_id = results_sheet_id
+                    logger.info(f"📊 Target: Results sheet ({results_sheet_id})")
+                else:
+                    # Use original spreadsheet
+                    target_spreadsheet_id = spreadsheet_id
+                    logger.info(f"📊 Target: Original sheet ({spreadsheet_id})")
+                
+                for tab_key, properties in classified_results.items():
+                    try:
+                        logger.info(f"\n{'─'*80}")
+                        logger.info(f"📑 Processing tab: '{tab_key}'")
+                        logger.info(f"   Properties count: {len(properties)}")
+                        
+                        # Parse tab_key (e.g., "tour_general" -> content_type="tour", page_type="general")
+                        # Split from the RIGHT to handle multi-word types like "real_estate"
+                        parts = tab_key.rsplit('_', 1)  # Use rsplit to split from the right
+                        logger.info(f"   Split parts: {parts}")
+                        
+                        if len(parts) == 2:
+                            content_type, page_type = parts
+                        else:
+                            content_type = tab_key
+                            page_type = 'general'
+                        
+                        logger.info(f"   Parsed - content_type: '{content_type}', page_type: '{page_type}'")
+                        
+                        # Create tab name (e.g., "tour_general")
+                        sheet_name = tab_key
+                        logger.info(f"   Sheet name: '{sheet_name}'")
+                        
+                        # Get or create the sheet tab
+                        logger.info(f"   Creating/getting sheet tab...")
+                        sheets_service.get_or_create_sheet(target_spreadsheet_id, sheet_name)
+                        
+                        # Clear the sheet
+                        logger.info(f"   Clearing sheet...")
+                        sheets_service.clear_sheet(target_spreadsheet_id, sheet_name)
+                        
+                        # Get column schema for this content type and page type
+                        logger.info(f"   Getting column schema for: content_type='{content_type}', page_type='{page_type}'")
+                        columns = self._get_column_schema(content_type, page_type)
+                        logger.info(f"   Schema has {len(columns)} columns: {list(columns.keys())[:5]}...")
+                        
+                        # Prepare header row
+                        header_row = list(columns.keys())
+                        logger.info(f"   Header row: {header_row[:5]}...")
+                        
+                        # Prepare data rows
+                        data_rows = []
+                        logger.info(f"   Extracting data from {len(properties)} properties...")
+                        
+                        for prop_idx, obj in enumerate(properties):
+                            row = []
+                            for col_idx, key in enumerate(columns.keys()):
+                                value = self._extract_field_value(obj, key)
+                                row.append(value)
+                                if prop_idx == 0 and col_idx < 3:  # Log first 3 values of first property
+                                    logger.info(f"      [{key}] = {str(value)[:50]}")
+                            data_rows.append(row)
+                        
+                        logger.info(f"   Prepared {len(data_rows)} data rows")
+                        
+                        # Write to sheet
+                        all_rows = [header_row] + data_rows
+                        logger.info(f"   Writing {len(all_rows)} total rows to sheet...")
+                        
+                        sheets_service.append_rows(
+                            target_spreadsheet_id,
+                            f"{sheet_name}!A1",
+                            all_rows,
+                            sheet_name=sheet_name
+                        )
+                        
+                        tabs_created.append({
+                            'name': sheet_name,
+                            'count': len(properties),
+                            'columns': len(columns),
+                            'content_type': content_type,
+                            'page_type': page_type
+                        })
+                        
+                        logger.info(f"✅ Created tab '{sheet_name}': {len(properties)} items, {len(columns)} columns")
+                        
+                    except Exception as e:
+                        logger.error(f"Error creating tab for {tab_key}: {e}")
                 
                 # Send notification email
                 admin_panel_url = request.build_absolute_uri('/admin/properties/property/')
                 send_batch_completion_email(
                     recipient_email=notify_email,
-                    results=results,
+                    results={
+                        'total': total_urls,
+                        'processed': processed_count,
+                        'failed': failed_count,
+                        'results': []
+                    },
                     spreadsheet_id=spreadsheet_id,
                     admin_panel_url=admin_panel_url
                 )
                 
                 response_data = {
                     'status': 'completed',
-                    'total': results['total'],
-                    'processed': results['processed'],
-                    'failed': results['failed'],
-                    'spreadsheet_url': f'https://docs.google.com/spreadsheets/d/{spreadsheet_id}/edit'
+                    'total': total_urls,
+                    'processed': processed_count,
+                    'failed': failed_count,
+                    'spreadsheet_url': f'https://docs.google.com/spreadsheets/d/{spreadsheet_id}/edit',
+                    'tabs': tabs_created
                 }
                 
-                # Include results spreadsheet info if it was created
-                if 'results_spreadsheet' in results:
-                    response_data['results_spreadsheet'] = results['results_spreadsheet']
+                if create_results_sheet and results_sheet_id:
+                    response_data['results_spreadsheet'] = {
+                        'spreadsheet_id': results_sheet_id,
+                        'spreadsheet_url': f'https://docs.google.com/spreadsheets/d/{results_sheet_id}/edit',
+                        'tabs': tabs_created
+                    }
                 
                 return Response(response_data, status=status.HTTP_200_OK)
                 
@@ -1508,21 +1700,218 @@ class CancelBatchView(APIView):
 
 class BatchExportToSheetsView(APIView):
     """
-    Export batch results to Google Sheets.
+    Export batch results to Google Sheets with dynamic columns and automatic tabs.
+    Creates separate tabs for specific vs general pages within the same spreadsheet.
     
     POST /ingest/batch-export/sheets/
     Body: {
         "sheet_id": "1abc...",
-        "results": [...]
+        "results": [...],
+        "content_type": "tour" | "real_estate" | "restaurant" | etc
     }
     """
     
     authentication_classes = []
     permission_classes = [AllowAny]
     
+    def _get_sheet_name(self, page_type: str) -> str:
+        """
+        Get friendly sheet name for page type.
+        """
+        names = {
+            'specific': 'Específicos',
+            'general': 'Generales'
+        }
+        return names.get(page_type, page_type.capitalize())
+    
+    def _get_column_schema(self, content_type: str, page_type: str) -> dict:
+        """
+        Define column schemas for different content types and page types.
+        Returns: {'headers': [...], 'field_keys': [...]}
+        """
+        
+        # TOUR - SPECIFIC PAGE
+        if content_type == 'tour' and page_type == 'specific':
+            return {
+                'headers': [
+                    'Nombre del Tour', 'Tipo de Tour', 'Precio (USD)', 'Precio Adults', 'Precio Children',
+                    'Precio Students', 'Precio Nationals', 'Precio Groups', 'Precio Range',
+                    'Duración (horas)', 'Nivel de Dificultad', 'Ubicación', 'Descripción',
+                    'Qué Incluye', 'Qué Excluye', 'Máx. Participantes', 'Idiomas Disponibles',
+                    'Pickup Incluido', 'Edad Mínima', 'Política de Cancelación',
+                    'Confianza Extracción', 'URL'
+                ],
+                'field_keys': [
+                    'tour_name', 'tour_type', 'price_usd', 'price_details.adults', 'price_details.children',
+                    'price_details.students', 'price_details.nationals', 'price_details.groups', 'price_details.range',
+                    'duration_hours', 'difficulty_level', 'location', 'description',
+                    'included_items', 'excluded_items', 'max_participants', 'languages_available',
+                    'pickup_included', 'minimum_age', 'cancellation_policy',
+                    'extraction_confidence', 'source_url'
+                ]
+            }
+        
+        # TOUR - GENERAL PAGE (GUIDE)
+        elif content_type == 'tour' and page_type == 'general':
+            return {
+                'headers': [
+                    'Destino', 'Ubicación', 'Resumen General', 'Tipos de Tours Disponibles',
+                    'Regiones', 'Precio Mín (USD)', 'Precio Máx (USD)', 'Precio Típico (USD)',
+                    'Mejor Temporada', 'Mejor Hora del Día', 'Rango de Duración',
+                    'Consejos', 'Qué Llevar', 'Tours Destacados', 'Total Tours Mencionados',
+                    'Consejos de Reserva', 'Actividades por Temporada', 'FAQs',
+                    'Apto para Familias', 'Info de Accesibilidad', 'Confianza Extracción', 'URL'
+                ],
+                'field_keys': [
+                    'destination', 'location', 'overview', 'tour_types_available',
+                    'regions', 'price_range.min_usd', 'price_range.max_usd', 'price_range.typical_usd',
+                    'best_season', 'best_time_of_day', 'duration_range',
+                    'tips', 'things_to_bring', 'featured_tours', 'total_tours_mentioned',
+                    'booking_tips', 'seasonal_activities', 'faqs',
+                    'family_friendly', 'accessibility_info', 'extraction_confidence', 'source_url'
+                ]
+            }
+        
+        # REAL ESTATE - SPECIFIC PAGE
+        elif content_type == 'real_estate' and page_type == 'specific':
+            return {
+                'headers': [
+                    'Título', 'Precio (USD)', 'Ubicación', 'Ciudad', 'Provincia', 'País',
+                    'Tipo de Propiedad', 'Tipo de Listado', 'Habitaciones', 'Baños',
+                    'Área (m²)', 'Tamaño Lote (m²)', 'Espacios de Estacionamiento',
+                    'Descripción', 'Amenidades', 'Fecha de Listado', 'Estado',
+                    'Confianza Extracción', 'URL'
+                ],
+                'field_keys': [
+                    'title', 'price_usd', 'location', 'city', 'province', 'country',
+                    'property_type', 'listing_type', 'bedrooms', 'bathrooms',
+                    'area_m2', 'lot_size_m2', 'parking_spaces',
+                    'description', 'amenities', 'date_listed', 'status',
+                    'extraction_confidence', 'source_url'
+                ]
+            }
+        
+        # REAL ESTATE - GENERAL PAGE
+        elif content_type == 'real_estate' and page_type == 'general':
+            return {
+                'headers': [
+                    'Destino', 'Ubicación', 'Resumen General', 'Tipos de Propiedades',
+                    'Precio Mín (USD)', 'Precio Máx (USD)', 'Propiedades Destacadas',
+                    'Total Propiedades', 'Regiones', 'Consejos', 'Confianza Extracción', 'URL'
+                ],
+                'field_keys': [
+                    'destination', 'location', 'overview', 'property_types',
+                    'price_range.min_usd', 'price_range.max_usd', 'featured_items',
+                    'total_items_mentioned', 'regions', 'tips', 'extraction_confidence', 'source_url'
+                ]
+            }
+        
+        # RESTAURANT - SPECIFIC PAGE
+        elif content_type == 'restaurant' and page_type == 'specific':
+            return {
+                'headers': [
+                    'Nombre', 'Tipo de Cocina', 'Rango de Precio', 'Precio Promedio (USD)',
+                    'Ubicación', 'Horario', 'Ambiente', 'Reservas Requeridas',
+                    'Platillos Destacados', 'Opciones Dietéticas', 'Código de Vestimenta',
+                    'Teléfono', 'Descripción', 'Confianza Extracción', 'URL'
+                ],
+                'field_keys': [
+                    'restaurant_name', 'cuisine_type', 'price_range', 'average_price_usd',
+                    'location', 'hours', 'ambiance', 'reservations_required',
+                    'signature_dishes', 'dietary_options', 'dress_code',
+                    'phone', 'description', 'extraction_confidence', 'source_url'
+                ]
+            }
+        
+        # RESTAURANT - GENERAL PAGE
+        elif content_type == 'restaurant' and page_type == 'general':
+            return {
+                'headers': [
+                    'Destino', 'Ubicación', 'Resumen General', 'Tipos de Cocina',
+                    'Precio Mín (USD)', 'Precio Máx (USD)', 'Restaurantes Destacados',
+                    'Total Restaurantes', 'Consejos', 'Confianza Extracción', 'URL'
+                ],
+                'field_keys': [
+                    'destination', 'location', 'overview', 'cuisine_types',
+                    'price_range.min_usd', 'price_range.max_usd', 'featured_items',
+                    'total_items_mentioned', 'tips', 'extraction_confidence', 'source_url'
+                ]
+            }
+        
+        # DEFAULT - Try to extract common fields
+        else:
+            return {
+                'headers': ['Título', 'Ubicación', 'Precio (USD)', 'Descripción', 'URL'],
+                'field_keys': ['title', 'location', 'price_usd', 'description', 'url']
+            }
+    
+    def _extract_field_value(self, obj: dict, key_path: str) -> str:
+        """
+        Extract value from nested dict using dot notation (e.g., 'price_range.min_usd').
+        Handles arrays, nested objects, and None values.
+        """
+        keys = key_path.split('.')
+        value = obj
+        
+        for key in keys:
+            if isinstance(value, dict):
+                value = value.get(key)
+            else:
+                return 'N/A'
+        
+        # Format value
+        if value is None:
+            return 'N/A'
+        elif isinstance(value, list):
+            if len(value) == 0:
+                return 'N/A'
+            # Format arrays nicely
+            if all(isinstance(item, str) for item in value):
+                return ', '.join(value)
+            elif all(isinstance(item, dict) for item in value):
+                # Special formatting for different types of objects
+                formatted_items = []
+                for item in value:
+                    # FAQs: "Q: ... A: ..."
+                    if 'question' in item and 'answer' in item:
+                        formatted_items.append(f"Q: {item['question']} | A: {item['answer']}")
+                    # Seasonal activities: "Season: ... Activities: ..."
+                    elif 'season' in item and 'recommended_activities' in item:
+                        activities = ', '.join(item.get('recommended_activities', []))
+                        formatted_items.append(f"{item['season']}: {activities}")
+                    # Featured tours/items with name
+                    elif 'name' in item:
+                        formatted_items.append(item['name'])
+                    elif 'tour_name' in item:
+                        formatted_items.append(item['tour_name'])
+                    # Price details
+                    elif 'adults' in item or 'children' in item:
+                        parts = []
+                        if 'adults' in item:
+                            parts.append(f"Adultos: ${item['adults']}")
+                        if 'children' in item:
+                            parts.append(f"Niños: ${item['children']}")
+                        if 'students' in item:
+                            parts.append(f"Estudiantes: ${item['students']}")
+                        formatted_items.append(' | '.join(parts))
+                    # Default: convert to string
+                    else:
+                        formatted_items.append(str(item))
+                
+                return ' || '.join(formatted_items)
+            else:
+                return ', '.join(str(v) for v in value)
+        elif isinstance(value, bool):
+            return 'Sí' if value else 'No'
+        elif isinstance(value, (int, float)):
+            return str(value)
+        else:
+            return str(value)
+    
     def post(self, request):
         sheet_id = request.data.get('sheet_id')
         results = request.data.get('results', [])
+        content_type = request.data.get('content_type', 'real_estate')
         
         if not sheet_id:
             return Response({
@@ -1538,28 +1927,73 @@ class BatchExportToSheetsView(APIView):
             # Initialize Google Sheets service
             sheets_service = GoogleSheetsService()
             
-            # Prepare data rows
-            rows = []
+            # Group results by page_type (specific vs general)
+            groups = {}
             for result in results:
-                rows.append([
-                    result.get('title', 'N/A'),
-                    result.get('price_usd', 'N/A'),
-                    result.get('location', 'N/A'),
-                    result.get('property_type', 'N/A'),
-                    result.get('description', 'N/A'),
-                    ', '.join(result.get('features', [])),
-                    result.get('url', 'N/A')
-                ])
+                page_type = result.get('page_type', 'specific')
+                if page_type not in groups:
+                    groups[page_type] = []
+                groups[page_type].append(result)
             
-            # Write to sheet
-            sheets_service.append_rows(sheet_id, 'Sheet1!A:G', rows)
+            logger.info(f"📊 Exporting {len(results)} items of type '{content_type}' grouped into {len(groups)} tabs")
             
-            logger.info(f"✅ Exported {len(results)} properties to Google Sheets: {sheet_id}")
+            exported_tabs = []
+            
+            # Export each group to its own tab
+            for page_type, group_results in groups.items():
+                # Get sheet name for this page type
+                sheet_name = self._get_sheet_name(page_type)
+                
+                logger.info(f"📝 Processing tab '{sheet_name}' with {len(group_results)} items...")
+                
+                # Get or create the sheet (tab)
+                sheets_service.get_or_create_sheet(sheet_id, sheet_name)
+                
+                # Get column schema for this content type and page type
+                schema = self._get_column_schema(content_type, page_type)
+                headers = schema['headers']
+                field_keys = schema['field_keys']
+                
+                logger.info(f"   Columns: {len(headers)} fields")
+                
+                # Clear the tab before writing
+                sheets_service.clear_sheet(sheet_id, sheet_name)
+                
+                # Prepare header row + data rows
+                rows = [headers]  # First row is headers
+                
+                for result in group_results:
+                    row = []
+                    for key in field_keys:
+                        value = self._extract_field_value(result, key)
+                        row.append(value)
+                    rows.append(row)
+                
+                # Calculate range dynamically
+                num_cols = len(headers)
+                col_letter = chr(ord('A') + num_cols - 1) if num_cols <= 26 else 'Z'
+                range_notation = f'{sheet_name}!A:{col_letter}'
+                
+                # Write to tab (headers + data)
+                sheets_service.append_rows(sheet_id, range_notation, rows, sheet_name)
+                
+                exported_tabs.append({
+                    'tab_name': sheet_name,
+                    'page_type': page_type,
+                    'items_count': len(group_results),
+                    'columns_count': len(headers)
+                })
+                
+                logger.info(f"✅ Exported {len(group_results)} items to tab '{sheet_name}'")
+            
+            logger.info(f"✅ All exports completed for {content_type}")
             
             return Response({
                 'status': 'success',
                 'exported_count': len(results),
-                'sheet_id': sheet_id
+                'sheet_id': sheet_id,
+                'content_type': content_type,
+                'tabs': exported_tabs
             }, status=status.HTTP_200_OK)
             
         except Exception as e:

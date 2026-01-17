@@ -213,7 +213,79 @@ class GoogleSheetsService:
             logger.error(f"Error appending result row: {e}")
             return False
     
-    def append_rows(self, spreadsheet_id: str, range_name: str, rows: List[List[Any]]) -> bool:
+    def get_or_create_sheet(self, spreadsheet_id: str, sheet_name: str) -> bool:
+        """
+        Get or create a sheet (tab) in the spreadsheet.
+        
+        Args:
+            spreadsheet_id: ID of the spreadsheet
+            sheet_name: Name of the sheet to get or create
+            
+        Returns:
+            True if sheet exists or was created successfully
+        """
+        try:
+            # Get spreadsheet metadata to check existing sheets
+            spreadsheet = self.sheets_api.get(spreadsheetId=spreadsheet_id).execute()
+            existing_sheets = [sheet['properties']['title'] for sheet in spreadsheet.get('sheets', [])]
+            
+            if sheet_name in existing_sheets:
+                logger.info(f"📋 Sheet '{sheet_name}' already exists")
+                return True
+            
+            # Create new sheet
+            logger.info(f"📝 Creating new sheet '{sheet_name}'...")
+            request_body = {
+                'requests': [{
+                    'addSheet': {
+                        'properties': {
+                            'title': sheet_name,
+                            'gridProperties': {
+                                'rowCount': 1000,
+                                'columnCount': 30
+                            }
+                        }
+                    }
+                }]
+            }
+            
+            self.sheets_api.batchUpdate(
+                spreadsheetId=spreadsheet_id,
+                body=request_body
+            ).execute()
+            
+            logger.info(f"✅ Created sheet '{sheet_name}'")
+            return True
+            
+        except HttpError as e:
+            logger.error(f"❌ Error getting/creating sheet: {e}")
+            return False
+    
+    def clear_sheet(self, spreadsheet_id: str, sheet_name: str = 'Sheet1') -> bool:
+        """
+        Clear all data from a sheet (keeps the sheet structure).
+        
+        Args:
+            spreadsheet_id: ID of the spreadsheet
+            sheet_name: Name of the sheet to clear (default: 'Sheet1')
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            self.sheets_api.values().clear(
+                spreadsheetId=spreadsheet_id,
+                range=f"{sheet_name}!A:ZZ"
+            ).execute()
+            
+            logger.info(f"✅ Cleared sheet '{sheet_name}' in {spreadsheet_id}")
+            return True
+            
+        except HttpError as e:
+            logger.error(f"❌ Error clearing sheet: {e}")
+            return False
+
+    def append_rows(self, spreadsheet_id: str, range_name: str, rows: List[List[Any]], sheet_name: str = None) -> bool:
         """
         Append multiple rows to a Google Sheet.
         
@@ -221,6 +293,7 @@ class GoogleSheetsService:
             spreadsheet_id: ID of the spreadsheet
             range_name: Range to append to (e.g., 'Sheet1!A:G')
             rows: List of row data (each row is a list of values)
+            sheet_name: Optional sheet name to log (for better logging)
             
         Returns:
             True if successful, False otherwise
@@ -234,7 +307,8 @@ class GoogleSheetsService:
                 body={'values': rows}
             ).execute()
             
-            logger.info(f"✅ Appended {len(rows)} rows to {spreadsheet_id}")
+            sheet_info = f" to sheet '{sheet_name}'" if sheet_name else ""
+            logger.info(f"✅ Appended {len(rows)} rows{sheet_info} ({spreadsheet_id})")
             return True
             
         except HttpError as e:
@@ -313,9 +387,6 @@ class GoogleSheetsService:
             List of dictionaries with row data
         """
         try:
-            # Ensure headers exist first
-            self.ensure_headers(spreadsheet_id)
-            
             result = self.sheets_api.values().get(
                 spreadsheetId=spreadsheet_id,
                 range=range_name
@@ -329,14 +400,38 @@ class GoogleSheetsService:
                 logger.info("❌ [GOOGLE SHEETS] No data found in sheet")
                 return []
             
-            # Assume first row is header
-            headers = values[0]
-            logger.info(f"📋 [GOOGLE SHEETS] Headers: {headers}")
-            logger.info(f"📋 [GOOGLE SHEETS] Data rows (excluding header): {len(values) - 1}")
+            # Detect if first row is a header or a URL
+            first_row = values[0]
+            is_header = False
+            
+            if first_row and len(first_row) > 0:
+                first_cell = str(first_row[0]).strip().lower()
+                # Check if first cell looks like a header (not a URL)
+                is_header = (
+                    'url' in first_cell or 
+                    'link' in first_cell or 
+                    'enlace' in first_cell or
+                    (not first_cell.startswith('http'))
+                )
+            
+            if is_header:
+                logger.info(f"📋 [GOOGLE SHEETS] Detected header row: {first_row}")
+                headers = first_row
+                data_rows = values[1:]
+                start_row = 2
+            else:
+                logger.info(f"📋 [GOOGLE SHEETS] No header detected - first row is data: {first_row[0][:50] if first_row else ''}")
+                # Create default headers
+                headers = ['URL', 'Tipo', 'Status', 'Fecha', 'Notas', 'Precio USD', 'Habitaciones', 'Baños', 'M² Construcción', 'Ubicación', 'Property ID']
+                data_rows = values
+                start_row = 1
+            
+            logger.info(f"📋 [GOOGLE SHEETS] Processing {len(data_rows)} data rows starting from row {start_row}")
+            logger.info(f"📋 [GOOGLE SHEETS] Processing {len(data_rows)} data rows starting from row {start_row}")
             
             rows = []
             
-            for idx, row in enumerate(values[1:], start=2):  # Start from row 2
+            for idx, row in enumerate(data_rows, start=start_row):
                 # Pad row if it's shorter than headers
                 row_data = row + [''] * (len(headers) - len(row))
                 

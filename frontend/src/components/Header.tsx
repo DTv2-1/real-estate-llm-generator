@@ -38,6 +38,11 @@ const Icons = {
       <path d="M19.5 2h-15A2.5 2.5 0 002 4.5v15A2.5 2.5 0 004.5 22h15a2.5 2.5 0 002.5-2.5v-15A2.5 2.5 0 0019.5 2zM7 6h10v2H7V6zm10 10H7v-2h10v2zm0-4H7v-2h10v2z"/>
     </svg>
   ),
+  check: () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+      <polyline points="20 6 9 17 4 12" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
 };
 
 export default function Header() {
@@ -48,7 +53,12 @@ export default function Header() {
     <header className="app-header">
       <div className="header-content">
         <Link to="/" className="header-logo">
-          {Icons.home && <Icons.home />} {t.header.logo}
+          <div className="flex items-center gap-2">
+            <div className="bg-green-500 rounded-full p-1">
+              <Icons.check />
+            </div>
+            <span>{t.header.logo}</span>
+          </div>
         </Link>
         
         <nav className="header-nav">

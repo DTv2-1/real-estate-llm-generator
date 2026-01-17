@@ -1,18 +1,24 @@
 from django.urls import path
+
+# Import from new organized views package
 from .views import (
+    # Basic ingestion
     IngestURLView, 
     IngestTextView, 
-    IngestBatchView, 
-    SavePropertyView, 
-    GenerateEmbeddingsView,
+    SavePropertyView,
+    # Google Sheets with auto-tabs
+    ProcessGoogleSheetView,
+    # Batch processing
+    IngestBatchView,
+    BatchExportToSheetsView,
+    BatchExportToDatabaseView,
+    # Utilities
     SupportedWebsitesView,
     ContentTypesView,
     IngestionStatsView,
-    ProcessGoogleSheetView,
+    GenerateEmbeddingsView,
     CreateGoogleSheetTemplateView,
     CancelBatchView,
-    BatchExportToSheetsView,
-    BatchExportToDatabaseView
 )
 
 urlpatterns = [

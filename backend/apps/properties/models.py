@@ -306,6 +306,22 @@ class Property(models.Model):
         help_text=_('Confidence score from LLM extraction (0-1)')
     )
     
+    content_type = models.CharField(
+        _('Content Type'),
+        max_length=50,
+        null=True,
+        blank=True,
+        help_text=_('Type of content: tour, real_estate, restaurant, etc.')
+    )
+    
+    page_type = models.CharField(
+        _('Page Type'),
+        max_length=50,
+        null=True,
+        blank=True,
+        help_text=_('Type of page: specific, general')
+    )
+    
     field_confidence = models.JSONField(
         _('Field Confidence'),
         default=dict,
