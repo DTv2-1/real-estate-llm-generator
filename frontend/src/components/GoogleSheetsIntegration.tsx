@@ -25,16 +25,24 @@ export default function GoogleSheetsIntegration() {
   const progressState = useProgress(taskId, {
     onComplete: (data) => {
       console.log('✅ Processing complete:', data)
+      setIsProcessing(false)
+      
+      // Mostrar mensaje de éxito
       setMessage({ 
         type: 'success', 
-        text: '¡Procesamiento completado! Revisa tu email y el Google Sheet.'
+        text: '¡Procesamiento completado! Redirigiendo a Google Sheets...'
       })
-      setIsProcessing(false)
+      
+      // Redirigir automáticamente al Google Sheet después de 2 segundos
+      setTimeout(() => {
+        const sheetUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`
+        window.open(sheetUrl, '_blank')
+      }, 2000)
     },
     onError: (error) => {
       console.error('❌ Processing error:', error)
-      setMessage({ type: 'error', text: `Error: ${error}` })
       setIsProcessing(false)
+      setMessage({ type: 'error', text: `Error: ${error}` })
     }
   })
 
@@ -113,7 +121,7 @@ export default function GoogleSheetsIntegration() {
       const requestBody: any = {
         spreadsheet_id: spreadsheetId.trim(),
         notify_email: notifyEmail.trim(),
-        async: false,  // Synchronous processing with WebSocket progress
+        async: true,  // Async processing with WebSocket progress updates
         create_results_sheet: createResultsSheet
       }
 
@@ -538,9 +546,41 @@ export default function GoogleSheetsIntegration() {
             </div>
 
             {/* Progress Bar - shown when processing */}
-            {isProcessing && taskId && (
+            {isProcessing && (
               <div className="mt-6 space-y-4">
-                <ProgressBar progress={progressState} />
+                {/* Connection Status */}
+                <div className={`p-3 rounded-lg border flex items-center gap-2 ${
+                  progressState.isConnected 
+                    ? 'bg-green-50 border-green-200' 
+                    : taskId 
+                    ? 'bg-yellow-50 border-yellow-200' 
+                    : 'bg-gray-50 border-gray-200'
+                }`}>
+                  <div className={`w-3 h-3 rounded-full animate-pulse ${
+                    progressState.isConnected ? 'bg-green-500' : taskId ? 'bg-yellow-500' : 'bg-gray-400'
+                  }`}></div>
+                  <span className={`text-sm font-medium ${
+                    progressState.isConnected 
+                      ? 'text-green-700' 
+                      : taskId 
+                      ? 'text-yellow-700' 
+                      : 'text-gray-600'
+                  }`}>
+                    {progressState.isConnected 
+                      ? '🟢 Conectado en tiempo real' 
+                      : taskId 
+                      ? '🟡 Conectando...' 
+                      : '⏳ Iniciando procesamiento...'}
+                  </span>
+                  {taskId && (
+                    <span className="text-xs text-gray-500 ml-auto font-mono">
+                      ID: {taskId.substring(0, 8)}...
+                    </span>
+                  )}
+                </div>
+
+                {/* Progress Bar */}
+                {taskId && <ProgressBar progress={progressState} />}
                 
                 {/* Progress Stats Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
