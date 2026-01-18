@@ -4,6 +4,8 @@ Allows processing properties directly from Google Sheets
 """
 
 import os
+import json
+import base64
 import logging
 from datetime import datetime
 from typing import List, Dict, Any, Optional
@@ -27,21 +29,43 @@ class GoogleSheetsService:
         Initialize Google Sheets service.
         
         Args:
-            credentials_path: Path to service account credentials JSON file
+            credentials_path: Path to service account credentials JSON file (local development)
+                            If not provided, will try GOOGLE_SHEETS_CREDENTIALS_BASE64 (production)
         """
-        if credentials_path is None:
-            credentials_path = os.getenv('GOOGLE_SHEETS_CREDENTIALS_PATH')
+        # Try base64 credentials first (production in DigitalOcean)
+        credentials_base64 = os.getenv('GOOGLE_SHEETS_CREDENTIALS_BASE64')
         
-        if not credentials_path or not os.path.exists(credentials_path):
-            raise ValueError(
-                "Google Sheets credentials not found. Set GOOGLE_SHEETS_CREDENTIALS_PATH "
-                "environment variable or provide credentials_path parameter."
+        if credentials_base64:
+            try:
+                # Decode base64 and load credentials
+                credentials_json = base64.b64decode(credentials_base64).decode('utf-8')
+                credentials_dict = json.loads(credentials_json)
+                
+                self.credentials = service_account.Credentials.from_service_account_info(
+                    credentials_dict,
+                    scopes=self.SCOPES
+                )
+                logger.info("✅ Google Sheets: Credentials loaded from base64 environment variable (production)")
+            except Exception as e:
+                logger.error(f"❌ Error loading base64 credentials: {e}")
+                raise ValueError(f"Invalid GOOGLE_SHEETS_CREDENTIALS_BASE64: {e}")
+        else:
+            # Fall back to file path (local development)
+            if credentials_path is None:
+                credentials_path = os.getenv('GOOGLE_SHEETS_CREDENTIALS_PATH')
+            
+            if not credentials_path or not os.path.exists(credentials_path):
+                raise ValueError(
+                    "Google Sheets credentials not found.\n"
+                    "For production: Set GOOGLE_SHEETS_CREDENTIALS_BASE64 environment variable with base64-encoded credentials\n"
+                    "For local development: Set GOOGLE_SHEETS_CREDENTIALS_PATH to point to credentials.json"
+                )
+            
+            self.credentials = service_account.Credentials.from_service_account_file(
+                credentials_path,
+                scopes=self.SCOPES
             )
-        
-        self.credentials = service_account.Credentials.from_service_account_file(
-            credentials_path,
-            scopes=self.SCOPES
-        )
+            logger.info(f"✅ Google Sheets: Credentials loaded from file (local development)")
         
         self.service = build('sheets', 'v4', credentials=self.credentials)
         self.sheets_api = self.service.spreadsheets()
