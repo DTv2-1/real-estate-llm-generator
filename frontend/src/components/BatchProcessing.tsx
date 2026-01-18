@@ -11,7 +11,7 @@ interface BatchItem {
 
 export default function BatchProcessing() {
   const [urls, setUrls] = useState('')
-  // const [resultsSheetId] = useState('')
+  const [resultsSheetId] = useState('')
   const [useResultsSheet, setUseResultsSheet] = useState(false)
   const [batchItems, setBatchItems] = useState<BatchItem[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
