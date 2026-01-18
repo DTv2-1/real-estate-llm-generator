@@ -185,6 +185,78 @@ export interface Translations {
     reload: string;
   };
   
+  // Batch Processing
+  batchProcessing: {
+    title: string;
+    subtitle: string;
+    processUrls: string;
+    pasteUrls: string;
+    urlsPlaceholder: string;
+    processButton: string;
+    processing: string;
+    exportResults: string;
+    resultsFound: string;
+    noResults: string;
+    readyToProcess: string;
+    pasteUrlsInstructions: string;
+    pressProcess: string;
+    automatic: string;
+    fast: string;
+    accurate: string;
+    
+    // Left panel - Export options
+    resultsHeading: string;
+    googleSheets: string;
+    googleSheetsDesc: string;
+    database: string;
+    databaseDesc: string;
+    excelFile: string;
+    excelFileDesc: string;
+    
+    // Results section
+    resultsProcessing: string;
+    total: string;
+    
+    // Batch items status
+    pending: string;
+    processing_status: string;
+    completed: string;
+    error: string;
+    
+    // Processing messages
+    startingProcess: string;
+    scrapingPage: string;
+    extractingData: string;
+    finalizing: string;
+    
+    // Google Sheets export
+    detectingContentTypes: string;
+    contentTypesDetected: string;
+    automaticTabs: string;
+    sheetUrlPlaceholder: string;
+    exportToSheets: string;
+    exporting: string;
+    exportComplete: string;
+    exportError: string;
+    verifySheetAccess: string;
+    noCompleted: string;
+    noCompletedSave: string;
+    
+    // Modal
+    propertyDetails: string;
+    completeInfo: string;
+    extractedData: string;
+    sourceUrl: string;
+    viewAllDetails: string;
+    copyJson: string;
+    copied: string;
+    
+    // Notifications
+    exportSuccess: string;
+    exportFailed: string;
+    errorDetails: string;
+  };
+  
   // Common
   common: {
     na: string;
@@ -369,6 +441,76 @@ Puedes preguntar sobre:
       queryBeaches: '¿Propiedades en Tamarindo?',
       queryBedrooms: 'Casas con 3 habitaciones bajo $300K',
       queryLuxury: '¿Propiedades de lujo con piscina?',
+    },
+    batchProcessing: {
+      title: 'Procesamiento en Lotes',
+      subtitle: 'Procesa múltiples URLs de propiedades simultáneamente',
+      processUrls: 'Procesar URLs en Lote',
+      pasteUrls: 'Pega las URLs aquí',
+      urlsPlaceholder: 'Ingresa URLs separadas por saltos de línea o comas. Ejemplo:\nhttps://ejemplo.com/propiedad1\nhttps://ejemplo.com/propiedad2\nhttps://ejemplo.com/propiedad3',
+      processButton: 'PROCESAR',
+      processing: 'Procesando...',
+      exportResults: 'Exportar Resultados',
+      resultsFound: 'Resultados encontrados',
+      noResults: 'Sin resultados',
+      readyToProcess: 'Listo para procesar',
+      pasteUrlsInstructions: 'Pega las URLs de las propiedades en el panel izquierdo y presiona',
+      pressProcess: 'PROCESAR',
+      automatic: 'Automático',
+      fast: 'Rápido',
+      accurate: 'Preciso',
+      
+      // Left panel - Export options
+      resultsHeading: 'Resultados del Procesamiento',
+      googleSheets: 'Google Sheets',
+      googleSheetsDesc: 'Exporta automáticamente a una hoja de cálculo en la nube',
+      database: 'Base de Datos',
+      databaseDesc: 'Guarda permanentemente en PostgreSQL',
+      excelFile: 'Archivo Excel',
+      excelFileDesc: 'Descarga un archivo .xlsx local',
+      
+      // Results section
+      resultsProcessing: 'Resultados del Procesamiento',
+      total: 'total',
+      
+      // Batch items status
+      pending: 'Pendiente',
+      processing_status: 'Procesando',
+      completed: 'Completado',
+      error: 'Error',
+      
+      // Processing messages
+      startingProcess: 'Iniciando proceso...',
+      scrapingPage: 'Scrapeando página...',
+      extractingData: 'Extrayendo datos...',
+      finalizing: 'Finalizando...',
+      
+      // Google Sheets export
+      detectingContentTypes: 'Tipos de contenido detectados:',
+      contentTypesDetected: '📊 Tipos de contenido detectados:',
+      automaticTabs: '💡 Se crearán tabs automáticos "Específicos" y "Generales" según el tipo de página',
+      sheetUrlPlaceholder: 'URL de Google Sheet para',
+      exportToSheets: 'Exportar a',
+      exporting: 'Exportando...',
+      exportComplete: 'Exportación Completa',
+      exportError: 'Error de Exportación',
+      verifySheetAccess: 'Verifica que los sheets estén compartidos correctamente con la cuenta de servicio de Google',
+      noCompleted: 'No hay resultados completados aún',
+      noCompletedSave: 'No hay resultados completados para guardar',
+      
+      // Modal
+      propertyDetails: 'Detalles de Propiedad',
+      completeInfo: 'Información completa extraída',
+      extractedData: 'Datos Extraídos de la Propiedad',
+      sourceUrl: 'URL DE ORIGEN',
+      viewAllDetails: 'Click para ver todos los detalles',
+      copyJson: 'Copiar JSON',
+      copied: '✓ Copiado',
+      
+      // Notifications
+      exportSuccess: 'Los datos fueron exportados exitosamente',
+      exportFailed: 'Fallo la exportación de los datos',
+      errorDetails: 'Detalles del error:',
     },
     error: {
       somethingWrong: 'Algo salió mal',
@@ -556,6 +698,76 @@ You can ask about:
       queryBeaches: 'Properties in Tamarindo?',
       queryBedrooms: 'Houses with 3 bedrooms under $300K',
       queryLuxury: 'Luxury properties with pool?',
+    },
+    batchProcessing: {
+      title: 'Batch Processing',
+      subtitle: 'Process multiple property URLs simultaneously',
+      processUrls: 'Process URLs in Batch',
+      pasteUrls: 'Paste URLs here',
+      urlsPlaceholder: 'Enter URLs separated by line breaks or commas. Example:\nhttps://example.com/property1\nhttps://example.com/property2\nhttps://example.com/property3',
+      processButton: 'PROCESS',
+      processing: 'Processing...',
+      exportResults: 'Export Results',
+      resultsFound: 'Results found',
+      noResults: 'No results',
+      readyToProcess: 'Ready to process',
+      pasteUrlsInstructions: 'Paste property URLs in the left panel and press',
+      pressProcess: 'PROCESS',
+      automatic: 'Automatic',
+      fast: 'Fast',
+      accurate: 'Accurate',
+      
+      // Left panel - Export options
+      resultsHeading: 'Processing Results',
+      googleSheets: 'Google Sheets',
+      googleSheetsDesc: 'Automatically export to a cloud spreadsheet',
+      database: 'Database',
+      databaseDesc: 'Permanently save to PostgreSQL',
+      excelFile: 'Excel File',
+      excelFileDesc: 'Download a local .xlsx file',
+      
+      // Results section
+      resultsProcessing: 'Processing Results',
+      total: 'total',
+      
+      // Batch items status
+      pending: 'Pending',
+      processing_status: 'Processing',
+      completed: 'Completed',
+      error: 'Error',
+      
+      // Processing messages
+      startingProcess: 'Starting process...',
+      scrapingPage: 'Scraping page...',
+      extractingData: 'Extracting data...',
+      finalizing: 'Finalizing...',
+      
+      // Google Sheets export
+      detectingContentTypes: 'Content types detected:',
+      contentTypesDetected: '📊 Content types detected:',
+      automaticTabs: '💡 Automatic "Specific" and "General" tabs will be created based on the page type',
+      sheetUrlPlaceholder: 'Google Sheet URL for',
+      exportToSheets: 'Export to',
+      exporting: 'Exporting...',
+      exportComplete: 'Export Complete',
+      exportError: 'Export Error',
+      verifySheetAccess: 'Verify that the sheets are correctly shared with the Google service account',
+      noCompleted: 'No completed results yet',
+      noCompletedSave: 'No completed results to save',
+      
+      // Modal
+      propertyDetails: 'Property Details',
+      completeInfo: 'Complete extracted information',
+      extractedData: 'Extracted Property Data',
+      sourceUrl: 'SOURCE URL',
+      viewAllDetails: 'Click to see all details',
+      copyJson: 'Copy JSON',
+      copied: '✓ Copied',
+      
+      // Notifications
+      exportSuccess: 'Data was successfully exported',
+      exportFailed: 'Data export failed',
+      errorDetails: 'Error details:',
     },
     error: {
       somethingWrong: 'Something went wrong',
