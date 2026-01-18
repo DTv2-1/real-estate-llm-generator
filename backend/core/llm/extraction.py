@@ -206,8 +206,94 @@ class PropertyExtractor:
         
         logger.info(f"🔍 Second pass: Inferring {len(missing_fields)} missing fields: {missing_fields}")
         
-        # Build inference prompt
-        inference_prompt = f"""You are analyzing a {self.content_type} page to fill in missing information.
+        # Build inference prompt - DIFFERENT FOR REAL ESTATE vs TOURS
+        if self.content_type == 'real_estate':
+            inference_prompt = f"""You are an EXPERT real estate analyst specializing in Costa Rican property data.
+Your task is to AGGRESSIVELY INFER missing information using ALL available context.
+
+**Already Extracted:**
+{json.dumps({k: v for k, v in data.items() if not k.endswith('_evidence') and k not in ['raw_html', 'field_confidence', 'extracted_at', 'tokens_used']}, indent=2, default=str)}
+
+**Missing/Incomplete Fields to Fill:**
+{', '.join(missing_fields)}
+
+**Full Content (Raw HTML and Text):**
+{cleaned_content}
+
+**AGGRESSIVE INFERENCE INSTRUCTIONS FOR COSTA RICAN REAL ESTATE:**
+
+1. **Property Features Analysis:**
+   - Examine ALL text for: bedroom mentions, bathroom counts, pool indicators, parking spots
+   - Look for "dormitorios", "habitaciones", "cuartos", "baños", "garaje", "estacionamiento"
+   - If land type: infer "0" bedrooms and bathrooms
+   - For size/area: look for "m²", "metros", "lote de", "terreno de" patterns
+
+2. **Amenities Extraction:**
+   - Search for ALL indicators: pool, garden, patio, deck, security, gate, garage
+   - Spanish: piscina, jardín, terraza, cerca, portón, cochera, bodega, aire acondicionado
+   - Extract as comprehensive list
+
+3. **Area and Lot Size Inference:**
+   - Land in Costa Rica typically: 100m² to 10,000m² (0.01 to 1 hectare)
+   - Curridabat: premium suburban area, plots often 500-2000m²
+   - URL hints: "land-for-sale" confirms terreno/lote
+
+4. **Description Inference:**
+   - Combine: property type + location + price + amenities → create realistic description
+   - Example: "Exclusive land plot in Curridabat, prime investment opportunity with development potential"
+
+5. **Field-Specific Rules:**
+   - **bedrooms**: Land=0, if missing & residential=infer 2-3
+   - **bathrooms**: Land=0, if missing & residential=infer 1-2
+   - **area_sqm**: Critical field, look for all number patterns
+   - **lot_size_sqm**: For land, often same as area_sqm
+   - **parking_spaces**: Land=0, residential=infer 1-2
+   - **amenities**: Always extract something based on context
+   - **property_condition**: High price → "Excellent", Standard → "Good"
+
+**Output Format - ONLY JSON:**
+```json
+{{
+  "bedrooms": <number or null>,
+  "bathrooms": <number or null>,
+  "area_sqm": <number or null>,
+  "lot_size_sqm": <number or null>,
+  "parking_spaces": <number or null>,
+  "amenities": <list or null>,
+  "property_condition": <string or null>,
+  "description": <detailed string or null>
+}}
+```
+
+**CRITICAL:** Return numbers not strings. For land: bedrooms=0, bathrooms=0, parking_spaces=0"""
+        
+        else:
+            # ORIGINAL PROMPT FOR TOURS AND OTHER CONTENT TYPES
+            inference_prompt = f"""You are analyzing a {self.content_type} page to fill in missing information.
+
+**Already Extracted:**
+{json.dumps({k: v for k, v in data.items() if not k.endswith('_evidence') and k not in ['raw_html', 'field_confidence', 'extracted_at', 'tokens_used']}, indent=2, default=str)}
+
+**Missing Fields to Infer:**
+{', '.join(missing_fields)}
+
+**Full Content:**
+{cleaned_content}
+
+**Instructions:**
+1. Analyze the full content carefully
+2. For each missing field, try to INFER or DERIVE the information from context
+3. Look for implicit information, schedules, lists, restrictions, tips
+4. If a field truly cannot be inferred, return null
+5. Return ONLY valid JSON with the missing fields
+
+**Examples of Inference:**
+- If content says "Child rates apply from ages 5 to 12" → minimum_age: 5
+- If content says "8:00am | 9:00am | 10:30am" → schedules: ["08:00", "09:00", "10:30"]
+- If content says "Wear comfortable clothes, sunscreen" → what_to_bring: ["comfortable clothes", "sunscreen", ...]
+- If content says "Check-in 15 minutes prior" → check_in_time: "15 minutes before tour"
+
+Now infer the missing fields:"""
 
 **Already Extracted:**
 {json.dumps({k: v for k, v in data.items() if not k.endswith('_evidence') and k not in ['raw_html', 'field_confidence', 'extracted_at', 'tokens_used']}, indent=2, default=str)}
@@ -278,6 +364,57 @@ Now infer the missing fields:"""
                     logger.info(f"  ✅ Filled {field}: {value}")
             
             logger.info(f"🎯 Second pass filled {filled_count}/{len(missing_fields)} fields")
+            
+            # THIRD PASS - ONLY FOR REAL ESTATE: Ultra-aggressive inference
+            if self.content_type == 'real_estate':
+                still_missing = [f for f in missing_fields if data.get(f) in [None, '', 'N/A', []]]
+                if still_missing:
+                    logger.info(f"🔥 THIRD PASS (Real Estate Only): Ultra-aggressive inference for {len(still_missing)} remaining fields")
+                    
+                    third_pass_prompt = f"""You are a Costa Rican real estate EXPERT. Fill remaining critical gaps with aggressive inference.
+
+Current Property Data:
+{json.dumps({k: v for k, v in data.items() if k in ['property_name', 'price_usd', 'location', 'area_sqm', 'lot_size_sqm', 'property_type']}, indent=2, default=str)}
+
+Still Missing/Empty: {', '.join(still_missing)}
+
+Full Content:
+{cleaned_content}
+
+ULTRA-AGGRESSIVE INFERENCE FOR COSTA RICA REAL ESTATE:
+1. Land properties (lote/terreno): bedrooms=0, bathrooms=0, parking_spaces=0
+2. No description? Create one: "{data.get('property_name', 'Property')} in {data.get('location', 'Costa Rica')}, listed at ${data.get('price_usd', 'price')} USD"
+3. No amenities? Infer from land: ["Level land", "Access road", "Development potential"] or similar
+4. Curridabat location: "Excellent" condition, premium area
+5. Large area (>5000m²): "Development opportunity" or "Multi-unit potential"
+
+Return ONLY JSON with values or nulls for missing fields."""
+
+                    try:
+                        response3 = self.client.chat.completions.create(
+                            model=self.model,
+                            messages=[
+                                {"role": "system", "content": "You are a Costa Rican real estate expert. Aggressively fill missing fields based on property context. Return only JSON."},
+                                {"role": "user", "content": third_pass_prompt}
+                            ],
+                            temperature=0.5,
+                            max_tokens=2000,
+                            response_format={"type": "json_object"}
+                        )
+                        
+                        third_pass_data = json.loads(response3.choices[0].message.content)
+                        data['tokens_used'] = data.get('tokens_used', 0) + response3.usage.total_tokens
+                        
+                        third_filled = 0
+                        for field, value in third_pass_data.items():
+                            if field in still_missing and value not in [None, '', []]:
+                                data[field] = value
+                                third_filled += 1
+                                logger.info(f"  🔥 Third pass filled {field}: {value}")
+                        
+                        logger.info(f"🔥 Third pass filled {third_filled}/{len(still_missing)} fields")
+                    except Exception as e:
+                        logger.warning(f"⚠️ Third pass failed: {e}")
             
             return data
             
