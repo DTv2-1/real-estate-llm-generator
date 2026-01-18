@@ -239,7 +239,7 @@ Your task is to AGGRESSIVELY INFER missing information using ALL available conte
    - URL hints: "land-for-sale" confirms terreno/lote
 
 4. **Description Inference:**
-   - Combine: property type + location + price + amenities → create realistic description
+   - Combine: property type + location + price + amenities -> create realistic description
    - Example: "Exclusive land plot in Curridabat, prime investment opportunity with development potential"
 
 5. **Field-Specific Rules:**
@@ -249,7 +249,7 @@ Your task is to AGGRESSIVELY INFER missing information using ALL available conte
    - **lot_size_sqm**: For land, often same as area_sqm
    - **parking_spaces**: Land=0, residential=infer 1-2
    - **amenities**: Always extract something based on context
-   - **property_condition**: High price → "Excellent", Standard → "Good"
+   - **property_condition**: High price -> "Excellent", Standard -> "Good"
 
 **Output Format - ONLY JSON:**
 ```json
@@ -287,30 +287,6 @@ Your task is to AGGRESSIVELY INFER missing information using ALL available conte
 4. If a field truly cannot be inferred, return null
 5. Return ONLY valid JSON with the missing fields
 
-**Examples of Inference:**
-- If content says "Child rates apply from ages 5 to 12" → minimum_age: 5
-- If content says "8:00am | 9:00am | 10:30am" → schedules: ["08:00", "09:00", "10:30"]
-- If content says "Wear comfortable clothes, sunscreen" → what_to_bring: ["comfortable clothes", "sunscreen", ...]
-- If content says "Check-in 15 minutes prior" → check_in_time: "15 minutes before tour"
-
-Now infer the missing fields:"""
-
-**Already Extracted:**
-{json.dumps({k: v for k, v in data.items() if not k.endswith('_evidence') and k not in ['raw_html', 'field_confidence', 'extracted_at', 'tokens_used']}, indent=2, default=str)}
-
-**Missing Fields to Infer:**
-{', '.join(missing_fields)}
-
-**Full Content:**
-{cleaned_content}
-
-**Instructions:**
-1. Analyze the full content carefully
-2. For each missing field, try to INFER or DERIVE the information from context
-3. Look for implicit information, schedules, lists, restrictions, tips
-4. If a field truly cannot be inferred, return null
-5. Return ONLY valid JSON with the missing fields
-
 **Output Format:**
 ```json
 {{
@@ -325,10 +301,10 @@ Now infer the missing fields:"""
 ```
 
 **Examples of Inference:**
-- If content says "Child rates apply from ages 5 to 12" → minimum_age: 5
-- If content says "8:00am | 9:00am | 10:30am" → schedules: ["08:00", "09:00", "10:30"]
-- If content says "Wear comfortable clothes, sunscreen" → what_to_bring: ["comfortable clothes", "sunscreen", ...]
-- If content says "Check-in 15 minutes prior" → check_in_time: "15 minutes before tour"
+- If content says "Child rates apply from ages 5 to 12" -> minimum_age: 5
+- If content says "8:00am | 9:00am | 10:30am" -> schedules: ["08:00", "09:00", "10:30"]
+- If content says "Wear comfortable clothes, sunscreen" -> what_to_bring: ["comfortable clothes", "sunscreen", ...]
+- If content says "Check-in 15 minutes prior" -> check_in_time: "15 minutes before tour"
 
 Now infer the missing fields:"""
 
@@ -450,7 +426,7 @@ Return ONLY JSON with values or nulls for missing fields."""
         # ============================================================================
         # FIELD PRESERVATION: Keep content-type specific field names
         # ============================================================================
-        # Instead of mapping tour_name → property_name, we keep both:
+        # Instead of mapping tour_name -> property_name, we keep both:
         # - tour_name, restaurant_name, etc. (original specific fields)
         # - property_name (copy for DB compatibility)
         #
@@ -485,7 +461,7 @@ Return ONLY JSON with values or nulls for missing fields."""
             if source_field in data and data[source_field] not in [None, '']:
                 # Copy source to target (keep both fields)
                 data[target_field] = data[source_field]
-                logger.info(f"🔄 Copied {source_field} → {target_field}: {data[source_field]}")
+                logger.info(f"🔄 Copied {source_field} -> {target_field}: {data[source_field]}")
         
         # For SPECIFIC pages OR common fields, validate property fields
         # Handle price
