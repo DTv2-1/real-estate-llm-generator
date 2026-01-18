@@ -973,7 +973,7 @@ export default function BatchProcessing() {
                 </div>
               </div>
             ) : (
-              <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-purple-100 overflow-hidden">
+              <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-purple-100">
                 <div className="p-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white">
                   <div className="flex items-center gap-3">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -985,7 +985,7 @@ export default function BatchProcessing() {
                     </div>
                   </div>
                 </div>
-                <div className="divide-y divide-gray-200 max-h-[70vh] overflow-y-auto">
+                <div className="divide-y divide-gray-200 max-h-[calc(100vh-280px)] overflow-y-auto">
                   {batchItems.map((item, index) => (
                     <div 
                       key={item.id} 
