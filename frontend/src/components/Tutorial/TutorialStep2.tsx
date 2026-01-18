@@ -1,3 +1,6 @@
+import { useLanguage } from '../../contexts/LanguageContext'
+import { getTranslation } from '../../i18n/translations'
+
 interface TutorialStep2Props {
   position?: DOMRect
   onNext: () => void
@@ -5,12 +8,15 @@ interface TutorialStep2Props {
 }
 
 export default function TutorialStep2({ position, onNext, onSkip }: TutorialStep2Props) {
+  const { language } = useLanguage()
+  const t = getTranslation(language)
+
   if (!position) return null
 
   return (
     <>
       {/* Animated arrow */}
-      <div 
+      <div
         className="absolute pointer-events-none z-50"
         style={{
           top: `${position.top + window.scrollY - 120}px`,
@@ -20,16 +26,16 @@ export default function TutorialStep2({ position, onNext, onSkip }: TutorialStep
       >
         <div className="flex flex-col items-center">
           <svg className="w-24 h-24 text-green-500 animate-bounce" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z" transform="rotate(90 12 12)"/>
+            <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z" transform="rotate(90 12 12)" />
           </svg>
           <div className="bg-green-500 text-white px-6 py-3 rounded-full font-bold text-lg shadow-2xl whitespace-nowrap mt-2">
-            ¡PEGA AQUÍ EL ENLACE!
+            {t.tutorial.pasteHere}
           </div>
         </div>
       </div>
 
       {/* Glowing highlight box */}
-      <div 
+      <div
         className="absolute pointer-events-none border-4 border-green-400 rounded-lg shadow-2xl"
         style={{
           top: `${position.top + window.scrollY}px`,
@@ -43,7 +49,7 @@ export default function TutorialStep2({ position, onNext, onSkip }: TutorialStep
       />
 
       {/* Instruction card */}
-      <div 
+      <div
         className="absolute pointer-events-auto bg-white rounded-lg shadow-2xl"
         style={{
           bottom: '5%',
@@ -61,13 +67,13 @@ export default function TutorialStep2({ position, onNext, onSkip }: TutorialStep
                 2
               </div>
               <div>
-                <h3 className="text-xl font-bold">Pega el enlace</h3>
-                <p className="text-xs text-green-100">Ctrl+V o Cmd+V en el campo resaltado</p>
+                <h3 className="text-xl font-bold">{t.tutorial.step2Title}</h3>
+                <p className="text-xs text-green-100">{t.tutorial.step2Subtitle}</p>
               </div>
             </div>
             <button onClick={onSkip} className="text-white/80 hover:text-white">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
@@ -78,16 +84,16 @@ export default function TutorialStep2({ position, onNext, onSkip }: TutorialStep
               onClick={onNext}
               className="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg font-bold hover:bg-green-700 transition-all flex items-center justify-center gap-2"
             >
-              Siguiente
+              {t.tutorial.next}
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
             </button>
             <button
               onClick={onSkip}
               className="px-6 py-3 text-gray-600 hover:text-gray-800 font-medium"
             >
-              Saltar
+              {t.tutorial.skip}
             </button>
           </div>
         </div>

@@ -9,6 +9,8 @@ import json
 import openai
 from django.conf import settings
 from .base import BaseExtractor
+from ..utils import MoneyUtils, JSONUtils, NumberUtils
+from ..types import PropertyData
 
 
 class Encuentra24Extractor(BaseExtractor):
@@ -18,7 +20,7 @@ class Encuentra24Extractor(BaseExtractor):
         super().__init__()
         self.site_name = "encuentra24.com"
     
-    def extract(self, html: str, url: Optional[str] = None):
+    def extract(self, html: str, url: Optional[str] = None) -> PropertyData:
         """Override extract to include custom fields and AI enhancement.
         
         OPTIMIZATION STRATEGY:
@@ -261,46 +263,26 @@ CRITICAL:
             
             # Map to standard field names
             if 'Parking' in title:
-                try:
-                    data['parking_spaces'] = int(value)
-                    print(f"✅ Parking extraído: {value}")
-                except ValueError:
-                    data['parking_spaces'] = value
+                data['parking_spaces'] = NumberUtils.extract_int(value)
+                print(f"✅ Parking extraído: {data['parking_spaces']}")
             
             elif 'Recámara' in title or 'Habitación' in title:
-                try:
-                    data['bedrooms'] = int(value)
-                    print(f"✅ Recámaras extraídas: {value}")
-                except ValueError:
-                    data['bedrooms'] = value
+                data['bedrooms'] = NumberUtils.extract_int(value)
+                print(f"✅ Recámaras extraídas: {data['bedrooms']}")
             
             elif 'Baño' in title:
-                try:
-                    data['bathrooms'] = int(value)
-                    print(f"✅ Baños extraídos: {value}")
-                except ValueError:
-                    data['bathrooms'] = value
+                data['bathrooms'] = NumberUtils.extract_int(value)
+                print(f"✅ Baños extraídos: {data['bathrooms']}")
             
             elif 'M² construcción' in title or 'Construcción' in title:
-                # Extract numeric value from "400 M²" or "400"
-                try:
-                    numeric_value = re.search(r'[\d,]+', value.replace("'", ""))
-                    if numeric_value:
-                        area_str = numeric_value.group().replace(',', '')
-                        data['area_m2'] = int(area_str)
-                        print(f"✅ Área extraída: {area_str} m²")
-                except ValueError:
-                    pass
+                data['area_m2'] = NumberUtils.parse_area(value)
+                if data['area_m2']:
+                    print(f"✅ Área extraída: {data['area_m2']} m²")
             
             elif 'M² terreno' in title or 'Terreno' in title:
-                try:
-                    numeric_value = re.search(r'[\d,]+', value.replace("'", ""))
-                    if numeric_value:
-                        lot_str = numeric_value.group().replace(',', '')
-                        data['lot_size_m2'] = int(lot_str)
-                        print(f"✅ Terreno extraído: {lot_str} m²")
-                except ValueError:
-                    pass
+                data['lot_size_m2'] = NumberUtils.parse_area(value)
+                if data['lot_size_m2']:
+                    print(f"✅ Terreno extraído: {data['lot_size_m2']} m²")
             
             elif 'Piscina' in title or 'Pool' in title:
                 data['pool'] = value.lower() in ['sí', 'si', 'yes', 'true', '1']
@@ -327,14 +309,10 @@ CRITICAL:
                     
                     if 'Precio' in label_text and 'M²' not in label_text:
                         # Extract price (e.g., "$400'000" -> 400000)
-                        try:
-                            price_clean = detail_text.replace("'", "").replace(",", "").replace("$", "").strip()
-                            numeric_value = re.search(r'\d+', price_clean)
-                            if numeric_value:
-                                data['price_usd'] = int(numeric_value.group())
-                                print(f"✅ Precio extraído: ${data['price_usd']}")
-                        except ValueError:
-                            pass
+                        price_val = NumberUtils.extract_float(detail_text)
+                        if price_val:
+                            data['price_usd'] = Decimal(str(price_val))
+                            print(f"✅ Precio extraído: ${data['price_usd']}")
         
         # Extract title from h1
         title_elem = soup.find('h1')
@@ -740,10 +718,9 @@ Return valid JSON only."""
             if crc_match:
                 price_str = crc_match.group(1).replace(',', '')
                 try:
-                    # Convert CRC to USD (approximate rate: 1 USD = 520 CRC)
+                    # Use central utility for conversion
                     crc_price = Decimal(price_str)
-                    usd_price = crc_price / Decimal('520')
-                    return usd_price.quantize(Decimal('0.01'))
+                    return MoneyUtils.convert_to_usd(crc_price, 'CRC')
                 except:
                     pass
         

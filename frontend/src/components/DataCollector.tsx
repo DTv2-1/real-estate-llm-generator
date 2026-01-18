@@ -105,21 +105,21 @@ function App() {
   // API Base URL configuration
   const getApiBase = () => {
     let baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-    
+
     console.log('🔧 [API CONFIG] Raw VITE_API_URL:', import.meta.env.VITE_API_URL)
     console.log('🔧 [API CONFIG] Initial baseUrl:', baseUrl)
-    
+
     // Remover trailing slash si existe
     if (baseUrl.endsWith('/')) {
       baseUrl = baseUrl.slice(0, -1)
     }
-    
+
     // Remover /api si ya viene incluido en VITE_API_URL (DigitalOcean lo agrega automáticamente)
     if (baseUrl.endsWith('/api')) {
       baseUrl = baseUrl.slice(0, -4)
       console.log('🔧 [API CONFIG] Removed /api suffix, new baseUrl:', baseUrl)
     }
-    
+
     console.log('✅ [API CONFIG] Final API_BASE:', baseUrl)
     return baseUrl
   }
@@ -185,7 +185,7 @@ function App() {
     loadHistoryFromBackend()
     loadIngestionStats()
   }, [])
-  
+
   const loadIngestionStats = async () => {
     try {
       const url = `${API_BASE}/ingest/stats/`
@@ -229,9 +229,9 @@ function App() {
     const websiteSection = document.getElementById('websiteSourceSelector')
     const urlInput = document.getElementById('propertyUrlInput')
     const processButton = document.getElementById('processPropertyButton')
-    
+
     const positions: any = {}
-    
+
     if (websiteSection) {
       positions.websiteSection = websiteSection.getBoundingClientRect()
     }
@@ -241,10 +241,10 @@ function App() {
     if (processButton) {
       positions.processButton = processButton.getBoundingClientRect()
     }
-    
+
     setHighlightPositions(positions)
   }
-  
+
   const loadSupportedWebsites = async () => {
     try {
       const url = `${API_BASE}/ingest/supported-websites/`
@@ -266,7 +266,7 @@ function App() {
   const getCategoryFromUrl = (url: string): string => {
     if (!url) return 'other'
     const urlLower = url.toLowerCase()
-    
+
     if (urlLower.includes('proyectos-nuevos')) return 'proyectos-nuevos'
     if (urlLower.includes('venta-de-propiedades-casas') || urlLower.includes('venta-casas')) return 'venta-casas'
     if (urlLower.includes('venta-de-propiedades-apartamentos') || urlLower.includes('venta-apartamentos')) return 'venta-apartamentos'
@@ -276,7 +276,7 @@ function App() {
     if (urlLower.includes('alquiler-casas')) return 'alquiler-casas'
     if (urlLower.includes('alquiler-apartamentos')) return 'alquiler-apartamentos'
     if (urlLower.includes('alquiler-locales-comerciales')) return 'alquiler-locales'
-    
+
     if (urlLower.includes('coldwellbanker')) {
       if (urlLower.includes('house-for-sale') || urlLower.includes('casa-en-venta')) return 'venta-casas'
       if (urlLower.includes('apartment-for-sale') || urlLower.includes('apartamento-en-venta')) return 'venta-apartamentos'
@@ -288,18 +288,18 @@ function App() {
       if (urlLower.includes('commercial-for-rent') || urlLower.includes('local-alquiler')) return 'alquiler-locales'
       return 'venta-casas'
     }
-    
+
     return 'other'
   }
 
   const getWebsiteFromUrl = (url: string): string => {
     if (!url) return 'other'
     const urlLower = url.toLowerCase()
-    
+
     if (urlLower.includes('brevitas')) return 'brevitas'
     if (urlLower.includes('encuentra24')) return 'encuentra24'
     if (urlLower.includes('coldwellbanker')) return 'coldwellbanker'
-    
+
     return 'other'
   }
 
@@ -392,8 +392,8 @@ function App() {
       // Primero iniciar el job en el backend y obtener task_id
       const endpoint = inputType === 'url' ? `${API_BASE}/ingest/url/` : `${API_BASE}/ingest/text/`
       console.log('📤 [FETCH] Starting processing job:', endpoint)
-      const body = inputType === 'url' 
-        ? { url, source_website: sourceWebsite, use_websocket: true } 
+      const body = inputType === 'url'
+        ? { url, source_website: sourceWebsite, use_websocket: true }
         : { text, source_website: sourceWebsite, use_websocket: true }
       console.log('📤 [FETCH] Request body:', body)
 
@@ -436,7 +436,7 @@ function App() {
       alert('No property data to save')
       return
     }
-    
+
     try {
       const response = await fetch(`${API_BASE}/ingest/save/`, {
         method: 'POST',
@@ -449,16 +449,16 @@ function App() {
       })
 
       const data = await response.json()
-      
+
       console.log('Save response status:', response.status)
       console.log('Save response data:', data)
-      
+
       if (response.status === 409) {
         // Duplicate property
         alert(`⚠️ Duplicate Property Detected\n\nThis property already exists in the database:\n\nName: ${data.property_name || 'Unknown'}\nID: ${data.property_id}\n\nThe property was NOT saved again.`)
         return
       }
-      
+
       if (response.ok && data.status === 'success') {
         alert(`✓ Property saved successfully!\n\nProperty ID: ${data.property_id}\nName: ${data.property.property_name}`)
         loadHistoryFromBackend()
@@ -491,13 +491,13 @@ function App() {
   })
 
   const categoryPriority = [
-    'proyectos-nuevos', 'venta-casas', 'venta-apartamentos', 
+    'proyectos-nuevos', 'venta-casas', 'venta-apartamentos',
     'venta-negocios', 'venta-lotes', 'venta-fincas',
     'alquiler-casas', 'alquiler-apartamentos', 'alquiler-locales',
     'other'
   ]
 
-  const sortedCategories = Object.keys(groupedByCategory).sort((a, b) => 
+  const sortedCategories = Object.keys(groupedByCategory).sort((a, b) =>
     categoryPriority.indexOf(a) - categoryPriority.indexOf(b)
   )
 
@@ -510,9 +510,9 @@ function App() {
             <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
             </svg>
-            Saved Properties
+            {t.sidebar.savedProperties}
           </h2>
-          <p className="text-xs text-gray-500 mt-1">Organized by category</p>
+          <p className="text-xs text-gray-500 mt-1">{t.sidebar.organizedBy}</p>
         </div>
         <div className="flex-1 overflow-y-auto sidebar-scrollbar p-4">
           {properties.length === 0 ? (
@@ -520,15 +520,15 @@ function App() {
               <svg className="w-16 h-16 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
               </svg>
-              <p className="text-gray-500 text-sm">No properties saved yet</p>
-              <p className="text-gray-400 text-xs mt-1">Start by processing a property URL</p>
+              <p className="text-gray-500 text-sm">{t.sidebar.noProperties}</p>
+              <p className="text-gray-400 text-xs mt-1">{t.dataCollector.startProcessing}</p>
             </div>
           ) : (
             sortedCategories.map(category => {
               const props = groupedByCategory[category]
               const config = CATEGORIES[category] || CATEGORIES.other
               const isCollapsed = collapsedGroups.has(category)
-              
+
               return (
                 <div key={category} className="website-group">
                   <div className="website-header" onClick={() => toggleWebsiteGroup(category)}>
@@ -536,15 +536,15 @@ function App() {
                     <span className="font-semibold text-gray-800 text-sm">{config.name}</span>
                     <span className="property-count">({props.length})</span>
                     <svg className="w-4 h-4 text-gray-500 transform transition-transform" style={{ marginLeft: '4px', transform: isCollapsed ? 'rotate(0deg)' : 'rotate(180deg)' }}>
-                      <path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+                      <path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z" />
                     </svg>
                   </div>
                   {!isCollapsed && (
                     <div className="property-list space-y-2">
                       {props.map(prop => (
-                        <div 
+                        <div
                           key={prop.id}
-                          className="ml-4 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition cursor-pointer border-l-2" 
+                          className="ml-4 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition cursor-pointer border-l-2"
                           style={{ borderColor: config.color }}
                           onClick={() => loadPropertyFromHistory(prop.id!)}
                         >
@@ -579,10 +579,10 @@ function App() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
             </svg>
-            Refresh
+            {t.sidebar.refresh}
           </button>
           <button onClick={clearHistory} className="w-full bg-red-100 text-red-700 py-2 px-4 rounded hover:bg-red-200 transition text-sm">
-            Clear All History
+            {t.sidebar.clearAll}
           </button>
         </div>
       </div>
@@ -594,8 +594,8 @@ function App() {
           <header className="mb-8">
             <div className="flex items-center justify-between">
               <div id="headerTitle">
-                <h1 className="text-3xl font-bold text-gray-800 mb-2">Property Data Collector</h1>
-                <p className="text-gray-600">Paste a property URL or text to automatically extract structured data</p>
+                <h1 className="text-3xl font-bold text-gray-800 mb-2">{t.dataCollector.title}</h1>
+                <p className="text-gray-600">{t.dataCollector.subtitle}</p>
               </div>
               <div className="flex items-center gap-4">
                 {/* Properties Processed Today Counter */}
@@ -614,13 +614,13 @@ function App() {
                     </div>
                   </div>
                 </div>
-                
+
                 {showResults && (
                   <button onClick={resetForm} className="bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-4 rounded-lg transition flex items-center gap-2">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                     </svg>
-                    Back to Search
+                    {t.dataCollector.backToSearch}
                   </button>
                 )}
               </div>
@@ -677,10 +677,10 @@ function App() {
                     hour: '2-digit',
                     minute: '2-digit'
                   });
-                  
+
                   return (
-                    <div 
-                      key={prop.id} 
+                    <div
+                      key={prop.id}
                       className="border border-gray-200 rounded-lg p-4 hover:shadow-lg transition-shadow bg-white"
                     >
                       <div className="flex flex-col gap-3">
@@ -734,24 +734,24 @@ function App() {
                 </label>
                 <div className="flex gap-4">
                   <label className="inline-flex items-center">
-                    <input 
-                      type="radio" 
-                      name="inputType" 
-                      value="url" 
+                    <input
+                      type="radio"
+                      name="inputType"
+                      value="url"
                       checked={inputType === 'url'}
                       onChange={() => setInputType('url')}
-                      className="form-radio text-blue-600" 
+                      className="form-radio text-blue-600"
                     />
                     <span className="ml-2">URL</span>
                   </label>
                   <label className="inline-flex items-center">
-                    <input 
-                      type="radio" 
-                      name="inputType" 
-                      value="text" 
+                    <input
+                      type="radio"
+                      name="inputType"
+                      value="text"
                       checked={inputType === 'text'}
                       onChange={() => setInputType('text')}
-                      className="form-radio text-blue-600" 
+                      className="form-radio text-blue-600"
                     />
                     <span className="ml-2">Text/HTML</span>
                   </label>
@@ -763,7 +763,7 @@ function App() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   {t.dataCollector.sourceWebsite} {websitesLoading && <span className="text-xs text-gray-400">({t.dataCollector.loading})</span>}
                 </label>
-                <select 
+                <select
                   value={sourceWebsite}
                   onChange={(e) => setSourceWebsite(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
@@ -777,13 +777,13 @@ function App() {
                 </select>
                 <div className="mt-2 flex flex-wrap gap-2" id="supportedWebsiteLinks">
                   {supportedWebsites.filter(w => w.url).map(website => (
-                    <a 
+                    <a
                       key={website.id}
-                      href={website.url!} 
-                      target="_blank" 
+                      href={website.url!}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-full hover:bg-gray-100 transition"
-                      style={{ 
+                      style={{
                         color: website.color,
                         border: `1px solid ${website.color}33`
                       }}
@@ -809,9 +809,9 @@ function App() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     {t.dataCollector.propertyUrl}
                   </label>
-                  <input 
+                  <input
                     id="propertyUrlInput"
-                    type="url" 
+                    type="url"
                     value={url}
                     onChange={(e) => {
                       setUrl(e.target.value)
@@ -829,7 +829,7 @@ function App() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     {t.dataCollector.propertyText}
                   </label>
-                  <textarea 
+                  <textarea
                     value={text}
                     onChange={(e) => setText(e.target.value)}
                     rows={10}
@@ -839,7 +839,7 @@ function App() {
                 </div>
               )}
 
-              <button 
+              <button
                 id="processPropertyButton"
                 onClick={processProperty}
                 className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition duration-200 font-semibold flex items-center justify-center gap-2"
@@ -855,7 +855,7 @@ function App() {
           {/* Loading Spinner / Progress Bar */}
           {loading && (
             <div className="bg-white rounded-lg shadow-md p-6">
-              <ProgressBar 
+              <ProgressBar
                 progress={progress.progress}
                 status={progress.status}
                 stage={progress.stage}
@@ -882,15 +882,14 @@ function App() {
               <div className="bg-white rounded-lg shadow-md p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-2xl font-bold text-gray-800">{t.dataCollector.extractedData}</h2>
-                  <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                    confidence >= 0.8 ? 'bg-green-100 text-green-800' :
-                    confidence >= 0.6 ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-red-100 text-red-800'
-                  }`}>
+                  <span className={`px-3 py-1 rounded-full text-sm font-semibold ${confidence >= 0.8 ? 'bg-green-100 text-green-800' :
+                      confidence >= 0.6 ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-red-100 text-red-800'
+                    }`}>
                     {Math.round(confidence * 100)}% {t.dataCollector.confidence}
                   </span>
                 </div>
-                
+
                 {/* Source Website Badge */}
                 <div className="mb-6 flex items-center gap-2 text-sm">
                   <span className="text-gray-600">{t.dataCollector.source}:</span>
@@ -907,8 +906,8 @@ function App() {
                     { label: t.dataCollector.listingStatus, value: extractedProperty.listing_status || extractedProperty.listing_type },
                     { label: t.dataCollector.price, value: extractedProperty.price_usd ? `$${parseFloat(String(extractedProperty.price_usd)).toLocaleString()}` : t.common.na },
                     { label: t.dataCollector.type, value: extractedProperty.property_type_display || extractedProperty.property_type },
-                    { 
-                      label: t.dataCollector.location, 
+                    {
+                      label: t.dataCollector.location,
                       value: extractedProperty.location || extractedProperty.address || (extractedProperty.city && extractedProperty.province ? `${extractedProperty.city}, ${extractedProperty.province}` : null),
                       isLocation: true,
                       lat: extractedProperty.latitude,
@@ -922,7 +921,7 @@ function App() {
                     { label: t.dataCollector.status, value: extractedProperty.status_display || extractedProperty.status },
                   ].map((field, index) => {
                     const displayValue = field.value || t.common.na
-                    
+
                     if ('isLocation' in field && field.isLocation && field.lat && field.lng) {
                       const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${field.lat},${field.lng}`
                       return (
@@ -939,7 +938,7 @@ function App() {
                         </div>
                       )
                     }
-                    
+
                     return (
                       <div key={index} className="border-l-4 border-blue-500 pl-4 py-2">
                         <p className="text-sm text-gray-600">{field.label}</p>
