@@ -1,5 +1,4 @@
 import { useState, useRef } from 'react'
-import { useLanguage } from '../context/LanguageContext'
 
 interface BatchItem {
   id: string
@@ -11,7 +10,6 @@ interface BatchItem {
 }
 
 export default function BatchProcessing() {
-  const { language, t } = useLanguage()
   const [urls, setUrls] = useState('')
   const [resultsSheetId] = useState('')
   const [useResultsSheet, setUseResultsSheet] = useState(false)
