@@ -1,7 +1,6 @@
 import TutorialStep1 from './TutorialStep1'
 import TutorialStep2 from './TutorialStep2'
 import TutorialStep3 from './TutorialStep3'
-import TutorialStep4 from './TutorialStep4'
 
 interface TutorialOverlayProps {
   tutorialStep: number | null
