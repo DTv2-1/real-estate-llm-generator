@@ -359,6 +359,34 @@ def _analyze_html_structure(html: str, content_type: str) -> Dict:
             indicators.append(f'Found {general_guide_found} guide keyword')
             logger.info(f"   ⚠️ Possible GENERAL: Guide language (score +1)")
     
+    elif content_type == 'transportation':
+        # Specific transport service keywords (single service/operator)
+        specific_transport_keywords = ['book now', 'reserve', 'departure time', 'pickup location',
+                                      'drop-off', 'luggage policy', 'cancellation policy',
+                                      'vehicle type', 'driver details', 'meeting point']
+        specific_transport_found = sum(1 for kw in specific_transport_keywords if kw in text)
+        
+        if specific_transport_found >= 2:
+            specific_score += 2
+            indicators.append(f'Found {specific_transport_found} specific transport service details')
+            logger.info(f"   ✅ SPECIFIC indicator: Transport service booking details (score +2)")
+        
+        # General transport guide keywords (comparison/multiple options)
+        general_transport_keywords = ['compare', 'options', 'ways to get', 'how to get from', 'how to travel',
+                                     'transport options', 'getting around', 'travel between',
+                                     'best way', 'fastest way', 'cheapest way', 'route finder',
+                                     'all routes', 'multiple options', 'choose your transport']
+        general_transport_found = sum(1 for kw in general_transport_keywords if kw in text)
+        
+        if general_transport_found >= 3:
+            general_score += 3
+            indicators.append(f'Found {general_transport_found} transport comparison keywords')
+            logger.info(f"   ✅ GENERAL indicator: Transport comparison/guide (score +3)")
+        elif general_transport_found >= 1:
+            general_score += 1
+            indicators.append(f'Found {general_transport_found} comparison keyword')
+            logger.info(f"   ⚠️ Possible GENERAL: Comparison language (score +1)")
+    
     # ========================================================================
     # Price counting (strong indicator)
     # ========================================================================

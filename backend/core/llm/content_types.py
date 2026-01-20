@@ -419,6 +419,117 @@ TRANSPORTATION_EXTRACTION_PROMPT = """You are a transportation information extra
 """
 
 
+TRANSPORTATION_GUIDE_EXTRACTION_PROMPT = """Eres un especialista en extracción de información de guías de transporte. Esta página es una GUÍA GENERAL (no un servicio individual), extrae información completa sobre opciones de transporte entre destinos.
+
+**INSTRUCCIONES CRÍTICAS:**
+1. ✅ EXTRAE TEXTO EXPLÍCITAMENTE ESCRITO EN LA FUENTE
+2. ✅ PARA CAMPOS VACÍOS: Sí puedes INFERIR usando información disponible en el contenido
+3. ✅ Completa información "lógica" y "práctica" derivada de las opciones descritas
+4. TODO debe estar en ESPAÑOL - traduce si es necesario
+5. Para cada campo, incluye "evidence" con la cita fuente cuando sea textual, o "derived_from" cuando sea inferido
+6. 🔥 IMPORTANTE: Para "overview" y "route_options.description" - extrae PÁRRAFOS COMPLETOS Y DETALLADOS
+
+**EJEMPLOS DE DERIVACIÓN CORRECTA:**
+✅ Texto menciona "bus" y "3 hours" → Incluye en route_options con duration_hours: 3
+✅ Texto menciona "$25" y "shuttle" → Incluye precio y tipo de transporte
+✅ Texto dice "San José to Arenal" → Derive origin: "San José", destination: "Arenal"
+✅ Múltiples opciones listadas → Extrae cada una como route_option separada
+
+**Formato de Salida Requerido (TODO EN ESPAÑOL):**
+```json
+{{
+  "page_type": "general_guide",
+  "origin": "string (ciudad/ubicación de origen) - EN ESPAÑOL",
+  "origin_evidence": "cita exacta del texto fuente",
+  "destination": "string (ciudad/ubicación de destino) - EN ESPAÑOL",
+  "destination_evidence": "cita exacta del texto fuente",
+  "overview": "string - PÁRRAFO LARGO Y COMPLETO (mínimo 3-5 oraciones) que combine TODA la información sobre cómo moverse entre estos lugares: opciones de transporte disponibles, distancia aproximada, tiempo de viaje típico, consideraciones importantes para viajeros, diferencias entre opciones (comodidad, precio, rapidez). NO seas breve - incluye todos los detalles mencionados - EN ESPAÑOL",
+  "overview_evidence": "cita exacta del texto fuente",
+  "distance_km": number or null,
+  "distance_evidence": "cita exacta del texto fuente",
+  "route_options": [
+    {{
+      "transport_name": "string (nombre del operador o servicio) - EN ESPAÑOL",
+      "transport_type": "bus|taxi|shuttle|rental_car|private_transfer|public_transport|ferry|flight|train|other",
+      "description": "DESCRIPCIÓN DETALLADA de esta opción: qué incluye, nivel de comodidad, frecuencia, dónde comprar tickets, ventajas y desventajas. Extrae TODA la información disponible sobre esta opción específica - EN ESPAÑOL",
+      "price_usd": number or null,
+      "price_details": {{
+        "one_way": number or null,
+        "round_trip": number or null,
+        "per_person": number or null,
+        "per_vehicle": number or null,
+        "range": "string like '$20-$45' or null",
+        "note": "string with pricing notes or null"
+      }},
+      "duration_hours": number or null,
+      "schedule": "string (horarios disponibles) - EN ESPAÑOL",
+      "frequency": "string (ej: 'cada 2 horas', 'diario a las 9am') - EN ESPAÑOL",
+      "pickup_locations": ["ubicación 1 EN ESPAÑOL", "ubicación 2 EN ESPAÑOL"],
+      "dropoff_locations": ["ubicación 1 EN ESPAÑOL", "ubicación 2 EN ESPAÑOL"],
+      "booking_info": "string (cómo reservar esta opción) - EN ESPAÑOL",
+      "contact_phone": "string or null",
+      "contact_email": "string or null",
+      "website": "string or null",
+      "luggage_allowance": "string - EN ESPAÑOL",
+      "amenities": ["wifi", "aire acondicionado", "baño a bordo", "etc"] - EN ESPAÑOL,
+      "pros": ["ventaja 1 EN ESPAÑOL", "ventaja 2 EN ESPAÑOL"],
+      "cons": ["desventaja 1 EN ESPAÑOL", "desventaja 2 EN ESPAÑOL"]
+    }}
+  ],
+  "route_options_evidence": "cita exacta del texto fuente",
+  "fastest_option": {{
+    "type": "string (tipo de transporte más rápido)",
+    "duration_hours": number,
+    "price_usd": number or null
+  }} or null,
+  "cheapest_option": {{
+    "type": "string (tipo de transporte más económico)",
+    "duration_hours": number or null,
+    "price_usd": number
+  }} or null,
+  "recommended_option": {{
+    "type": "string (opción recomendada)",
+    "reason": "string (por qué es recomendada) - EN ESPAÑOL"
+  }} or null,
+  "recommended_evidence": "cita exacta del texto fuente",
+  "travel_tips": ["consejo práctico 1 EN ESPAÑOL", "consejo 2 EN ESPAÑOL"],
+  "tips_evidence": "cita exacta del texto fuente",
+  "things_to_know": ["información importante 1 EN ESPAÑOL", "información 2 EN ESPAÑOL"],
+  "know_evidence": "cita exacta del texto fuente",
+  "booking_tips": "string (consejos para reservar, cuándo reservar, etc) - EN ESPAÑOL",
+  "booking_evidence": "cita exacta del texto fuente",
+  "best_time_to_travel": "string (mejor hora del día o temporada) - EN ESPAÑOL",
+  "time_evidence": "cita exacta del texto fuente",
+  "things_to_avoid": ["qué evitar 1 EN ESPAÑOL", "qué evitar 2 EN ESPAÑOL"],
+  "avoid_evidence": "cita exacta del texto fuente",
+  "accessibility_info": "string or null - EN ESPAÑOL",
+  "accessibility_evidence": "cita exacta del texto fuente",
+  "total_options_mentioned": number or null,
+  "extraction_confidence": number (0.0 to 1.0),
+  "confidence_reasoning": "explicación breve EN ESPAÑOL"
+}}
+```
+
+**DERIVACIÓN INTELIGENTE - COMPLETA CAMPOS USANDO INFORMACIÓN DISPONIBLE:**
+Después de extraer información explícita, puedes llenar campos vacíos derivando de información disponible:
+
+⚠️ REGLAS PARA DERIVACIÓN:
+1. ✅ Si hay múltiples opciones con precios → DERIVE fastest_option, cheapest_option
+2. ✅ Si hay menciones de operadores → DERIVE route_options con nombres específicos
+3. ✅ Si hay horarios mencionados → DERIVE schedule y frequency
+4. ✅ Si hay distancia y tiempo → CALCULA velocidad promedio si es lógico
+5. ✅ Si mencionan "early morning" → DERIVE best_time_to_travel
+
+**IMPORTANTE:** 
+- Si un campo no está EXPLÍCITAMENTE en el texto fuente, usa null inicialmente
+- TODO debe estar en español - traduce términos en inglés
+- Extrae TODAS las opciones de transporte mencionadas en la página
+
+**Content to extract from:**
+{content}
+"""
+
+
 # ============================================================================
 # CONTENT TYPE CONFIGURATION
 # ============================================================================
@@ -586,7 +697,7 @@ def get_extraction_prompt(content_type: str, page_type: str = 'specific') -> str
         'TOUR_EXTRACTION_PROMPT': TOUR_EXTRACTION_PROMPT if page_type == 'specific' else TOUR_GUIDE_EXTRACTION_PROMPT,
         'RESTAURANT_EXTRACTION_PROMPT': RESTAURANT_EXTRACTION_PROMPT,
         'LOCAL_TIPS_EXTRACTION_PROMPT': LOCAL_TIPS_EXTRACTION_PROMPT,
-        'TRANSPORTATION_EXTRACTION_PROMPT': TRANSPORTATION_EXTRACTION_PROMPT,
+        'TRANSPORTATION_EXTRACTION_PROMPT': TRANSPORTATION_EXTRACTION_PROMPT if page_type == 'specific' else TRANSPORTATION_GUIDE_EXTRACTION_PROMPT,
     }
     
     return prompts[prompt_key]

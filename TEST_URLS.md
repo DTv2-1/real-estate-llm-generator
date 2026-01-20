@@ -117,11 +117,25 @@ https://www.lonelyplanet.com/costa-rica/san-jose/practical-information
 
 ## 🚗 Transportation
 
-### Rome2Rio
+### Rome2Rio (General - Multiple Options)
 ```
 https://www.rome2rio.com/map/San-Jose-Costa-Rica/Jaco
 https://www.rome2rio.com/map/San-Jose-Airport-SJO/Arenal-Volcano-National-Park
 https://www.rome2rio.com/map/San-Jose-Costa-Rica/Manuel-Antonio-National-Park
+https://www.rome2rio.com/map/Liberia-Airport-LIR/Tamarindo
+```
+
+### Interbus (Specific - Shuttle Service)
+```
+https://www.interbusonline.com/destinations/shuttle-san-jose-to-arenal
+https://www.interbusonline.com/destinations/shuttle-san-jose-to-jaco
+https://www.interbusonline.com/destinations/shuttle-san-jose-to-tamarindo
+```
+
+### Easy Ride (Specific - Private Transfer)
+```
+https://easyridecr.com/private-transfer-san-jose-airport-to-jaco/
+https://easyridecr.com/private-transfer-san-jose-airport-to-arenal/
 ```
 
 ---

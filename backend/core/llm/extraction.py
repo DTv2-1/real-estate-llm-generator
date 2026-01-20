@@ -185,6 +185,12 @@ class PropertyExtractor:
                 'opening_hours', 'cuisine_type', 'price_range', 'dress_code',
                 'reservation_required', 'parking_available'
             ],
+            'transportation': [
+                'origin', 'distance_km', 'route_options', 'fastest_option', 
+                'cheapest_option', 'recommended_option', 'travel_tips', 
+                'things_to_know', 'best_time_to_travel', 'things_to_avoid',
+                'accessibility_info'
+            ],
             'real_estate': [
                 'year_built', 'lot_size_m2', 'hoa_fee_monthly', 'property_tax_annual'
             ]
@@ -266,6 +272,100 @@ Your task is to AGGRESSIVELY INFER missing information using ALL available conte
 ```
 
 **CRITICAL:** Return numbers not strings. For land: bedrooms=0, bathrooms=0, parking_spaces=0"""
+        
+        elif self.content_type == 'transportation':
+            # TRANSPORTATION-SPECIFIC INFERENCE PROMPT
+            inference_prompt = f"""Eres un experto en análisis de información de transporte. Debes INFERIR agresivamente los campos faltantes usando TODO el contexto disponible.
+
+**Datos ya extraídos:**
+{json.dumps({k: v for k, v in data.items() if not k.endswith('_evidence') and k not in ['raw_html', 'field_confidence', 'extracted_at', 'tokens_used']}, indent=2, default=str, ensure_ascii=False)}
+
+**Campos faltantes a inferir:**
+{', '.join(missing_fields)}
+
+**Contenido completo:**
+{cleaned_content[:15000]}
+
+**INSTRUCCIONES DE INFERENCIA AGRESIVA:**
+
+1. **origin (punto de partida):**
+   - Busca menciones de aeropuertos, ciudades, hoteles de origen
+   - Palabras clave: "from", "desde", "salida de", "departure from"
+   - Si hay URL con nombres de lugares, usa el primero como origen
+
+2. **distance_km (distancia en kilómetros):**
+   - Busca números + "km", "kilometers", "kilómetros", "miles"
+   - Convierte millas a km (1 mile = 1.6 km)
+   - Si dice "1 hour drive" sin km, infiere ~60-80km
+
+3. **route_options (opciones de ruta):**
+   - Extrae TODAS las menciones de: bus, taxi, shuttle, car rental, private transfer, Uber
+   - Busca precios ($, USD, colones), duraciones (hours, mins)
+   - Formato: [{{"transport_type": "...", "price_usd": X, "duration_hours": Y, "description": "..."}}]
+
+4. **fastest_option / cheapest_option / recommended_option:**
+   - Analiza tiempos mencionados → fastest
+   - Analiza precios → cheapest
+   - Busca palabras "recommended", "best", "most popular" → recommended
+   - Formato: {{"transport_type": "...", "reason": "..."}}
+
+5. **travel_tips (consejos de viaje):**
+   - Extrae tips prácticos mencionados
+   - Busca: "tip", "advice", "recommendation", "should know"
+   - Lista completa de frases útiles
+
+6. **things_to_know (cosas a saber):**
+   - Información importante: horarios, frecuencias, reservas necesarias
+   - Restricciones, requisitos, documentos
+   - Clima, temporada, condiciones de rutas
+
+7. **best_time_to_travel (mejor momento):**
+   - Busca menciones de horarios recomendados
+   - Temporadas (dry season, rainy season)
+   - Horarios de menor tráfico
+
+8. **things_to_avoid (cosas a evitar):**
+   - Advertencias, riesgos, problemas comunes
+   - "avoid", "don't", "not recommended"
+   - Horarios pico, rutas peligrosas
+
+9. **accessibility_info (accesibilidad):**
+   - Menciones de wheelchair, disabled access, elderly-friendly
+   - "accessible", "accesible", "adaptado"
+
+**REGLAS CRÍTICAS:**
+- TODO debe estar en ESPAÑOL (traduce si es necesario)
+- Si un campo NO puede inferirse del contenido → null
+- Para listas vacías → []
+- Para route_options: extrae TODAS las opciones mencionadas, con precios/duraciones si están disponibles
+- Números como números, no strings
+
+**Formato de salida - SOLO JSON:**
+```json
+{{
+  "origin": <string o null>,
+  "distance_km": <number o null>,
+  "route_options": [
+    {{
+      "transport_type": "tipo de transporte",
+      "transport_name": "nombre del servicio (opcional)",
+      "price_usd": <number o null>,
+      "duration_hours": <number o null>,
+      "description": "descripción completa"
+    }}
+  ],
+  "fastest_option": {{"transport_type": "...", "reason": "..."}},
+  "cheapest_option": {{"transport_type": "...", "reason": "..."}},
+  "recommended_option": {{"transport_type": "...", "reason": "..."}},
+  "travel_tips": ["tip1", "tip2", ...],
+  "things_to_know": ["info1", "info2", ...],
+  "best_time_to_travel": <string o null>,
+  "things_to_avoid": ["cosa1", "cosa2", ...],
+  "accessibility_info": <string o null>
+}}
+```
+
+Infiere los campos faltantes ahora:"""
         
         else:
             # ORIGINAL PROMPT FOR TOURS AND OTHER CONTENT TYPES

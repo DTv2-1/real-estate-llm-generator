@@ -317,6 +317,40 @@ class BatchExportToSheetsView(APIView):
                 ]
             }
         
+        # TRANSPORTATION - SPECIFIC SERVICE
+        elif content_type == 'transportation' and page_type == 'specific':
+            return {
+                'headers': [
+                    'Nombre', 'Tipo', 'Ruta', 'Precio (USD)', 'Duración (horas)',
+                    'Horario', 'Frecuencia', 'Punto de Recogida', 'Punto de Entrega',
+                    'Reserva Requerida', 'Capacidad de Equipaje', 'Teléfono',
+                    'Descripción', 'Confianza Extracción', 'URL'
+                ],
+                'field_keys': [
+                    'transport_name', 'transport_type', 'route', 'price_usd', 'duration_hours',
+                    'schedule', 'frequency', 'pickup_location', 'dropoff_location',
+                    'booking_required', 'luggage_allowance', 'contact_phone',
+                    'description', 'extraction_confidence', 'source_url'
+                ]
+            }
+        
+        # TRANSPORTATION - GENERAL GUIDE
+        elif content_type == 'transportation' and page_type == 'general':
+            return {
+                'headers': [
+                    'Origen', 'Destino', 'Distancia (km)', 'Resumen General',
+                    'Opciones Disponibles', 'Opción Más Rápida', 'Opción Más Económica',
+                    'Opción Recomendada', 'Consejos de Viaje', 'Información Importante',
+                    'Mejor Momento para Viajar', 'Confianza Extracción', 'URL'
+                ],
+                'field_keys': [
+                    'origin', 'destination', 'distance_km', 'overview',
+                    'route_options', 'fastest_option.transport_type', 'cheapest_option.transport_type',
+                    'recommended_option.transport_type', 'travel_tips', 'things_to_know',
+                    'best_time_to_travel', 'extraction_confidence', 'source_url'
+                ]
+            }
+        
         # DEFAULT - Try to extract common fields
         else:
             return {
@@ -363,6 +397,14 @@ class BatchExportToSheetsView(APIView):
                         formatted_items.append(item['name'])
                     elif 'tour_name' in item:
                         formatted_items.append(item['tour_name'])
+                    # Transportation route options
+                    elif 'transport_type' in item:
+                        parts = [item['transport_type']]
+                        if item.get('price_usd'):
+                            parts.append(f"${item['price_usd']}")
+                        if item.get('duration_hours'):
+                            parts.append(f"{item['duration_hours']}h")
+                        formatted_items.append(' - '.join(parts))
                     # Price details
                     elif 'adults' in item or 'children' in item:
                         parts = []

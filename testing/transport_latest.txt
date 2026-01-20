@@ -1,0 +1,139 @@
+INFO 2026-01-19 12:50:22,050 scraper 🚀 Scrapfly enabled - Anti-bot bypass ready
+INFO 2026-01-19 12:50:22,050 scraper 🔧 Scraper initialized - Residential proxy: ❌ Not configured
+INFO 2026-01-19 12:50:22,051 scraper 🔍 [SCRAPE DECISION] Starting method selection for: https://www.tripadvisor.com/ShowTopic-g309293-i792-k14177884-Transportation_from_Liberia_Airport_to_Tamarindo-Province_of_Guanacaste.html
+INFO 2026-01-19 12:50:22,051 scraper 🔍 [SCRAPFLY CHECK] Domain: www.tripadvisor.com
+INFO 2026-01-19 12:50:22,051 scraper 🔍 [SCRAPFLY CHECK] Enabled: True
+INFO 2026-01-19 12:50:22,051 scraper 🔍 [SCRAPFLY CHECK] Client available: True
+INFO 2026-01-19 12:50:22,051 scraper 🔍 [BYPASS CHECK] Checking domain: www.tripadvisor.com
+INFO 2026-01-19 12:50:22,051 scraper 🔍 [BYPASS CHECK] Protected domains list: ['brevitas.com', 'encuentra24.com', 'tripadvisor.com', 'rome2rio.com']
+INFO 2026-01-19 12:50:22,051 scraper 🛡️ Cloudflare-protected site detected: www.tripadvisor.com
+INFO 2026-01-19 12:50:22,051 scraper 🔍 [SCRAPFLY CHECK] Needs Cloudflare bypass: True
+INFO 2026-01-19 12:50:22,051 scraper ✅ [SCRAPFLY] Will use Scrapfly for protected site: www.tripadvisor.com
+INFO 2026-01-19 12:50:22,051 scraper ✅ [DECISION] Using Scrapfly for Cloudflare bypass: https://www.tripadvisor.com/ShowTopic-g309293-i792-k14177884-Transportation_from_Liberia_Airport_to_Tamarindo-Province_of_Guanacaste.html
+INFO 2026-01-19 12:50:22,051 scraper 🚀 [SCRAPFLY] Starting scrape: https://www.tripadvisor.com/ShowTopic-g309293-i792-k14177884-Transportation_from_Liberia_Airport_to_Tamarindo-Province_of_Guanacaste.html
+INFO 2026-01-19 12:50:22,051 scraper 🚀 [SCRAPFLY] Config: ASP=True, Country=CR, RenderJS=True, Wait=3000ms
+INFO 2026-01-19 12:50:22,051 scraper 🚀 [SCRAPFLY] Executing API call...
+INFO 2026-01-19 12:50:36,162 scraper ✅ [SCRAPFLY] API call successful
+INFO 2026-01-19 12:50:36,163 scraper 🔍 [SCRAPFLY] Response status: 200
+INFO 2026-01-19 12:50:36,163 scraper 🔍 [SCRAPFLY] HTML length: 334163 chars
+INFO 2026-01-19 12:50:36,203 scraper ✅ Scrapfly success - API cost: 0 credits
+INFO 2026-01-19 12:50:36,204 page_type_detection ================================================================================
+INFO 2026-01-19 12:50:36,204 page_type_detection 🎯 Auto-Detecting Content Type
+INFO 2026-01-19 12:50:36,204 page_type_detection    URL: https://www.tripadvisor.com/ShowTopic-g309293-i792-k14177884-Transportation_from_Liberia_Airport_to_Tamarindo-Province_of_Guanacaste.html
+INFO 2026-01-19 12:50:36,204 page_type_detection ================================================================================
+INFO 2026-01-19 12:50:36,204 page_type_detection 🤖 Calling OpenAI GPT-4o-mini for content type classification...
+INFO 2026-01-19 12:50:36,277 page_type_detection HTML: 334,163 → 79,064 → 12,000 chars
+INFO 2026-01-19 12:50:39,368 _client HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-01-19 12:50:39,373 page_type_detection ✅ Content Type Analysis Complete:
+INFO 2026-01-19 12:50:39,373 page_type_detection    Type: transportation
+INFO 2026-01-19 12:50:39,373 page_type_detection    Confidence: 85%
+INFO 2026-01-19 12:50:39,373 page_type_detection    Reasoning: The webpage discusses transportation options from Liberia Airport to Tamarindo, which indicates it is focused on transport services rather than dining, accommodation, or other types of content.
+INFO 2026-01-19 12:50:39,373 page_type_detection    Signals: Transportation from Liberia Airport, Tamarindo, Airport Shuttle
+INFO 2026-01-19 12:50:39,373 page_type_detection    Time: 3.17s
+INFO 2026-01-19 12:50:39,373 page_type_detection    Cost: $0.0072
+INFO 2026-01-19 12:50:39,373 page_type_detection    Tokens: 4807
+INFO 2026-01-19 12:50:39,373 page_type_detection ✅ OpenAI Result:
+INFO 2026-01-19 12:50:39,373 page_type_detection    Content Type: transportation
+INFO 2026-01-19 12:50:39,373 page_type_detection    Confidence: 85%
+INFO 2026-01-19 12:50:39,373 page_type_detection    Reasoning: The webpage discusses transportation options from Liberia Airport to Tamarindo, which indicates it is focused on transport services rather than dining, accommodation, or other types of content.
+INFO 2026-01-19 12:50:39,373 page_type_detection    Cost: $0.0072
+INFO 2026-01-19 12:50:39,373 page_type_detection    Time: 3.17s
+INFO 2026-01-19 12:50:39,373 page_type_detection ================================================================================
+INFO 2026-01-19 12:50:39,373 page_type_detection ================================================================================
+INFO 2026-01-19 12:50:39,373 page_type_detection 🤖 OpenAI-Direct Page Type Detection (Opción 1)
+INFO 2026-01-19 12:50:39,373 page_type_detection    URL: https://www.tripadvisor.com/ShowTopic-g309293-i792-k14177884-Transportation_from_Liberia_Airport_to_Tamarindo-Province_of_Guanacaste.html
+INFO 2026-01-19 12:50:39,373 page_type_detection    Content type: transportation
+INFO 2026-01-19 12:50:39,373 page_type_detection ================================================================================
+INFO 2026-01-19 12:50:39,373 page_type_detection 🎯 Calling OpenAI GPT-4o-mini for classification...
+INFO 2026-01-19 12:50:39,373 page_type_detection 
+============================================================
+INFO 2026-01-19 12:50:39,373 page_type_detection 🤖 LEVEL 3: OpenAI Analysis
+INFO 2026-01-19 12:50:39,374 page_type_detection ============================================================
+INFO 2026-01-19 12:50:39,424 page_type_detection Original HTML: 334,163 chars → Cleaned: 79,064 chars → Preview: 12,000 chars
+INFO 2026-01-19 12:50:39,424 page_type_detection Content type: transportation
+INFO 2026-01-19 12:50:39,424 page_type_detection ============================================================
+INFO 2026-01-19 12:50:39,424 page_type_detection 🔍 HTML PREVIEW BEING SENT TO OPENAI:
+INFO 2026-01-19 12:50:39,424 page_type_detection ============================================================
+INFO 2026-01-19 12:50:39,424 page_type_detection <html><head> <title> Restaurant recommendation - San Jose Forum - Tripadvisor </title> <!--trkP:bot_detection--> <!-- PLACEMENT bot_detection --> <!--etk--> <!--[if IE 6]> <link rel="stylesheet" type="text/css" media="screen, print" href="https://static.tacdn.com/css2/build/concat/winIE6-v23211338030a.css" /> <![endif]--> <!--[if IE 7]> <link rel="stylesheet" type="text/css" media="screen, print" href="https://static.tacdn.com/css2/build/concat/winIE7-v21543589224a.css" /> <![endif]--> <!-- web553a.a.tripadvisor.com --> <!-- PRODUCTION --> <!-- releases/PRODUCTION_1674768_20260112_0301 --> <!-- Rev 1674770 --> </head> <body class="ltr domn_en_US lang_en globalNav2011_reset rebrand_2017 css_commerce_buttons flat_buttons sitewide xo_pin_user_review_to_top track_back" id="BODY_BLOCK_JQUERY_REFLOW"> <div id="fb-root"></div> <!--trkP:sync_rt_cookie--> <!-- PLACEMENT sync_rt_cookie --> <div class="ppr_rup ppr_priv_sync_rt_cookie" id="taplc_sync_rt_cookie_0"> </div> <!--etk--> <div id="iframe
+INFO 2026-01-19 12:50:39,425 page_type_detection ...
+INFO 2026-01-19 12:50:39,425 page_type_detection h_overlay_content ui_container social_typeahead_2018"><div class="dual_search_loader_container" id="DUAL_SEARCH_LOADER_CONTAINER"><div class="dual_search_loader_overlay"></div><div class="dual_search_loader_visual"><div class="ui_spinner"></div></div></div><div class="just_padding"><div class="no_cpu"><form class="search_form ui_columns is-multiline" id="global_nav_search_form"><div class="ui_column is-10 is-gapless"><div class="search_line ui_columns is-multiline"><div class="mainSearchContaine
+INFO 2026-01-19 12:50:39,425 page_type_detection ============================================================
+INFO 2026-01-19 12:50:41,702 _client HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-01-19 12:50:41,704 page_type_detection 
+✅ OpenAI Analysis Complete:
+INFO 2026-01-19 12:50:41,705 page_type_detection    Page Type: general
+INFO 2026-01-19 12:50:41,706 page_type_detection    Confidence: 90%
+INFO 2026-01-19 12:50:41,706 page_type_detection    Reasoning: The page discusses transportation options from Liberia Airport to Tamarindo, indicating multiple transportation methods or services rather than focusing on a single item. It likely serves as a guide for travelers rather than a specific booking page for one transportation service.
+INFO 2026-01-19 12:50:41,706 page_type_detection    Key Indicators: describes a location, lists multiple transportation options, general destination info
+INFO 2026-01-19 12:50:41,706 page_type_detection    Time: 2.33s
+INFO 2026-01-19 12:50:41,706 page_type_detection    Cost: $0.0073
+INFO 2026-01-19 12:50:41,706 page_type_detection    Tokens: 4836
+INFO 2026-01-19 12:50:41,706 page_type_detection ============================================================
+INFO 2026-01-19 12:50:41,706 page_type_detection ✅ OpenAI Result:
+INFO 2026-01-19 12:50:41,706 page_type_detection    Page type: general
+INFO 2026-01-19 12:50:41,706 page_type_detection    Confidence: 90%
+INFO 2026-01-19 12:50:41,707 page_type_detection    Reason: The page discusses transportation options from Liberia Airport to Tamarindo, indicating multiple transportation methods or services rather than focusing on a single item. It likely serves as a guide for travelers rather than a specific booking page for one transportation service.
+INFO 2026-01-19 12:50:41,707 page_type_detection    Cost: $0.0073
+INFO 2026-01-19 12:50:41,707 page_type_detection    Time: 2.33s
+INFO 2026-01-19 12:50:41,707 page_type_detection ================================================================================
+INFO 2026-01-19 12:50:41,707 extraction 🔑 OPENAI_API_KEY configured: Yes
+INFO 2026-01-19 12:50:41,707 extraction 🔑 API Key length: 164 chars
+INFO 2026-01-19 12:50:41,707 extraction 🔑 API Key preview: sk-proj-ex...
+INFO 2026-01-19 12:50:41,716 extraction 📝 Extractor initialized for content type: transportation, page type: general
+INFO 2026-01-19 12:50:41,771 extraction Prompt preview (first 800 chars): Eres un especialista en extracción de información de guías de transporte. Esta página es una GUÍA GENERAL (no un servicio individual), extrae información completa sobre opciones de transporte entre destinos.
+
+**INSTRUCCIONES CRÍTICAS:**
+1. ✅ EXTRAE TEXTO EXPLÍCITAMENTE ESCRITO EN LA FUENTE
+2. ✅ PARA CAMPOS VACÍOS: Sí puedes INFERIR usando información disponible en el contenido
+3. ✅ Completa información "lógica" y "práctica" derivada de las opciones descritas
+4. TODO debe estar en ESPAÑOL - traduce si es necesario
+5. Para cada campo, incluye "evidence" con la cita fuente cuando sea textual, o "derived_from" cuando sea inferido
+6. 🔥 IMPORTANTE: Para "overview" y "route_options.description" - extrae PÁRRAFOS COMPLETOS Y DETALLADOS
+
+**EJEMPLOS DE DERIVACIÓN CORRECTA:**
+✅ Texto menciona "bus" y
+INFO 2026-01-19 12:50:41,771 extraction Prompt preview (last 800 chars): orld class in the preparation of octopus. PARAGRAPH: This is the version of our website addressed to speakers of English in the United States . If you are a resident of another country or region, please select the appropriate version of Tripadvisor for your country or region in the drop-down menu. PARAGRAPH: Tripadvisor LLC makes no guarantees for availability of prices advertised on our sites and applications. Listed prices may require a stay of a particular length or have blackout dates, qualifications or other applicable restrictions. Tripadvisor LLC is not responsible for any content on external web PARAGRAPH: Tripadvisor LLC is not a booking agent or tour operator. When you book with one of our partners, please be sure to check their site for a full disclosure of all applicable fees.
+
+INFO 2026-01-19 12:50:41,771 extraction Starting LLM property extraction...
+INFO 2026-01-19 12:51:15,496 _client HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-01-19 12:51:15,500 extraction LLM extraction completed. Tokens used: 7408
+INFO 2026-01-19 12:51:15,500 extraction Raw LLM response: {
+  "page_type": "general_guide",
+  "origin": "San José",
+  "origin_evidence": "Arriving late afternoon Adventure Inn it will be a very long day.",
+  "destination": "Manuel Antonio",
+  "destination_evidence": "Also heading next day to Manuel Antonia area for a wedding Dec 1.",
+  "overview": "Entre San José y Manuel Antonio, los viajeros tienen varias opciones de transporte. Una de las más convenientes es el uso de taxis o servicios de transporte privado, que ofrecen comodidad y flexibilidad, aun
+INFO 2026-01-19 12:51:15,500 extraction Parsed JSON keys: ['page_type', 'origin', 'origin_evidence', 'destination', 'destination_evidence', 'overview', 'overview_evidence', 'distance_km', 'distance_evidence', 'route_options', 'route_options_evidence', 'fastest_option', 'cheapest_option', 'recommended_option', 'recommended_evidence', 'travel_tips', 'tips_evidence', 'things_to_know', 'know_evidence', 'booking_tips', 'booking_evidence', 'best_time_to_travel', 'time_evidence', 'things_to_avoid', 'avoid_evidence', 'accessibility_info', 'accessibility_evidence', 'total_options_mentioned', 'extraction_confidence', 'confidence_reasoning']
+INFO 2026-01-19 12:51:15,501 extraction ✅ All fields filled, skipping inference pass
+INFO 2026-01-19 12:51:15,501 extraction Extraction successful. Confidence: 0.9
+================================================================================
+🚗 QUICK TRANSPORTATION EXTRACTION TEST
+================================================================================
+
+📄 URL: https://www.tripadvisor.com/ShowTopic-g309293-i792-k14177884-Transportation_from_Liberia_Airport_to_Tamarindo-Province_of_Guanacaste.html
+
+⏳ Scraping page...
+🌐 Opening browser window (you can see it!)...
+✅ Scraped 334,163 characters
+
+🔍 Detecting content type...
+✅ Content Type: transportation (85%)
+
+🔍 Detecting page type...
+✅ Page Type: general (90%)
+
+⚙️  Extracting data...
+✅ Extraction complete!
+
+================================================================================
+RESULTS
+================================================================================
+
+🚦 Route: N/A → Manuel Antonio
+
+🎯 Confidence: 90%
+
+💾 Full results saved to: transport_test_result.json
+
+✅ Test complete!

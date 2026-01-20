@@ -65,6 +65,8 @@ class WebScraper:
     CLOUDFLARE_PROTECTED_DOMAINS = [
         'brevitas.com',  # Has anti-bot protection (403 Forbidden)
         'encuentra24.com',  # Has Cloudflare protection
+        'tripadvisor.com',  # Has DataDome CAPTCHA protection
+        'rome2rio.com',  # Has Cloudflare protection
         # Add more as needed: 'example.com', 'another-site.com'
     ]
     
@@ -83,9 +85,9 @@ class WebScraper:
     ]
     
     def __init__(self):
-        self.timeout = settings.SCRAPING_TIMEOUT_SECONDS
-        self.user_agent = settings.SCRAPING_USER_AGENT
-        self.rate_limit = settings.SCRAPING_RATE_LIMIT_PER_SECOND
+        self.timeout = getattr(settings, 'SCRAPING_TIMEOUT_SECONDS', 30)
+        self.user_agent = getattr(settings, 'SCRAPING_USER_AGENT', self.USER_AGENTS[0])
+        self.rate_limit = getattr(settings, 'SCRAPING_RATE_LIMIT_PER_SECOND', 2.0)
         self.last_request_time = {}
         
         # Scrapfly configuration (preferred for Cloudflare bypass)
@@ -152,13 +154,13 @@ class WebScraper:
         domain = urlparse(url).netloc
         return any(js_domain in domain for js_domain in self.JS_HEAVY_DOMAINS)
     
-    async def _scrape_with_playwright(self, url: str) -> Dict[str, any]:
+    async def _scrape_with_playwright(self, url: str, headless: bool = True) -> Dict[str, any]:
         """Scrape using Playwright for JavaScript-heavy sites."""
         logger.info(f"Scraping with Playwright: {url}")
         
         async with async_playwright() as p:
             browser = await p.chromium.launch(
-                headless=settings.PLAYWRIGHT_HEADLESS,
+                headless=getattr(settings, 'PLAYWRIGHT_HEADLESS', headless),
                 args=[
                     '--disable-blink-features=AutomationControlled',
                     '--disable-dev-shm-usage',
@@ -576,12 +578,13 @@ class WebScraper:
             logger.error(f"Scrapfly error: {e}")
             raise ScraperError(f"Scrapfly error scraping {url}: {str(e)}")
     
-    async def scrape(self, url: str) -> Dict[str, any]:
+    async def scrape(self, url: str, headless: bool = True) -> Dict[str, any]:
         """
         Main scrape method - automatically chooses best approach.
         
         Args:
             url: URL to scrape
+            headless: Run browser in headless mode (default True). Set to False to see browser.
             
         Returns:
             Dictionary with scraped content
@@ -618,7 +621,7 @@ class WebScraper:
         elif await self._should_use_playwright(url):
             # Use Playwright for JS-heavy sites
             logger.info(f"✅ [DECISION] Using Playwright for JS rendering: {url}")
-            result = await self._scrape_with_playwright(url)
+            result = await self._scrape_with_playwright(url, headless=headless)
         else:
             # Try httpx first, fallback to Playwright if fails
             logger.info(f"✅ [DECISION] Trying httpx first (simple scraping): {url}")
@@ -626,23 +629,28 @@ class WebScraper:
                 result = await self._scrape_with_httpx(url)
             except ScraperError:
                 logger.info(f"⚠️ [FALLBACK] httpx failed, falling back to Playwright: {url}")
-                result = await self._scrape_with_playwright(url)
+                result = await self._scrape_with_playwright(url, headless=headless)
         
         return result
     
-    def scrape_sync(self, url: str) -> Dict[str, any]:
+    def scrape_sync(self, url: str, headless: bool = True) -> Dict[str, any]:
         """Synchronous wrapper for scrape method."""
-        return asyncio.run(self.scrape(url))
+        return asyncio.run(self.scrape(url, headless=headless))
 
 
-def scrape_url(url: str) -> Dict[str, any]:
+def scrape_url(url: str, headless: bool = True) -> Dict[str, any]:
     """
     Convenience function to scrape a URL.
     
+    Args:
+        url: The URL to scrape
+        headless: Run browser in headless mode (default True). Set to False to see browser.
+    
     Usage:
         result = scrape_url('https://encuentra24.com/property/123')
+        result = scrape_url('https://site.com', headless=False)  # Show browser
         html = result['html']
         text = result['text']
     """
     scraper = WebScraper()
-    return scraper.scrape_sync(url)
+    return scraper.scrape_sync(url, headless=headless)
