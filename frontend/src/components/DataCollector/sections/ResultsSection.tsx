@@ -7,6 +7,13 @@ import {
   formatArea,
   formatBoolean
 } from '../utils/formatters';
+import {
+  RealEstateTemplate,
+  TourTemplate,
+  RestaurantTemplate,
+  TransportationTemplate,
+  LocalTipsTemplate
+} from '../contentTypes';
 
 /**
  * Props for ResultsSection component
@@ -18,12 +25,16 @@ interface ResultsSectionProps {
   showRawData: boolean;
   /** Handler to toggle raw data view */
   onToggleRawData: () => void;
-  /** Handler to save property */
+  /** Handler to save property to Google Sheets */
   onSave: () => void;
+  /** Handler to save property to database */
+  onSaveToDatabase: () => void;
   /** Handler to export property */
   onExport: () => void;
   /** Whether save operation is in progress */
   isSaving: boolean;
+  /** Whether database save is in progress */
+  isSavingToDb: boolean;
   /** Handler to start new search */
   onNewSearch?: () => void;
   /** Current tutorial step */
@@ -52,8 +63,10 @@ export const ResultsSection: React.FC<ResultsSectionProps> = ({
   showRawData,
   onToggleRawData,
   onSave,
+  onSaveToDatabase,
   onExport,
   isSaving,
+  isSavingToDb,
   onNewSearch,
   tutorialStep
 }) => {
@@ -70,16 +83,20 @@ export const ResultsSection: React.FC<ResultsSectionProps> = ({
         tutorialStep={tutorialStep}
       />
 
-      {showRawData ? (
-        <RawDataView property={property} />
-      ) : (
-        <PropertyDataView property={property} />
-      )}
+      <div className="results-content">
+        {showRawData ? (
+          <RawDataView property={property} />
+        ) : (
+          <PropertyDataView property={property} />
+        )}
+      </div>
 
       <ResultsActions
         onSave={onSave}
+        onSaveToDatabase={onSaveToDatabase}
         onExport={onExport}
         isSaving={isSaving}
+        isSavingToDb={isSavingToDb}
         tutorialStep={tutorialStep}
       />
     </section>
@@ -192,13 +209,58 @@ interface PropertyDataViewProps {
 
 /**
  * Formatted view of property data organized in sections
- * Displays all fields in a user-friendly layout
+ * Displays all fields in a user-friendly layout using content-specific templates
  * 
  * @component
  */
 export const PropertyDataView: React.FC<PropertyDataViewProps> = ({ property }) => {
+  // Use content-specific template if available
+  const contentType = property.content_type?.toLowerCase();
+  
+  switch (contentType) {
+    case 'real_estate':
+    case 'realestate':
+      return <RealEstateTemplate property={property} />;
+    
+    case 'tour':
+    case 'activity':
+      return <TourTemplate property={property} />;
+    
+    case 'restaurant':
+    case 'dining':
+      return <RestaurantTemplate property={property} />;
+    
+    case 'transportation':
+    case 'transport':
+      return <TransportationTemplate property={property} />;
+    
+    case 'local_tips':
+    case 'localtips':
+    case 'tips':
+      return <LocalTipsTemplate property={property} />;
+    
+    default:
+      // Fallback to generic view for unknown content types
+      return <GenericDataView property={property} />;
+  }
+};
+
+/**
+ * Props for GenericDataView component
+ */
+interface GenericDataViewProps {
+  /** Property data to display */
+  property: PropertyData;
+}
+
+/**
+ * Generic fallback view for content types without specific templates
+ * 
+ * @component
+ */
+export const GenericDataView: React.FC<GenericDataViewProps> = ({ property }) => {
   return (
-    <div className="property-data-view">
+    <>
       {/* Basic Information */}
       <section className="data-section">
         <h3 className="section-title">📝 Información Básica</h3>
@@ -277,7 +339,7 @@ export const PropertyDataView: React.FC<PropertyDataViewProps> = ({ property }) 
         <section className="data-section">
           <h3 className="section-title">⭐ Características</h3>
           <ul className="features-list">
-            {property.features.map((feature, index) => (
+            {property.features.map((feature: string, index: number) => (
               <li key={index} className="feature-item">
                 {feature}
               </li>
@@ -291,7 +353,7 @@ export const PropertyDataView: React.FC<PropertyDataViewProps> = ({ property }) 
         <section className="data-section">
           <h3 className="section-title">📷 Imágenes ({property.images.length})</h3>
           <div className="images-grid">
-            {property.images.slice(0, 6).map((imageUrl, index) => (
+            {property.images.slice(0, 6).map((imageUrl: string, index: number) => (
               <div key={index} className="image-thumbnail">
                 <img src={imageUrl} alt={`Imagen ${index + 1}`} loading="lazy" />
               </div>
@@ -330,7 +392,7 @@ export const PropertyDataView: React.FC<PropertyDataViewProps> = ({ property }) 
           <DataField label="Procesado por" value={property.processed_by} />
         </div>
       </section>
-    </div>
+    </>
   );
 };
 
@@ -405,12 +467,16 @@ export const DataField: React.FC<DataFieldProps> = ({
  * Props for ResultsActions component
  */
 interface ResultsActionsProps {
-  /** Handler to save property */
+  /** Handler to save property to Google Sheets */
   onSave: () => void;
+  /** Handler to save property to database */
+  onSaveToDatabase: () => void;
   /** Handler to export property */
   onExport: () => void;
-  /** Whether save is in progress */
+  /** Whether Google Sheets save is in progress */
   isSaving: boolean;
+  /** Whether database save is in progress */
+  isSavingToDb: boolean;
   /** Current tutorial step */
   tutorialStep?: number;
 }
@@ -423,8 +489,10 @@ interface ResultsActionsProps {
  */
 export const ResultsActions: React.FC<ResultsActionsProps> = ({
   onSave,
+  onSaveToDatabase,
   onExport,
   isSaving,
+  isSavingToDb,
   tutorialStep
 }) => {
   const isHighlighted = tutorialStep === 6;
@@ -432,9 +500,27 @@ export const ResultsActions: React.FC<ResultsActionsProps> = ({
   return (
     <div className={`results-actions ${isHighlighted ? 'tutorial-highlight' : ''}`}>
       <button
+        onClick={onSaveToDatabase}
+        className="action-button save-db-button"
+        disabled={isSavingToDb || isSaving}
+      >
+        {isSavingToDb ? (
+          <>
+            <span className="spinner">⏳</span>
+            <span>Guardando...</span>
+          </>
+        ) : (
+          <>
+            <span className="button-icon">🗄️</span>
+            <span>Guardar en Base de Datos</span>
+          </>
+        )}
+      </button>
+
+      <button
         onClick={onSave}
         className="action-button save-button"
-        disabled={isSaving}
+        disabled={isSaving || isSavingToDb}
       >
         {isSaving ? (
           <>
@@ -452,7 +538,7 @@ export const ResultsActions: React.FC<ResultsActionsProps> = ({
       <button
         onClick={onExport}
         className="action-button export-button"
-        disabled={isSaving}
+        disabled={isSaving || isSavingToDb}
       >
         <span className="button-icon">📥</span>
         <span>Exportar JSON</span>

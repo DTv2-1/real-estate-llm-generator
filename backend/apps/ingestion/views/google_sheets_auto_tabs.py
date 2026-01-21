@@ -14,9 +14,7 @@ from apps.tenants.models import Tenant
 from apps.properties.models import Property
 
 from core.scraping.scraper import scrape_url
-from core.llm.extraction import extract_content_data
-from core.llm.content_detection import detect_content_type
-from core.llm.page_type_detection import detect_page_type
+from core.llm.extraction import extract_content_data, detect_content_type, detect_page_type
 
 from ..google_sheets import GoogleSheetsService
 from ..email_notifications import send_batch_completion_email, send_error_notification

@@ -17,9 +17,7 @@ from apps.properties.models import Property, PropertyImage
 from apps.properties.serializers import PropertyDetailSerializer
 
 from core.scraping.scraper import scrape_url, ScraperError
-from core.scraping.extractors import get_extractor
-from core.llm.extraction import extract_property_data, extract_content_data, ExtractionError
-from core.llm.content_detection import detect_content_type
+from core.llm.extraction import extract_content_data, ExtractionError, detect_content_type
 from core.utils.website_detector import detect_source_website
 
 from ..progress import ProgressTracker
@@ -108,11 +106,11 @@ class IngestURLView(APIView):
             time.sleep(0.2)
             
             # NEW: Detect page type (specific item vs general guide/listing)
-            from core.llm.page_type_detection import detect_page_type
+            from core.llm.extraction import detect_page_type
             
             page_detection = detect_page_type(
                 url=url,
-                html=html_content,
+                html_content=html_content,
                 content_type=detected_content_type
             )
             detected_page_type = page_detection['page_type']
@@ -125,38 +123,18 @@ class IngestURLView(APIView):
             time.sleep(0.2)
             
             # Step 3: Extraction (40-80%)
-            tracker.update(45, "Obteniendo extractor...", stage="Extracción", substage="Configurando herramientas")
-            time.sleep(0.2)
-            
-            # Only use site-specific extractor for real_estate
-            if detected_content_type == 'real_estate':
-                extractor = get_extractor(url)
-                extractor_name = extractor.__class__.__name__
-                use_site_extractor = extractor_name != 'BaseExtractor'
-            else:
-                use_site_extractor = False
-                extractor_name = 'LLM-based'
-            
-            if use_site_extractor:
-                tracker.update(50, f"Usando extractor específico: {extractor.site_name}", stage="Extracción", substage="Extracción rápida")
-                time.sleep(0.3)
-                extracted_data = extractor.extract(html_content, url)
-                tracker.update(75, "Datos extraídos con éxito", stage="Extracción", substage="Completado")
-                time.sleep(0.3)
-                extraction_method = 'site_specific'
-                extraction_confidence = 0.95
-            else:
-                tracker.update(50, "Usando extracción con IA...", stage="Extracción", substage="Procesando con LLM")
-                # Use content-type specific extraction with page type detection
-                extracted_data = extract_content_data(
-                    html_content, 
-                    content_type=detected_content_type, 
-                    page_type=detected_page_type,
-                    url=url
-                )
-                tracker.update(75, "IA completó la extracción", stage="Extracción", substage="Completado")
-                extraction_method = 'llm_based'
-                extraction_confidence = extracted_data.get('extraction_confidence', 0.5)
+            tracker.update(50, "Usando extracción con IA...", stage="Extracción", substage="Procesando con LLM")
+            # Use content-type specific extraction with page type detection
+            extracted_data = extract_content_data(
+                html_content, 
+                content_type=detected_content_type, 
+                page_type=detected_page_type,
+                url=url
+            )
+            tracker.update(75, "IA completó la extracción", stage="Extracción", substage="Completado")
+            extraction_method = 'llm_based'
+            extractor_name = 'LLM-based'
+            extraction_confidence = extracted_data.get('extraction_confidence', 0.5)
             
             # Step 4: Finalization (80-100%)
             time.sleep(0.2)
@@ -197,6 +175,52 @@ class IngestURLView(APIView):
                         preserved_data[field] = extracted_data[field]
                         logger.info(f"  ✅ Preserved: {field} = {extracted_data[field]}")
                 logger.info(f"📦 Total preserved fields: {len(preserved_data)}")
+            
+            tenant = Tenant.objects.first()
+            extracted_data['tenant'] = tenant
+            
+            # NEW: Post-process web_search_context to fill missing fields
+            # IMPORTANT: Do this BEFORE removing tenant from extracted_data
+            if extracted_data.get('web_search_context'):
+                logger.info(f"🔍 [POST-PROCESS] Web search context available, extracting structured data...")
+                tracker.update(78, "Procesando contexto web...", stage="Extracción", substage="Enriquecimiento")
+                
+                from core.llm.extraction import WebSearchService
+                web_search = WebSearchService()
+                
+                # Create a clean copy for JSON serialization (remove tenant object)
+                clean_data = {k: v for k, v in extracted_data.items() if k != 'tenant'}
+                
+                # Extract structured data from web context
+                context_extracted = web_search.extract_from_web_context(
+                    web_search_context=extracted_data['web_search_context'],
+                    existing_data=clean_data,
+                    content_type=detected_content_type
+                )
+                
+                # Clean the web_search_context itself (remove markdown symbols)
+                raw_context = extracted_data['web_search_context']
+                import re
+                # Remove markdown formatting
+                cleaned_context = re.sub(r'\*\*', '', raw_context)  # Remove **
+                cleaned_context = re.sub(r'^#{1,6}\s+', '', cleaned_context, flags=re.MULTILINE)  # Remove headers
+                cleaned_context = re.sub(r'^\s*[-*+]\s+', '• ', cleaned_context, flags=re.MULTILINE)  # Replace bullets
+                cleaned_context = re.sub(r'[✅❌💰🎯📍⭐🌍🎪🔗]', '', cleaned_context)  # Remove emojis
+                extracted_data['web_search_context'] = cleaned_context.strip()
+                
+                # Merge: only add fields that are missing (null/empty) in original extraction
+                fields_added = 0
+                for key, value in context_extracted.items():
+                    if value is not None and value != "" and value != []:
+                        # Only add if field doesn't exist or is empty
+                        current_value = extracted_data.get(key)
+                        if current_value is None or current_value == "" or current_value == []:
+                            extracted_data[key] = value
+                            fields_added += 1
+                            logger.info(f"  ✅ Added from context: {key} = {value}")
+                
+                logger.info(f"✅ [POST-PROCESS] Added {fields_added} fields from web search context")
+                tracker.update(80, f"Añadidos {fields_added} campos desde contexto web", stage="Extracción", substage="Completado")
             
             tenant_id = extracted_data['tenant'].id if extracted_data.get('tenant') else None
             extracted_data['tenant_id'] = tenant_id
@@ -306,11 +330,11 @@ class IngestURLView(APIView):
             logger.info(f"Content type detected: {detected_content_type} (confidence: {content_type_confidence:.2%}, method: {detection_method})")
             
             # NEW: Detect page type (specific item vs general guide/listing)
-            from core.llm.page_type_detection import detect_page_type
+            from core.llm.extraction import detect_page_type
             
             page_detection = detect_page_type(
                 url=url,
-                html=html_content,
+                html_content=html_content,
                 content_type=detected_content_type
             )
             detected_page_type = page_detection['page_type']
@@ -319,45 +343,20 @@ class IngestURLView(APIView):
             
             logger.info(f"Page type detected: {detected_page_type} (confidence: {page_type_confidence:.2%}, method: {page_detection_method})")
             
-            # Step 3: Get site-specific extractor (only for real_estate)
-            if detected_content_type == 'real_estate':
-                extractor = get_extractor(url)
-                extractor_name = extractor.__class__.__name__
-                logger.info(f"Step 3: Using extractor: {extractor_name} for {extractor.site_name}")
-                use_site_extractor = extractor_name != 'BaseExtractor'
-            else:
-                use_site_extractor = False
-                extractor_name = 'LLM-based'
-                logger.info(f"Step 3: Content type is {detected_content_type}, using LLM extraction")
+            # Step 3: Extract using LLM with appropriate content type and page type
+            logger.info(f"Extracting {detected_content_type} data with LLM (page_type: {detected_page_type})...")
+            extracted_data = extract_content_data(
+                content=html_content,
+                content_type=detected_content_type,
+                page_type=detected_page_type,
+                url=url
+            )
             
-            if use_site_extractor:
-                logger.info(f"✓ Using site-specific extractor for real_estate - no LLM needed")
-                
-                # Extract using site-specific rules (fast, free, precise)
-                extractor = get_extractor(url)
-                extracted_data = extractor.extract(html_content, url)
-                logger.info(f"Extraction complete using {extractor_name}")
-                logger.info(f"Extracted fields: {[k for k, v in extracted_data.items() if v is not None]}")
-                
-                extraction_method = 'site_specific'
-                extraction_confidence = 0.95  # High confidence for rule-based extraction
-                
-            else:
-                logger.info(f"⚠ Using LLM extraction for content type: {detected_content_type}, page type: {detected_page_type}")
-                
-                # Use LLM-based extraction with appropriate content type AND page type prompt
-                logger.info(f"Extracting {detected_content_type} data with LLM (page_type: {detected_page_type})...")
-                extracted_data = extract_content_data(
-                    content=html_content,
-                    content_type=detected_content_type,
-                    page_type=detected_page_type,
-                    url=url
-                )
-                
-                logger.info(f"Extraction complete. Confidence: {extracted_data.get('extraction_confidence')}")
-                
-                extraction_method = 'llm_based'
-                extraction_confidence = extracted_data.get('extraction_confidence', 0.5)
+            logger.info(f"Extraction complete. Confidence: {extracted_data.get('extraction_confidence')}")
+            
+            extraction_method = 'llm_based'
+            extractor_name = 'LLM-based'
+            extraction_confidence = extracted_data.get('extraction_confidence', 0.5)
             
             # Step 4: Add source website and tenant
             extracted_data['source_website'] = source_website
@@ -483,7 +482,11 @@ class IngestTextView(APIView):
         try:
             # Extract property data with LLM
             logger.info("Extracting property data from text...")
-            extracted_data = extract_property_data(text)
+            extracted_data = extract_content_data(
+                content=text,
+                content_type='real_estate',
+                page_type='specific'
+            )
             
             # Set source_website from user selection or default to 'other'
             extracted_data['source_website'] = source_website_override if source_website_override else 'other'

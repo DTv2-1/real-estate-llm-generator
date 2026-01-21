@@ -50,3 +50,31 @@ export const processProperty = async (
 
   return await response.json()
 }
+
+/**
+ * Save property data to the database via ingestion endpoint
+ * 
+ * @param {any} propertyData - The property data to save
+ * @returns {Promise<any>} Saved property response
+ */
+export const savePropertyViaIngestion = async (propertyData: any) => {
+  console.log('💾 [SAVE] Saving property to database:', propertyData)
+  
+  const response = await fetch(`${API_BASE}/ingest/save/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ property_data: propertyData })
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.error || `Error al guardar: ${response.status}`)
+  }
+
+  const data = await response.json()
+  console.log('✅ [SAVE] Property saved successfully:', data)
+  
+  return data
+}

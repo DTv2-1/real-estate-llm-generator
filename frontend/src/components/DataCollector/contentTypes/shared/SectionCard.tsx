@@ -1,4 +1,5 @@
 import React from 'react';
+import './SectionCard.css';
 
 /**
  * Props for SectionCard component

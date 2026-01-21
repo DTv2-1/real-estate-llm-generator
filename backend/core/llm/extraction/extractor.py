@@ -11,8 +11,8 @@ import openai
 from django.conf import settings
 from django.utils import timezone
 
-from .prompts import PROPERTY_EXTRACTION_PROMPT
-from .content_types import get_extraction_prompt, CONTENT_TYPES
+from ..content_types import get_extraction_prompt, CONTENT_TYPES, get_allowed_fields
+from .web_search import get_web_search_service
 
 logger = logging.getLogger(__name__)
 
@@ -112,6 +112,30 @@ class PropertyExtractor:
             if script.string:
                 important_text.append(f"STRUCTURED DATA: {script.string}")
         
+        # 4b. Extract JSON from regular script tags (for TripAdvisor, etc.)
+        import json
+        import re
+        all_scripts = soup.find_all('script')
+        for script in all_scripts:
+            if script.string and len(script.string) > 100:  # Only process substantial scripts
+                # Look for JSON objects in the script
+                json_pattern = r'\{[^{}]*(?:"[^"]*"[^{}]*)*\}'
+                matches = re.findall(json_pattern, script.string[:5000])  # First 5000 chars only
+                for match in matches:
+                    try:
+                        parsed = json.loads(match)
+                        if isinstance(parsed, dict) and len(parsed) > 2:  # Valid JSON with content
+                            important_text.append(f"SCRIPT JSON: {json.dumps(parsed)[:1000]}")
+                    except:
+                        pass  # Not valid JSON, skip
+        
+        # 4c. Extract data from data-* attributes
+        all_tags = soup.find_all(attrs={'data-details': True})
+        for tag in all_tags:
+            for attr_name, attr_value in tag.attrs.items():
+                if attr_name.startswith('data-') and len(str(attr_value)) > 20:
+                    important_text.append(f"DATA ATTRIBUTE ({attr_name}): {attr_value}")
+        
         # 5. Lists (ul, ol) - often contain features, inclusions, schedules
         lists = soup.find_all(['ul', 'ol'])
         for list_elem in lists:
@@ -121,9 +145,11 @@ class PropertyExtractor:
                 if len(list_text) > 20:
                     important_text.append(f"LIST: {list_text}")
         
-        # 6. Description/content paragraphs
+        # 6. Description/content paragraphs (LIMIT TO FIRST 20 for efficiency)
         paragraphs = soup.find_all('p')
-        for p in paragraphs:
+        for idx, p in enumerate(paragraphs):
+            if idx >= 20:  # Only process first 20 paragraphs
+                break
             text = p.get_text(separator=' ', strip=True)
             if len(text) > 50:  # Skip short paragraphs
                 important_text.append(f"PARAGRAPH: {text[:300]}")  # Limit to 300 chars
@@ -149,10 +175,11 @@ class PropertyExtractor:
         # Remove excessive whitespace
         combined = ' '.join(combined.split())
         
-        # Truncate if still too long (max ~150K chars for better coverage of pricing/details)
-        # This allows capturing more content while staying within LLM context limits
-        if len(combined) > 150000:
-            combined = combined[:150000] + "...[truncated]"
+        # Truncate if still too long (max 50K chars to keep prompt under ~15K tokens)
+        # This balances thoroughness with API speed/cost
+        max_length = 50000
+        if len(combined) > max_length:
+            combined = combined[:max_length] + "...[truncated]"
         
         return combined
     
@@ -601,20 +628,16 @@ Return ONLY JSON with values or nulls for missing fields."""
         generic_fields = ['property_name', 'property_type', 'location', 'description',
                          'listing_id', 'internal_property_id', 'listing_status']
         
-        # Content-specific fields by type
-        content_specific_fields = {
-            'tour': ['tour_name', 'tour_type', 'duration_hours', 'difficulty_level',
-                    'included_items', 'excluded_items', 'max_participants', 
-                    'languages_available', 'pickup_included', 'minimum_age',
-                    'cancellation_policy', 'schedules', 'what_to_bring',
-                    'check_in_time', 'restrictions'],
-            'restaurant': ['restaurant_name', 'cuisine_type', 'opening_hours',
-                          'price_range', 'dress_code', 'reservation_required'],
-            'real_estate': ['property_name', 'property_type'],
-        }
+        # Get content-specific fields from new modular config
+        try:
+            content_specific = get_allowed_fields(self.content_type)
+        except ValueError:
+            # Fallback for unknown content types
+            logger.warning(f"Unknown content type '{self.content_type}', using empty field list")
+            content_specific = []
         
         # Add content-specific fields for this content type
-        all_fields = generic_fields + content_specific_fields.get(self.content_type, [])
+        all_fields = generic_fields + content_specific
         
         for field in all_fields:
             if field in data:
@@ -652,6 +675,80 @@ Return ONLY JSON with values or nulls for missing fields."""
         
         return validated
     
+    def _extract_structured_data(self, html: str) -> Dict:
+        """
+        Pre-parse JSON-LD and structured data from HTML before LLM extraction.
+        This is more reliable than asking LLM to parse JSON strings.
+        
+        Returns:
+            Dictionary with pre-extracted structured data
+        """
+        from bs4 import BeautifulSoup
+        import json as json_lib
+        
+        soup = BeautifulSoup(html, 'html.parser')
+        structured_data = {}
+        
+        # Extract JSON-LD
+        scripts = soup.find_all('script', type='application/ld+json')
+        for script in scripts:
+            if script.string:
+                try:
+                    data = json_lib.loads(script.string)
+                    
+                    # For TripAdvisor Restaurant/FoodEstablishment schema
+                    if isinstance(data, dict) and data.get('@type') in ['Restaurant', 'FoodEstablishment']:
+                        # Extract rating
+                        if 'aggregateRating' in data:
+                            rating_data = data['aggregateRating']
+                            structured_data['rating'] = rating_data.get('ratingValue')
+                            structured_data['number_of_reviews'] = rating_data.get('reviewCount')
+                        
+                        # Extract phone
+                        if 'telephone' in data:
+                            structured_data['contact_phone'] = data['telephone']
+                        
+                        # Extract cuisine
+                        if 'servesCuisine' in data:
+                            cuisine = data['servesCuisine']
+                            if isinstance(cuisine, list):
+                                structured_data['cuisine_type'] = ', '.join(cuisine)
+                            else:
+                                structured_data['cuisine_type'] = cuisine
+                        
+                        # Extract address
+                        if 'address' in data:
+                            addr = data['address']
+                            if isinstance(addr, dict):
+                                street = addr.get('streetAddress', '')
+                                city = addr.get('addressLocality', '')
+                                postal = addr.get('postalCode', '')
+                                structured_data['location'] = f"{street}, {city}, {addr.get('addressCountry', {}).get('name', 'CR')} {postal}".strip()
+                        
+                        # Extract price range
+                        if 'priceRange' in data:
+                            price_range = data['priceRange']
+                            if '$$$$' in price_range:
+                                structured_data['price_range'] = 'fine_dining'
+                            elif '$$$' in price_range:
+                                structured_data['price_range'] = 'upscale'
+                            elif '$$' in price_range:
+                                structured_data['price_range'] = 'moderate'
+                            elif '$' in price_range:
+                                structured_data['price_range'] = 'budget'
+                        
+                        # Extract reservation info
+                        if 'acceptsReservations' in data:
+                            structured_data['reservation_required'] = data['acceptsReservations']
+                        
+                        logger.info(f"📊 Pre-extracted {len(structured_data)} fields from JSON-LD: {list(structured_data.keys())}")
+                
+                except Exception as e:
+                    logger.warning(f"Failed to parse JSON-LD: {e}")
+                    continue
+        
+        return structured_data
+    
     def extract_from_html(self, html: str, url: Optional[str] = None) -> Dict:
         """
         Extract data from HTML content based on content type.
@@ -666,6 +763,9 @@ Return ONLY JSON with values or nulls for missing fields."""
         Raises:
             ExtractionError: If extraction fails
         """
+        
+        # Pre-extract structured data (JSON-LD, schema.org)
+        pre_extracted = self._extract_structured_data(html)
         
         # Clean content
         content = self._clean_content(html)
@@ -707,6 +807,18 @@ Return ONLY JSON with values or nulls for missing fields."""
                 logger.error(f"Raw response was: {raw_json}")
                 raise ExtractionError("LLM returned invalid JSON")
             
+            # Merge pre-extracted structured data with LLM extraction
+            # Pre-extracted data takes precedence for fields where LLM returned null
+            logger.info(f"🔄 Merging {len(pre_extracted)} pre-extracted fields...")
+            for key, value in pre_extracted.items():
+                llm_value = extracted_data.get(key)
+                logger.info(f"   {key}: LLM={llm_value}, Pre-extracted={value}")
+                if value and llm_value in [None, '', []]:
+                    extracted_data[key] = value
+                    logger.info(f"   ✅ Using pre-extracted {key}: {value}")
+                else:
+                    logger.info(f"   ⏭️ Skipping {key} (LLM already has value: {llm_value})")
+            
             # Validate and clean
             validated_data = self._validate_extraction(extracted_data)
             
@@ -720,6 +832,26 @@ Return ONLY JSON with values or nulls for missing fields."""
                 content, 
                 html
             )
+            
+            # ========================================================================
+            # THIRD PASS (OPTIONAL): Enrich with web search results
+            # ========================================================================
+            # Use OpenAI web_search tool to add additional context from live internet
+            # This is especially useful for:
+            # - Real-time pricing/availability
+            # - Reviews and ratings
+            # - Updated hours/schedules
+            # - Additional details not on scraped page
+            web_search_service = get_web_search_service()
+            if web_search_service.enabled:
+                logger.info("🌐 [WEB SEARCH] Enriching data with web search...")
+                validated_data = web_search_service.enrich_property_data(
+                    property_data=validated_data,
+                    url=url,
+                    content_type=self.content_type
+                )
+            else:
+                logger.info("⚠️ [WEB SEARCH] Skipping web search (disabled)")
             
             # Add metadata
             validated_data['source_url'] = url

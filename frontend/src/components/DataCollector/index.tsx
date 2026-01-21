@@ -7,7 +7,7 @@ import { usePropertyData } from './hooks/usePropertyData';
 import { useContentTypes } from './hooks/useContentTypes';
 import { useIngestionStats } from './hooks/useIngestionStats';
 import { useTutorial } from './hooks/useTutorial';
-import { processProperty } from './services/ingestionService';
+import { processProperty, savePropertyViaIngestion } from './services/ingestionService';
 import { getCategoryFromUrl } from './utils/categoryUtils';
 import { validateUrl } from './utils/validators';
 
@@ -79,6 +79,7 @@ export const DataCollector: React.FC = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [extractedProperty, setExtractedProperty] = useState<any>(null);
   const [isTutorialActive, setIsTutorialActive] = useState(false);
+  const [isSavingToDb, setIsSavingToDb] = useState(false);
   
   // Use empty array for categories (not provided by hook)
   const categories: any[] = [];
@@ -199,6 +200,33 @@ export const DataCollector: React.FC = () => {
       loadHistory();
     } catch (err: any) {
       setError(err.message || 'Error al guardar la propiedad');
+    }
+  };
+
+  /**
+   * Handle saving property to PostgreSQL database
+   */
+  const handleSaveToDatabase = async () => {
+    if (!extractedProperty) return;
+
+    setIsSavingToDb(true);
+    try {
+      // Use the service layer instead of direct fetch
+      const savedProperty = await savePropertyViaIngestion(extractedProperty);
+      
+      console.log('✅ Propiedad guardada en BD:', savedProperty);
+      
+      // Reload history and stats after saving
+      loadHistory();
+      
+      // Show success message (optional)
+      alert('✅ Contenido guardado exitosamente en la base de datos');
+    } catch (err: any) {
+      console.error('❌ Error saving to database:', err);
+      setError(err.message || 'Error al guardar en la base de datos');
+      alert('❌ Error al guardar: ' + (err.message || 'Error desconocido'));
+    } finally {
+      setIsSavingToDb(false);
     }
   };
 
@@ -402,6 +430,7 @@ export const DataCollector: React.FC = () => {
               showRawData={showRawData}
               onToggleRawData={toggleRawData}
               onSave={handleSaveProperty}
+              onSaveToDatabase={handleSaveToDatabase}
               onExport={handleExportProperty}
               onNewSearch={() => {
                 setShowResults(false);
@@ -409,15 +438,9 @@ export const DataCollector: React.FC = () => {
                 setUrl('');
               }}
               isSaving={false}
+              isSavingToDb={isSavingToDb}
               tutorialStep={isTutorialActive ? tutorialStep || 0 : undefined}
             />
-          )}
-
-          {/* Content-Specific Template (when not showing raw data) */}
-          {showResults && extractedProperty && !showRawData && (
-            <div className="content-template-container">
-              {renderContentTemplate()}
-            </div>
           )}
         </main>
       </div>

@@ -94,13 +94,26 @@ class WebScraper:
         self.scrapfly_enabled = getattr(settings, 'SCRAPFLY_ENABLED', False) and SCRAPFLY_AVAILABLE
         self.scrapfly_api_key = getattr(settings, 'SCRAPFLY_API_KEY', None)
         
+        logger.info(f"🔧 Scrapfly SDK available: {SCRAPFLY_AVAILABLE}")
+        logger.info(f"🔧 Scrapfly enabled in settings: {getattr(settings, 'SCRAPFLY_ENABLED', False)}")
+        logger.info(f"🔧 Scrapfly API key configured: {bool(self.scrapfly_api_key)}")
+        logger.info(f"🔧 Scrapfly API key length: {len(self.scrapfly_api_key) if self.scrapfly_api_key else 0}")
+        
         if self.scrapfly_enabled and self.scrapfly_api_key:
-            self.scrapfly_client = ScrapflyClient(key=self.scrapfly_api_key)
-            logger.info("🚀 Scrapfly enabled - Anti-bot bypass ready")
+            try:
+                self.scrapfly_client = ScrapflyClient(key=self.scrapfly_api_key)
+                logger.info("🚀 Scrapfly client initialized successfully")
+            except Exception as e:
+                logger.error(f"❌ Failed to initialize Scrapfly client: {e}")
+                self.scrapfly_client = None
         else:
             self.scrapfly_client = None
             if not SCRAPFLY_AVAILABLE:
                 logger.info("⚠️ Scrapfly SDK not available - install with: pip install scrapfly-sdk")
+            elif not self.scrapfly_enabled:
+                logger.info("⚠️ Scrapfly disabled in settings")
+            elif not self.scrapfly_api_key:
+                logger.info("⚠️ Scrapfly API key not configured")
         
         # Proxy configuration (fallback for Cloudflare-protected sites)
         self.residential_proxy = getattr(settings, 'RESIDENTIAL_PROXY_URL', None)
@@ -364,6 +377,35 @@ class WebScraper:
                 await page.evaluate(f'window.scrollTo(0, {random.randint(100, 300)})')
                 await asyncio.sleep(random.uniform(1, 2))
                 
+                # Check for DataDome CAPTCHA
+                content = await page.content()
+                if 'captcha-delivery.com' in content or 'DataDome' in content:
+                    logger.warning("⚠️ DataDome CAPTCHA detected - attempting to bypass...")
+                    
+                    # Wait longer for potential auto-solve
+                    await asyncio.sleep(random.uniform(5, 8))
+                    
+                    # Try random mouse movements and clicks
+                    for _ in range(3):
+                        x = random.randint(200, 1700)
+                        y = random.randint(200, 900)
+                        await page.mouse.move(x, y, steps=random.randint(10, 30))
+                        await asyncio.sleep(random.uniform(0.3, 0.8))
+                    
+                    # Scroll more to simulate reading
+                    for scroll_pos in [300, 600, 400, 200]:
+                        await page.evaluate(f'window.scrollTo(0, {scroll_pos})')
+                        await asyncio.sleep(random.uniform(1, 2))
+                    
+                    # Wait for CAPTCHA to potentially resolve
+                    await asyncio.sleep(random.uniform(3, 5))
+                    
+                    # Check again
+                    content = await page.content()
+                    if 'captcha-delivery.com' in content:
+                        logger.error("❌ DataDome CAPTCHA still present - cannot bypass")
+                        # Try to get what we can
+                
                 # Wait for network to be idle (if not already)
                 try:
                     await page.wait_for_load_state('networkidle', timeout=15000)
@@ -581,6 +623,7 @@ class WebScraper:
     async def scrape(self, url: str, headless: bool = True) -> Dict[str, any]:
         """
         Main scrape method - automatically chooses best approach.
+        Smart fallback strategy: httpx (free) → Playwright (free) → Scrapfly (paid)
         
         Args:
             url: URL to scrape
@@ -609,29 +652,73 @@ class WebScraper:
         import time
         self.last_request_time[domain] = time.time()
         
-        # Choose scraping method based on site requirements
-        # Priority: Scrapfly > Playwright > httpx
+        logger.info(f"🔍 [SCRAPE START] URL: {url}")
         
-        logger.info(f"🔍 [SCRAPE DECISION] Starting method selection for: {url}")
+        # SMART FALLBACK STRATEGY:
+        # 1️⃣ Try httpx first (fast, free, works for 70% of sites)
+        # 2️⃣ Fallback to Playwright if blocked/failed (slower, free, works for 90% of sites)
+        # 3️⃣ Fallback to Scrapfly if still blocked (paid, works for 99% of sites)
         
-        if self._should_use_scrapfly(url):
-            # Use Scrapfly for Cloudflare-protected sites
-            logger.info(f"✅ [DECISION] Using Scrapfly for Cloudflare bypass: {url}")
-            result = await self._scrape_with_scrapfly(url)
-        elif await self._should_use_playwright(url):
-            # Use Playwright for JS-heavy sites
-            logger.info(f"✅ [DECISION] Using Playwright for JS rendering: {url}")
+        result = None
+        errors = []
+        
+        # STEP 1: Try httpx first (fast, free)
+        logger.info(f"🚀 [ATTEMPT 1/3] Trying httpx (free, fast)...")
+        try:
+            result = await self._scrape_with_httpx(url)
+            
+            # Validate result has meaningful content
+            if len(result.get('text', '')) < 200:
+                raise ScraperError("Content too short (< 200 chars) - likely blocked")
+            if 'cloudflare' in result.get('text', '').lower()[:500]:
+                raise ScraperError("Cloudflare challenge detected")
+            if 'access denied' in result.get('text', '').lower()[:500]:
+                raise ScraperError("Access denied detected")
+            
+            logger.info(f"✅ [SUCCESS] httpx worked! Content length: {len(result['text'])} chars")
+            return result
+            
+        except Exception as e:
+            error_msg = f"httpx failed: {str(e)}"
+            errors.append(error_msg)
+            logger.warning(f"⚠️ [ATTEMPT 1/3 FAILED] {error_msg}")
+        
+        # STEP 2: Fallback to Playwright (free, more powerful)
+        logger.info(f"🚀 [ATTEMPT 2/3] Trying Playwright (free, JS rendering)...")
+        try:
             result = await self._scrape_with_playwright(url, headless=headless)
-        else:
-            # Try httpx first, fallback to Playwright if fails
-            logger.info(f"✅ [DECISION] Trying httpx first (simple scraping): {url}")
-            try:
-                result = await self._scrape_with_httpx(url)
-            except ScraperError:
-                logger.info(f"⚠️ [FALLBACK] httpx failed, falling back to Playwright: {url}")
-                result = await self._scrape_with_playwright(url, headless=headless)
+            
+            # Validate result
+            if len(result.get('text', '')) < 200:
+                raise ScraperError("Content too short (< 200 chars) - likely blocked")
+            
+            logger.info(f"✅ [SUCCESS] Playwright worked! Content length: {len(result['text'])} chars")
+            return result
+            
+        except Exception as e:
+            error_msg = f"Playwright failed: {str(e)}"
+            errors.append(error_msg)
+            logger.warning(f"⚠️ [ATTEMPT 2/3 FAILED] {error_msg}")
         
-        return result
+        # STEP 3: Last resort - Scrapfly (paid, most powerful)
+        if self._should_use_scrapfly(url):
+            logger.info(f"🚀 [ATTEMPT 3/3] Trying Scrapfly (PAID, anti-bot bypass)...")
+            try:
+                result = await self._scrape_with_scrapfly(url)
+                logger.info(f"✅ [SUCCESS] Scrapfly worked! Content length: {len(result['text'])} chars")
+                return result
+            except Exception as e:
+                error_msg = f"Scrapfly failed: {str(e)}"
+                errors.append(error_msg)
+                logger.error(f"❌ [ATTEMPT 3/3 FAILED] {error_msg}")
+        else:
+            logger.warning(f"⚠️ [SKIP] Scrapfly not available (disabled or no API key)")
+            errors.append("Scrapfly not configured")
+        
+        # All methods failed
+        logger.error(f"❌ [ALL METHODS FAILED] Could not scrape {url}")
+        logger.error(f"❌ Errors encountered: {' | '.join(errors)}")
+        raise ScraperError(f"All scraping methods failed for {url}: {' | '.join(errors)}")
     
     def scrape_sync(self, url: str, headless: bool = True) -> Dict[str, any]:
         """Synchronous wrapper for scrape method."""

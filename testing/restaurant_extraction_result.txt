@@ -1,0 +1,139 @@
+================================================================================
+RESULTADO DE EXTRACCIÓN DEL HTML
+================================================================================
+
+URL: https://www.tripadvisor.com/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html
+Confianza: 0.9
+Razonamiento: N/A
+
+CAMPOS EXTRAÍDOS:
+--------------------------------------------------------------------------------
+
+price_details:
+{'range': None, 'appetizers_range': None, 'mains_range': None, 'desserts_range': None, 'drinks_range': None, 'note': None}
+
+property_name:
+Amana
+
+property_type:
+Latin, International, Contemporary, Costa Rican
+
+location:
+Avenida 9, 125m oeste de Fresh Market Escalante, San Jose, CR 10101
+
+restaurant_name:
+Amana
+
+cuisine_type:
+Latin, International, Contemporary, Costa Rican
+
+price_range:
+moderate
+
+field_confidence:
+{'restaurant_name': 'name: "Amana"', 'cuisine': 'servesCuisine: ["Latin", "International", "Contemporary", "Costa Rican"]', 'price_range': 'priceRange: "$$ - $$$"', 'price': 'priceRange: "$$ - $$$"', 'location': 'address: { streetAddress: "Avenida 9, 125m oeste de Fresh Market Escalante", addressLocality: "San Jose", postalCode: "10101" }', 'dishes': None, 'atmosphere': None, 'hours': 'openingHoursSpecification: [{ dayOfWeek: "Sunday", opens: "12:00:00", closes: "16:00:00" }, { dayOfWeek: "Tuesday", opens: "18:00:00", closes: "22:00:00" }, { dayOfWeek: "Wednesday", opens: "18:00:00", closes: "22:00:00" }, { dayOfWeek: "Thursday", opens: "12:00:00", closes: "16:00:00" }, { dayOfWeek: "Thursday", opens: "18:00:00", closes: "22:00:00" }, { dayOfWeek: "Friday", opens: "12:00:00", closes: "16:00:00" }, { dayOfWeek: "Friday", opens: "18:00:00", closes: "23:00:00" }, { dayOfWeek: "Saturday", opens: "12:00:00", closes: "16:00:00" }, { dayOfWeek: "Saturday", opens: "18:00:00", closes: "23:00:00" }]', 'reservations': 'acceptsReservations: true', 'dietary': None, 'dress_code': None, 'contact': 'telephone: "+506 6143 6871"'}
+
+extracted_at:
+2026-01-20 21:23:16.799876+00:00
+
+tokens_used:
+3617
+
+opening_hours:
+{'Sunday': '12:00 - 16:00', 'Tuesday': '18:00 - 22:00', 'Wednesday': '18:00 - 22:00', 'Thursday': ['12:00 - 16:00', '18:00 - 22:00'], 'Friday': ['12:00 - 16:00', '18:00 - 23:00'], 'Saturday': ['12:00 - 16:00', '18:00 - 23:00']}
+
+reservation_required:
+True
+
+web_search_context:
+Here’s the latest information on the restaurant **Amana**, located at Avenida 9, 125 m west of Fresh Market, Barrio Escalante, San José, CR 10101:
+
+---
+
+**Hours of Operation**
+- Lunch: Tuesday through Saturday, 12:00 p.m. – 4:00 p.m. ([opentable.com](https://www.opentable.com/r/amana-san-jose-1160?utm_source=openai))  
+- Dinner:  
+  - Tuesday to Thursday: 6:00 p.m. – 10:00 p.m.  
+  - Friday and Saturday: 6:00 p.m. – 11:00 p.m. ([opentable.com](https://www.opentable.com/r/amana-san-jose-1160?utm_source=openai))  
+- Closed on Sundays and Mondays ([tripadvisor.com](https://www.tripadvisor.com/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html?utm_source=openai))  
+
+---
+
+**Menu Highlights**
+Amana offers a contemporary Latin-American menu that changes periodically. The most recent update to their main menu was on September 25, 2025 ([opentable.com](https://www.opentable.com/r/amana-san-jose-1160?utm_source=openai)). Notable dishes include:
+
+*Entrées (Entradas):*  
+- Guanábana ceviche (v): CRC 5,500  
+- Pan al vapor (steamed bun): CRC 6,000  
+- Calamar y papa: CRC 6,800  
+- Tiradito con ají y uchuva: CRC 7,500  
+- Arancinis (v): CRC 8,000 ([opentable.com](https://www.opentable.com/r/amana-san-jose-1160?utm_source=openai))  
+
+*Mains (Fuertes):*  
+- Brócoli y hummus (v): CRC 7,500  
+- Cerdo crujiente (crispy pork): CRC 9,500  
+- Dorado al pastor: CRC 11,500  
+- Pulpo y jaibas (octopus & crab): CRC 14,500  
+- Risotto de entraña: CRC 15,500 ([opentable.com](https://www.opentable.com/r/amana-san-jose-1160?utm_source=openai))  
+
+*Desserts:*  
+- Cas y dulce de leche: CRC 5,000  
+- Seasonal dessert (price varies) ([opentable.com](https://www.opentable.com/r/amana-san-jose-1160?utm_source=openai))  
+
+*Cocktails:*  
+A creative cocktail list includes drinks such as Papaya de Celaya (CRC 6,000), Amana Paloma (CRC 5,800), Garden Highball (CRC 5,600), Fresco Pisco Sour (CRC 5,800), Gimlet de cas (CRC 5,800), among others ([opentable.com](https://www.opentable.com/r/amana-san-jose-1160?utm_source=openai)).
+
+---
+
+**Special Experience: Chef’s Table**
+Amana offers an exclusive **Chef’s Table** tasting menu (seven courses) available **Tuesday through Saturday evenings** between 6:30 p.m. and 8:30 p.m., with a maximum of 8 people per night.  
+- Cost: USD 88 per person (approx. CRC 44,000), optional wine pairing for CRC 16,000, with a required deposit of CRC 22,000 ([opentable.com](https://www.opentable.com/r/amana-san-jose-1160?utm_source=openai)).  
+
+---
+
+**Reviews & Ambiance**
+- **OpenTable rating**: Approximately 4.9 / 5 from around 120 reviews ([opentable.com](https://www.opentable.com/r/amana-san-jose-1160?avt=eyJ2IjoyLCJtIjoxLCJwIjowLCJzIjowLCJuIjowfQ&corrid=0dda7eb5-91db-4826-b95f-84d5c06f9894&originId=0dda7eb5-91db-4826-b95f-84d5c06f9894&utm_source=openai)).  
+- **Tripadvisor and other sources** highlight Amana's inventive menu, attentive service, and intimate atmosphere:
+  - Reviewers praise the flavor combinations (such as Asian influences and local ingredients), creative dishes such as octopus, arancinis, guanábana ceviche, and the risotto, and note the excellent cocktails ([top-rated.online](https://www.top-rated.online/cities/CARMEN/place/p/11875592/Amana?utm_source=openai)).
+  - The ambiance is described as cozy and perfect for dates or special occasions ([top-rated.online](https://www.top-rated.online/cities/CARMEN/place/p/11875592/Amana?utm_source=openai)).
+
+---
+
+**Summary Snapshot**
+
+- Location: Avenida 9, 125 m west of Fresh Market, Barrio Escalante, San José, CR 10101  
+- Hours: Tue–Sat Lunch (12 p.m.–4 p.m.), Tue–Thu Dinner (6 p.m.–10 p.m.), Fri–Sat Dinner (6 p.m.–11 p.m.); closed Sun & Mon  
+- Menu: Contemporary Latin cuisine, updated September 2025 — appetizers ~CRC 5,500–8,000; mains ~CRC 7,500–15,500  
+- Cocktails: Creative cocktails CRC 5,600–6,500 range  
+- Chef’s Table: 7‑course, Tue–Sat evenings, USD 88 (~CRC 44,000), with optional wine pairing  
+- Reviews: Excellent ratings (~4.9), praised for food, service, ambiance
+
+---
+
+Let me know if you'd like help with reservations, menu translations, or exploring similar restaurants in San José!
+
+web_search_sources:
+['https://www.opentable.com/r/amana-san-jose-1160', 'https://triptap.com/places/cr/san-jos/san-jose/amana-t0593930', 'https://www.opentable.com/r/amana-san-jose-1160?avt=eyJ2IjoyLCJtIjoxLCJwIjowLCJzIjowLCJuIjowfQ&corrid=0dda7eb5-91db-4826-b95f-84d5c06f9894&originId=0dda7eb5-91db-4826-b95f-84d5c06f9894', 'https://www.top-rated.online/cities/CARMEN/place/p/11875592/Amana', 'https://www.opentable.com/r/amana-san-jose-1160?avt=eyJ2IjoyLCJtIjoxLCJwIjowLCJzIjowLCJuIjowfQ&corrid=830a1bf4-84cc-4185-96e2-0014d91d8f98&originId=830a1bf4-84cc-4185-96e2-0014d91d8f98', 'https://www.opentable.com/r/amana-san-jose-1160?avt=eyJ2IjoyLCJtIjoxLCJwIjowLCJzIjowLCJuIjowfQ&corrid=d9ee3a2b-7eb0-4c0f-9f11-ae6b4b65d619&originId=d9ee3a2b-7eb0-4c0f-9f11-ae6b4b65d619', 'https://triptap.com/places/cr/san-jose/san-jose/amana-t0134f0c', 'https://crhoy.com/amana/', 'https://www.tripadvisor.com/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html', 'https://www.tripadvisor.co/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html', 'https://www.tripadvisor.es/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html', 'https://www.opentable.com/r/amana-san-jose?corrid=f183cd6d-b885-4d59-8060-d51c9c7072c5', 'https://triptap.com/places/cr/san-jos/san-jose/amana-t0593930?utm_source=openai', 'https://triptap.com/places/cr/san-jose/san-jose/amana-t0134f0c?utm_source=openai', 'https://www.opentable.com/r/amana-san-jose-1160?avt=eyJ2IjoyLCJtIjoxLCJwIjowLCJzIjowLCJuIjowfQ&corrid=830a1bf4-84cc-4185-96e2-0014d91d8f98&originId=830a1bf4-84cc-4185-96e2-0014d91d8f98&utm_source=openai', 'https://www.opentable.com/r/amana-san-jose-1160?avt=eyJ2IjoyLCJtIjoxLCJwIjowLCJzIjowLCJuIjowfQ&corrid=d9ee3a2b-7eb0-4c0f-9f11-ae6b4b65d619&originId=d9ee3a2b-7eb0-4c0f-9f11-ae6b4b65d619&utm_source=openai', 'https://www.opentable.com/r/amana-san-jose?corrid=f183cd6d-b885-4d59-8060-d51c9c7072c5&utm_source=openai', 'https://crhoy.com/amana/?utm_source=openai', 'https://www.tripadvisor.co/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html?utm_source=openai', 'https://www.tripadvisor.es/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html?utm_source=openai']
+
+web_search_citations:
+[{'url': 'https://www.opentable.com/r/amana-san-jose-1160?utm_source=openai', 'title': 'Restaurante Amana - San José, San Jose | OpenTable', 'start_index': 234, 'end_index': 318}, {'url': 'https://www.opentable.com/r/amana-san-jose-1160?utm_source=openai', 'title': 'Restaurante Amana - San José, San Jose | OpenTable', 'start_index': 431, 'end_index': 515}, {'url': 'https://www.tripadvisor.com/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html?utm_source=openai', 'title': 'AMANA, San Jose - Menu, Prices, Restaurant Reviews & Reservations - Tripadvisor', 'start_index': 550, 'end_index': 716}, {'url': 'https://www.opentable.com/r/amana-san-jose-1160?utm_source=openai', 'title': 'Restaurante Amana - San José, San Jose | OpenTable', 'start_index': 888, 'end_index': 972}, {'url': 'https://www.opentable.com/r/amana-san-jose-1160?utm_source=openai', 'title': 'Restaurante Amana - San José, San Jose | OpenTable', 'start_index': 1200, 'end_index': 1284}, {'url': 'https://www.opentable.com/r/amana-san-jose-1160?utm_source=openai', 'title': 'Restaurante Amana - San José, San Jose | OpenTable', 'start_index': 1504, 'end_index': 1588}, {'url': 'https://www.opentable.com/r/amana-san-jose-1160?utm_source=openai', 'title': 'Restaurante Amana - San José, San Jose | OpenTable', 'start_index': 1676, 'end_index': 1760}, {'url': 'https://www.opentable.com/r/amana-san-jose-1160?utm_source=openai', 'title': 'Restaurante Amana - San José, San Jose | OpenTable', 'start_index': 1984, 'end_index': 2068}, {'url': 'https://www.opentable.com/r/amana-san-jose-1160?utm_source=openai', 'title': 'Restaurante Amana - San José, San Jose | OpenTable', 'start_index': 2430, 'end_index': 2514}, {'url': 'https://www.opentable.com/r/amana-san-jose-1160?avt=eyJ2IjoyLCJtIjoxLCJwIjowLCJzIjowLCJuIjowfQ&corrid=0dda7eb5-91db-4826-b95f-84d5c06f9894&originId=0dda7eb5-91db-4826-b95f-84d5c06f9894&utm_source=openai', 'title': 'Amana Restaurant - San José, San Jose | OpenTable', 'start_index': 2617, 'end_index': 2838}, {'url': 'https://www.top-rated.online/cities/CARMEN/place/p/11875592/Amana?utm_source=openai', 'title': 'Amana Reviews - Restaurant in CARMEN, Costa Rica | Top-Rated.Online', 'start_index': 3164, 'end_index': 3269}, {'url': 'https://www.top-rated.online/cities/CARMEN/place/p/11875592/Amana?utm_source=openai', 'title': 'Amana Reviews - Restaurant in CARMEN, Costa Rica | Top-Rated.Online', 'start_index': 3352, 'end_index': 3457}]
+
+source_url:
+https://www.tripadvisor.com/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html
+
+raw_html:
+<html lang="en-US"><head><link rel="icon" id="favicon" type="image/x-icon" href="https://static.tacdn.com/assets/s/6b5096f1.ico"><link rel="icon" type="image/svg+xml" href="https://static.tacdn.com/assets/s/3ba4aeda.svg"><link rel="apple-touch-icon" sizes="180x180" href="https://static.tacdn.com/assets/s/12951248.png"><link rel="mask-icon" sizes="any" color="#00210c" href="https://static.tacdn.com/assets/s/4f134e39.svg"><meta name="theme-color" content="#00eb5b"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="format-detection" content="telephone=no"><meta property="al:ios:app_name" content="TripAdvisor"><meta property="al:ios:app_store_id" content="284876795"><meta property="twitter:app:id:ipad" name="twitter:app:id:ipad" content="284876795"><meta property="twitter:app:id:iphone" name="twitter:app:id:iphone" content="284876795"><meta property="al:ios:url" content="tripadvisor://www.tripadvisor.com/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html?m=33762"><meta property="twitter:app:url:ipad" name="twitter:app:url:ipad" content="tripadvisor://www.tripadvisor.com/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html?m=33762"><meta property="twitter:app:url:iphone" name="twitter:app:url:iphone" content="tripadvisor://www.tripadvisor.com/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html?m=33762"><meta name="apple-itunes-app" content="app-id=-1"><script type="application/ld+json">{"@context":"https:\u002F\u002Fschema.org","@graph":[{"@type":"Organization","name":"Tripadvisor","url":"https:\u002F\u002Fwww.tripadvisor.com\u002F","logo":"https:\u002F\u002Fstatic.tacdn.com\u002Fimg2\u002Fbrand_refresh\u002FTripadvisor_logoset_solid_green.svg","sameAs":["https:\u002F\u002Fwww.facebook.com\u002FTripadvisor","https:\u002F\u002Ftwitter.com\u002FTripadvisor","https:\u002F\u002Finstagram.com\u002Ftripadvisor\u002F","https:\u002F\u002Fwww.linkedin.com\u002Fcompany\u002Ftripadvisor"]},{"@type":"WebSite","name":"Tripadvisor","url":"https:\u002F\u002Fwww.tripadvisor.com\u002F","potentialAction":{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https:\u002F\u002Fwww.tripadvisor.com\u002FSearch?q={search_term_string}"},"query":"required name=search_term_string"}}]}</script><meta property="fb:pages" content="5863091683"><meta property="fb:pages" content="329182043776593"><meta name="twitter:widgets:csp" content="on"><script nonce="">window.performance&&performance.mark&&performance.getEntriesByType&&0===performance.getEntriesByType("visibility-state").length&&(performance.mark("visible"===document.visibilityState?"visible":"hidden"),document.addEventListener&&document.addEventListener("visibilitychange",function(){performance.mark("visible"===document.visibilityState?"visible":"hidden")},!1));</script><title>AMANA, San Jose - Menu, Prices, Restaurant Reviews &amp; Reservations - Tripadvisor</title><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><meta name="description" content="Reserve a table at Amana, San Jose on Tripadvisor: See 45 unbiased reviews of Amana, rated 4.8 of 5 on Tripadvisor and ranked #63 of 720 restaurants in San Jose."><meta name="robots" content="max-image-preview:large"><link rel="canonical" href="https://www.tripadvisor.com/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="en" href="https://www.tripadvisor.com/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="en-GB" href="https://www.tripadvisor.co.uk/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="en-CA" href="https://www.tripadvisor.ca/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="fr-CA" href="https://fr.tripadvisor.ca/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="it" href="https://www.tripadvisor.it/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="es" href="https://www.tripadvisor.es/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="de" href="https://www.tripadvisor.de/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="fr" href="https://www.tripadvisor.fr/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="ja" href="https://www.tripadvisor.jp/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="zh-Hans" href="https://cn.tripadvisor.com/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="en-IN" href="https://www.tripadvisor.in/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="sv" href="https://www.tripadvisor.se/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="nl" href="https://www.tripadvisor.nl/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="pt" href="https://www.tripadvisor.com.br/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="tr" href="https://www.tripadvisor.com.tr/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="da" href="https://www.tripadvisor.dk/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="es-MX" href="https://www.tripadvisor.com.mx/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="en-IE" href="https://www.tripadvisor.ie/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="ar" href="https://ar.tripadvisor.com/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="ar-EG" href="https://www.tripadvisor.com.eg/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="de-AT" href="https://www.tripadvisor.at/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="el" href="https://www.tripadvisor.com.gr/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="en-AU" href="https://www.tripadvisor.com.au/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="en-MY" href="https://www.tripadvisor.com.my/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="en-NZ" href="https://www.tripadvisor.co.nz/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="en-PH" href="https://www.tripadvisor.com.ph/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="en-SG" href="https://www.tripadvisor.com.sg/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="en-ZA" href="https://www.tripadvisor.co.za/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="es-AR" href="https://www.tripadvisor.com.ar/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="es-CL" href="https://www.tripadvisor.cl/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="es-CO" href="https://www.tripadvisor.co/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="es-PE" href="https://www.tripadvisor.com.pe/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="es-VE" href="https://www.tripadvisor.com.ve/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="id" href="https://www.tripadvisor.co.id/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="he" href="https://www.tripadvisor.co.il/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="ko" href="https://www.tripadvisor.co.kr/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="nb" href="https://no.tripadvisor.com/Restaurant_Review-g309293-d26501860-Reviews-Amana-San_Jose_San_Jose_Metro_Province_of_San_Jose.html"><link rel="alternate" hreflang="pt-PT"
+
+content_type:
+restaurant
+
+page_type:
+specific
+
+
+CAMPOS NULL/VACÍOS:
+--------------------------------------------------------------------------------
+  - description
+  - dress_code
+  - date_listed
+  - amenities

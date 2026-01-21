@@ -1,0 +1,114 @@
+/* SectionCard Component Styles */
+
+.section-card {
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border: 2px solid rgba(102, 126, 234, 0.1);
+  border-radius: 12px;
+  margin-bottom: 20px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.section-card:hover {
+  border-color: rgba(102, 126, 234, 0.2);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.08);
+}
+
+.section-card.collapsed {
+  background: #ffffff;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 24px;
+  border-bottom: 2px solid rgba(102, 126, 234, 0.08);
+  transition: all 0.2s ease;
+}
+
+.section-header.clickable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.section-header.clickable:hover {
+  background: rgba(102, 126, 234, 0.04);
+}
+
+.section-header.clickable:active {
+  background: rgba(102, 126, 234, 0.08);
+}
+
+.section-card.collapsed .section-header {
+  border-bottom: none;
+}
+
+.section-icon {
+  font-size: 24px;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.section-title {
+  flex: 1;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.collapse-indicator {
+  font-size: 14px;
+  color: #667eea;
+  transition: transform 0.3s ease;
+  font-weight: bold;
+  margin-left: auto;
+}
+
+.section-card.collapsed .collapse-indicator {
+  transform: rotate(0deg);
+}
+
+.section-card:not(.collapsed) .collapse-indicator {
+  transform: rotate(0deg);
+}
+
+.section-content {
+  padding: 24px;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .section-header {
+    padding: 16px 20px;
+  }
+
+  .section-content {
+    padding: 20px;
+  }
+
+  .section-icon {
+    font-size: 20px;
+  }
+
+  .section-title {
+    font-size: 16px;
+  }
+}

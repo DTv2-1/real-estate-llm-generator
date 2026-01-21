@@ -11,7 +11,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 from django.http import StreamingHttpResponse
 
-from core.llm.rag import RAGPipeline, RAGError
+from core.llm.chatbot.rag import RAGPipeline, RAGError
 from apps.conversations.models import Conversation, Message
 
 logger = logging.getLogger(__name__)

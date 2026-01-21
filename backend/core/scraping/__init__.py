@@ -5,29 +5,22 @@ This module provides tools for scraping property data from real estate websites.
 
 Key components:
 - WebScraper: Main scraper class using Scrapfly
-- Extractors: Site-specific extraction rules for different websites
-- get_extractor(): Auto-detect and return appropriate extractor for a URL
+- Extractors: Site-specific extraction rules for different websites (TODO: migrate)
+- get_extractor(): Auto-detect and return appropriate extractor for a URL (TODO: migrate)
 
 Usage:
-    from core.scraping import WebScraper, get_extractor
+    from core.scraping import WebScraper, scrape_url
     
     # Scrape a URL
-    scraper = WebScraper()
-    result = scraper.scrape(url)
-    
-    # Extract property data
-    extractor = get_extractor(url)
-    property_data = extractor.extract(result['html'])
+    result = scrape_url(url)
 """
 
 from .scraper import WebScraper, scrape_url, ScraperError
-from .extractors import get_extractor, EXTRACTORS, BaseExtractor
+# from .extractors import get_extractor, EXTRACTORS, BaseExtractor  # TODO: extractors.py missing
 
 __all__ = [
     'WebScraper',
     'scrape_url',
     'ScraperError',
-    'get_extractor',
-    'EXTRACTORS',
-    'BaseExtractor',
 ]
+

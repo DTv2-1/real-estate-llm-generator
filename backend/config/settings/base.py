@@ -267,6 +267,11 @@ OPENAI_EMBEDDING_MODEL = env('OPENAI_EMBEDDING_MODEL', default='text-embedding-3
 OPENAI_MAX_TOKENS = env.int('OPENAI_MAX_TOKENS', default=4000)
 OPENAI_TEMPERATURE = env.float('OPENAI_TEMPERATURE', default=0.3)
 
+# Web Search Configuration (OpenAI Responses API)
+WEB_SEARCH_ENABLED = env.bool('WEB_SEARCH_ENABLED', default=False)
+WEB_SEARCH_MODEL = env('WEB_SEARCH_MODEL', default='gpt-4o')
+WEB_SEARCH_COUNTRY = env('WEB_SEARCH_COUNTRY', default='CR')  # Costa Rica
+
 ANTHROPIC_API_KEY = env('ANTHROPIC_API_KEY', default='')
 ANTHROPIC_MODEL = env('ANTHROPIC_MODEL', default='claude-3-5-sonnet-20240620')
 ANTHROPIC_MAX_TOKENS = env.int('ANTHROPIC_MAX_TOKENS', default=4000)

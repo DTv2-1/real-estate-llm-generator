@@ -11,9 +11,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 
-from core.scraping.extractors import EXTRACTORS
 from core.llm.content_types import get_all_content_types
-from core.llm.embeddings import generate_property_embedding
+from core.llm.chatbot.embeddings import generate_property_embedding
 from apps.properties.models import Property
 from ..serializers import SupportedWebsiteSerializer
 from ..google_sheets import GoogleSheetsService
@@ -35,6 +34,7 @@ class SupportedWebsitesView(APIView):
         """Return list of supported websites."""
         
         # Define supported websites with their configurations
+        # All websites now use LLM-based extraction (no site-specific extractors)
         websites = [
             {
                 'id': 'brevitas',
@@ -42,7 +42,7 @@ class SupportedWebsitesView(APIView):
                 'url': 'https://brevitas.com',
                 'color': '#f59e0b',
                 'active': True,
-                'has_extractor': 'brevitas.com' in EXTRACTORS
+                'has_extractor': True  # LLM-based
             },
             {
                 'id': 'encuentra24',
@@ -50,7 +50,7 @@ class SupportedWebsitesView(APIView):
                 'url': 'https://encuentra24.com/costa-rica-en',
                 'color': '#10b981',
                 'active': True,
-                'has_extractor': 'encuentra24.com' in EXTRACTORS
+                'has_extractor': True  # LLM-based
             },
             {
                 'id': 'coldwellbanker',
@@ -58,7 +58,7 @@ class SupportedWebsitesView(APIView):
                 'url': 'https://www.coldwellbankercostarica.com',
                 'color': '#8b5cf6',
                 'active': True,
-                'has_extractor': 'coldwellbankercostarica.com' in EXTRACTORS
+                'has_extractor': True  # LLM-based
             },
             {
                 'id': 'other',
@@ -66,7 +66,7 @@ class SupportedWebsitesView(APIView):
                 'url': None,
                 'color': '#6b7280',
                 'active': True,
-                'has_extractor': False
+                'has_extractor': True  # LLM-based
             }
         ]
         
@@ -75,8 +75,8 @@ class SupportedWebsitesView(APIView):
         return Response({
             'status': 'success',
             'websites': serializer.data,
-            'total_extractors': len(EXTRACTORS),
-            'extractor_sites': list(EXTRACTORS.keys())
+            'extraction_method': 'llm_based',
+            'note': 'All websites use intelligent LLM-based extraction'
         }, status=status.HTTP_200_OK)
 
 

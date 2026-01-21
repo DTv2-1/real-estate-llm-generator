@@ -98,8 +98,10 @@ class IngestBatchView(APIView):
             for url in urls:
                 try:
                     scraped_data = scrape_url(url)
-                    extracted_data = extract_property_data(
-                        scraped_data.get('html', ''), 
+                    extracted_data = extract_content_data(
+                        content=scraped_data.get('html', ''),
+                        content_type='real_estate',
+                        page_type='specific',
                         url=url
                     )
                     if request.user.is_authenticated:

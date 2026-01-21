@@ -1,27 +1,31 @@
 /* RecentProperties Component - Professional Property Cards Grid */
 .recent-properties {
   margin-bottom: 32px;
+  padding: 24px;
+  background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+  border-radius: 16px;
 }
 
 .recent-properties-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
 }
 
 .recent-properties-title {
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 26px;
+  font-weight: 800;
   color: #1a202c;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  letter-spacing: -0.5px;
 }
 
-.recent-properties-title::before {
-  content: "🏠";
-  font-size: 26px;
+.title-icon {
+  font-size: 28px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
 .view-all-btn {
@@ -45,24 +49,43 @@
 
 .properties-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 28px;
 }
 
 .property-card {
   background: white;
-  border-radius: 12px;
+  border-radius: 16px;
   overflow: hidden;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
   border: 2px solid transparent;
+  position: relative;
+}
+
+.property-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.property-card:hover::before {
+  opacity: 1;
 }
 
 .property-card:hover {
   border-color: #667eea;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -5px rgba(102, 126, 234, 0.3), 0 10px 20px -5px rgba(0, 0, 0, 0.1);
+  transform: translateY(-6px) scale(1.01);
 }
 
 .property-card.selected {
@@ -70,76 +93,79 @@
   box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
 }
 
-.property-image {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.card-image-container {
+  display: none;
 }
 
-.property-image.placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 56px;
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.property-content {
-  padding: 20px;
-}
-
-.property-badge {
+.card-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
   display: inline-flex;
   align-items: center;
-  padding: 6px 12px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-radius: 20px;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  color: #667eea;
+  border-radius: 24px;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 12px;
+  letter-spacing: 0.8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 2px solid rgba(102, 126, 234, 0.2);
+  z-index: 1;
 }
 
-.property-title {
-  font-size: 16px;
+.card-content {
+  padding: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.card-title {
+  font-size: 17px;
   font-weight: 700;
   color: #1a202c;
-  margin-bottom: 10px;
+  margin-bottom: 14px;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   line-height: 1.5;
-  min-height: 48px;
+  min-height: 51px;
+  transition: color 0.2s ease;
 }
 
-.property-location {
-  font-size: 14px;
-  color: #718096;
-  margin-bottom: 14px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 500;
+.property-card:hover .card-title {
+  color: #667eea;
 }
 
-.property-location::before {
-  content: "📍";
-  font-size: 14px;
-}
-
-.property-price {
-  font-size: 22px;
-  font-weight: 800;
+.card-price {
+  font-size: 24px;
+  font-weight: 900;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
+  letter-spacing: -0.5px;
+}
+
+.card-location {
+  font-size: 14px;
+  color: #718096;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.location-icon {
+  font-size: 16px;
+  flex-shrink: 0;
 }
 
 .property-details {
