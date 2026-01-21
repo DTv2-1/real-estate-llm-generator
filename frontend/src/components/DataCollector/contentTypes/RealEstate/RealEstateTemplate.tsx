@@ -135,6 +135,78 @@ export const RealEstateTemplate: React.FC<RealEstateTemplateProps> = ({ property
           </div>
         )}
 
+        {/* Search Context & Filters */}
+        {(data.search_location || data.search_filters || data.total_results) && (
+          <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-lg border border-purple-200">
+            <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <span className="text-2xl">🔍</span>
+              Contexto de Búsqueda
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-700">
+              {data.search_location && (
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">📍</span>
+                  <span><strong>Ubicación:</strong> {data.search_location}</span>
+                </div>
+              )}
+              {data.total_results && (
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">📊</span>
+                  <span><strong>Resultados:</strong> {data.total_results.toLocaleString()} propiedades</span>
+                </div>
+              )}
+              {data.search_filters?.property_type && (
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">🏗️</span>
+                  <span><strong>Tipo:</strong> {data.search_filters.property_type}</span>
+                </div>
+              )}
+              {data.search_filters?.transaction_type && (
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">💼</span>
+                  <span><strong>Transacción:</strong> {data.search_filters.transaction_type}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Price Range Summary */}
+        {data.price_range_summary && (data.price_range_summary.lowest_usd || data.price_range_summary.highest_usd) && (
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <span className="text-2xl">💵</span>
+              Resumen de Precios
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {data.price_range_summary.lowest_usd && (
+                <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
+                  <p className="text-sm text-gray-600 mb-1">Más Bajo</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    ${data.price_range_summary.lowest_usd.toLocaleString()}
+                  </p>
+                </div>
+              )}
+              {data.price_range_summary.highest_usd && (
+                <div className="text-center p-4 bg-red-50 rounded-lg border border-red-200">
+                  <p className="text-sm text-gray-600 mb-1">Más Alto</p>
+                  <p className="text-2xl font-bold text-red-600">
+                    ${data.price_range_summary.highest_usd.toLocaleString()}
+                  </p>
+                </div>
+              )}
+              {data.price_range_summary.average_usd && (
+                <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <p className="text-sm text-gray-600 mb-1">Promedio</p>
+                  <p className="text-2xl font-bold text-blue-600">
+                    ${data.price_range_summary.average_usd.toLocaleString()}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Market Trends */}
         {data.market_trends && (
           <div className="bg-gradient-to-r from-orange-50 to-yellow-50 p-6 rounded-lg border border-orange-200">
@@ -144,6 +216,130 @@ export const RealEstateTemplate: React.FC<RealEstateTemplateProps> = ({ property
             </h3>
             <p className="text-gray-700 leading-relaxed">{data.market_trends}</p>
           </div>
+        )}
+
+        {/* Properties List */}
+        {data.properties && data.properties.length > 0 && (
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <span className="text-2xl">🏘️</span>
+              Propiedades Encontradas
+              <span className="ml-auto text-sm font-normal bg-blue-100 text-blue-700 px-3 py-1 rounded-full">
+                {data.properties.length} propiedades
+              </span>
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {data.properties.map((prop: any, index: number) => (
+                <div
+                  key={index}
+                  className="border border-gray-200 rounded-lg p-4 hover:shadow-xl transition-all hover:border-blue-400 bg-gradient-to-br from-white to-gray-50"
+                >
+                  {/* Property Title/Description */}
+                  <h4 className="font-bold text-gray-800 mb-3 text-base leading-snug line-clamp-2 min-h-[3rem]">
+                    {prop.description || prop.title || `Propiedad ${index + 1}`}
+                  </h4>
+                  
+                  {/* Price */}
+                  {prop.price_usd && (
+                    <div className="flex items-center gap-2 mb-3 text-green-600 font-bold text-xl bg-green-50 px-3 py-2 rounded-lg">
+                      <span>💰</span>
+                      <span>${prop.price_usd.toLocaleString()}</span>
+                    </div>
+                  )}
+                  
+                  {/* Property Details Grid */}
+                  <div className="space-y-2 text-sm">
+                    {/* Bedrooms */}
+                    {prop.bedrooms > 0 && (
+                      <div className="flex items-center gap-2 text-gray-700">
+                        <span>🛏️</span>
+                        <span className="font-medium">{prop.bedrooms} habitaciones</span>
+                      </div>
+                    )}
+                    
+                    {/* Bathrooms */}
+                    {prop.bathrooms > 0 && (
+                      <div className="flex items-center gap-2 text-gray-700">
+                        <span>🚿</span>
+                        <span className="font-medium">{prop.bathrooms} baños</span>
+                      </div>
+                    )}
+                    
+                    {/* Square Meters */}
+                    {prop.square_meters > 0 && (
+                      <div className="flex items-center gap-2 text-gray-700">
+                        <span>📐</span>
+                        <span className="font-medium">{prop.square_meters.toLocaleString()} m²</span>
+                      </div>
+                    )}
+                    
+                    {/* Amenities */}
+                    {prop.amenities && prop.amenities.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {prop.amenities.slice(0, 3).map((amenity: string, idx: number) => (
+                          <span
+                            key={idx}
+                            className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium"
+                          >
+                            {amenity}
+                          </span>
+                        ))}
+                        {prop.amenities.length > 3 && (
+                          <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
+                            +{prop.amenities.length - 3} más
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Web Search Context (Collapsible) */}
+        {data.web_search_context && (
+          <details className="bg-gray-50 rounded-lg border border-gray-200">
+            <summary className="cursor-pointer p-4 font-bold text-gray-800 hover:bg-gray-100 transition-colors flex items-center gap-2">
+              <span className="text-xl">🌐</span>
+              Información Adicional de Búsqueda Web
+              <span className="ml-auto text-sm font-normal text-gray-500">(Click para expandir)</span>
+            </summary>
+            <div className="p-4 pt-0 space-y-4">
+              <div className="bg-white p-4 rounded-md border border-gray-200">
+                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                  {data.web_search_context}
+                </p>
+              </div>
+              {data.web_search_sources && data.web_search_sources.length > 0 && (
+                <div>
+                  <h4 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                    <span>🔗</span>
+                    Fuentes ({data.web_search_sources.length})
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+                    {data.web_search_sources.slice(0, 10).map((source: string, idx: number) => (
+                      <a
+                        key={idx}
+                        href={source}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-blue-600 hover:text-blue-800 hover:underline truncate"
+                      >
+                        {source}
+                      </a>
+                    ))}
+                  </div>
+                  {data.web_search_sources.length > 10 && (
+                    <p className="text-xs text-gray-500 mt-2">
+                      ... y {data.web_search_sources.length - 10} fuentes más
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          </details>
         )}
 
         {/* Featured Properties */}

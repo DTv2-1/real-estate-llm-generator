@@ -137,7 +137,10 @@ class IngestionStatsView(APIView):
                     'bedrooms': prop.bedrooms,
                     'bathrooms': float(prop.bathrooms) if prop.bathrooms else None,
                     'source_website': prop.source_website or 'Desconocido',
-                    'created_at': prop.created_at.isoformat()
+                    'created_at': prop.created_at.isoformat(),
+                    'content_type': prop.content_type if hasattr(prop, 'content_type') else 'real-estate',
+                    'detected_content_type': prop.detected_content_type if hasattr(prop, 'detected_content_type') else None,
+                    'page_type': prop.page_type if hasattr(prop, 'page_type') else None,
                 }
                 for prop in recent_properties
             ]

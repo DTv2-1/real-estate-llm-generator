@@ -518,14 +518,74 @@ LOCAL_TIPS_PROMPT = """You are a local knowledge extraction specialist. Extract 
 **Instructions:**
 1. Extract ONLY information explicitly stated in the source text
 2. For each field, include an "evidence" field showing where you found the information
-3. Use null for any field not found in the source
-4. Normalize all data
+3. Use null for any field not found in the source (DO NOT force extraction if data is not present)
+4. Normalize all data - NO markdown symbols (**, *, _, #), NO emojis, NO bullets
 5. DO NOT invent or assume information
+6. Different page types (country guides, city guides, activity guides) will have different fields - extract what exists
+
+**CRITICAL EXTRACTION RULES:**
+
+**Rule 1 - TITLE EXTRACTION (HIGHEST PRIORITY):**
+Look for the article/page title in phrases like:
+- "titled *\"Best places to visit in Costa Rica\"*" → Extract: "Best places to visit in Costa Rica"
+- "article called Guide to San José" → Extract: "Guide to San José"
+- "page titled Costa Rica travel tips" → Extract: "Costa Rica travel tips"
+Clean ALL markdown: remove *, **, _, #, italics, bold, etc.
+
+**Rule 2-9 - DESTINATIONS COVERED (Structure if available):**
+If the content mentions multiple destinations/regions/neighborhoods, structure them as:
+
+⚠️ CRITICAL: Extract AT LEAST 8-12 destinations OR ALL destinations mentioned (whichever is MORE).
+DO NOT limit to only "top" destinations - include ALL mentioned places.
+
+For country/regional guides, extract EVERY place mentioned:
+- Main cities (capitals, major urban centers)
+- National parks and protected areas
+- Beach towns and coastal destinations
+- Mountain/highland regions
+- Cultural/historical sites
+- Adventure destinations
+- Wildlife viewing areas
+- Off-the-beaten-path locations
+
+For EACH destination extract:
+- name: Clean destination name (city, park, region)
+- highlights: 3-5 specific features/attractions (what makes it unique)
+- best_for: ONE category - adventure|nature|beach|culture|city|wildlife
+- activities: 3-5 specific activities available there
+
+Example: [
+  {{"name": "Manuel Antonio", "highlights": ["national park", "white sand beaches", "wildlife", "hiking"], "best_for": "beach", "activities": ["beach", "wildlife watching", "hiking", "snorkeling"]}},
+  {{"name": "Tortuguero", "highlights": ["sea turtles", "canal waterways", "jungle", "Caribbean coast"], "best_for": "nature", "activities": ["turtle watching", "boat tours", "kayaking", "wildlife"]}},
+  {{"name": "La Fortuna", "highlights": ["Arenal volcano", "hot springs", "waterfalls"], "best_for": "adventure", "activities": ["ziplining", "hot springs"]}},
+  // ... continue extracting ALL other destinations mentioned
+]
+
+⚠️ DO NOT skip destinations - extract comprehensively
+⚠️ DO NOT merge multiple places into one entry
+
+**Rule 10-12 - BUDGET GUIDE (Structure if available):**
+If budget/cost information is mentioned, structure as:
+- Extract price ranges for budget/mid_range/luxury categories if available
+- Include notes about what costs cover
+- Example: {{"budget": "30-50 USD/day", "mid_range": "75-150 USD/day", "luxury": "200+ USD/day", "notes": "Includes accommodation and meals"}}
+
+**Rule 13 - VISA INFO:** Extract visa requirements if mentioned (e.g., "90-day visa on arrival for most countries")
+
+**Rule 14 - LANGUAGE:** Extract language info if mentioned (e.g., "Spanish official, English in tourist areas")
+
+**Rule 15 - CURRENCY:** Extract currency info if mentioned (e.g., "Costa Rican Colón (CRC), USD accepted")
+
+**Rule 16 - RECOMMENDED DURATION:** Extract trip length suggestions if mentioned (e.g., "7-14 days ideal")
+
+**Rule 17 - SAFETY RATING:** Extract safety assessment if mentioned (e.g., "Generally safe, normal precautions")
+
+**Rule 18 - TRANSPORTATION TIPS:** Extract getting around info if mentioned (e.g., "Rental car recommended, buses available")
 
 **Required Output Format:**
 ```json
 {{
-  "tip_title": "string or null",
+  "tip_title": "string or null - PRIORITY: Extract from \"titled\", \"called\", \"article name\" phrases",
   "tip_title_evidence": "exact quote from source",
   "category": "safety|money|transportation|culture|weather|health|general or null",
   "category_evidence": "exact quote from source",
@@ -534,7 +594,7 @@ LOCAL_TIPS_PROMPT = """You are a local knowledge extraction specialist. Extract 
   "description": "string or null - EXTRACT THE COMPLETE AND FULL DESCRIPTION. Include all contextual information, explanations, and details. DO NOT truncate or summarize - capture the entire descriptive text available.",
   "practical_advice": ["array of specific tips"] or null,
   "advice_evidence": "exact quote from source",
-  "cost_estimate": "string or null (e.g., '$10-20 per day')",
+  "cost_estimate": "string or null (e.g., '30-50 USD/day')",
   "cost_evidence": "exact quote from source",
   "best_time": "string or null (e.g., 'dry season: December-April')",
   "time_evidence": "exact quote from source",
@@ -544,10 +604,44 @@ LOCAL_TIPS_PROMPT = """You are a local knowledge extraction specialist. Extract 
   "customs_evidence": "exact quote from source",
   "emergency_contacts": {{"police": "string", "ambulance": "string", "etc": "string"}} or null,
   "emergency_evidence": "exact quote from source",
+  "destinations_covered": [
+    {{
+      "name": "destination name",
+      "highlights": ["highlight 1", "highlight 2", "highlight 3"],
+      "best_for": "adventure|nature|beach|culture|city|wildlife",
+      "activities": ["activity 1", "activity 2"]
+    }}
+  ] or null,
+  "destinations_evidence": "exact quote from source",
+  "budget_guide": {{
+    "budget": "string (e.g., '30-50 USD/day')",
+    "mid_range": "string (e.g., '75-150 USD/day')",
+    "luxury": "string (e.g., '200+ USD/day')",
+    "notes": "string or null"
+  }} or null,
+  "budget_evidence": "exact quote from source",
+  "visa_info": "string or null",
+  "visa_evidence": "exact quote from source",
+  "language": "string or null",
+  "language_evidence": "exact quote from source",
+  "currency": "string or null",
+  "currency_evidence": "exact quote from source",
+  "recommended_duration": "string or null",
+  "duration_evidence": "exact quote from source",
+  "safety_rating": "string or null",
+  "safety_evidence": "exact quote from source",
+  "transportation_tips": "string or null",
+  "transportation_evidence": "exact quote from source",
   "extraction_confidence": number (0.0 to 1.0),
   "confidence_reasoning": "brief explanation of confidence score"
 }}
 ```
+
+**IMPORTANT:** 
+- Use null for fields not found with HIGH confidence (don't force extraction)
+- Different page types will have different fields - country guides have visa_info, city guides don't
+- Clean all markdown and formatting from extracted text
+- Structure destinations and budget as objects/arrays when data is available
 
 Now extract the local tips information from:
 
@@ -562,56 +656,62 @@ Return ONLY the JSON object."""
 # REAL ESTATE GUIDE EXTRACTION PROMPT
 # ============================================================================
 
-REAL_ESTATE_GUIDE_PROMPT = """You are a real estate market guide extraction specialist. This appears to be a GENERAL GUIDE page (not a single property), so extract overview information about the real estate market.
+REAL_ESTATE_GUIDE_PROMPT = """You are a real estate listing page extraction specialist. This is a GENERAL LISTING page showing multiple properties for sale or rent.
 
 **Instructions:**
-1. Extract general information about the real estate market and available properties
-2. DO NOT try to extract details of a single property (this is a guide/listing page)
-3. Focus on: destination, market overview, property types, price ranges, popular areas
+1. Extract information about the search/listing context (location, filters applied)
+2. Extract a list of ALL properties shown on the page with their key details
+3. Focus on: location context, property listings, price ranges, property types
 4. Use null for any field not found in the source
 
 **Required Output Format:**
 ```json
 {{
-  "page_type": "general_guide",
-  "destination": "string (e.g., 'Costa Rica Real Estate', 'Guanacaste Properties')",
-  "destination_evidence": "exact quote",
-  "overview": "string (general description of the real estate market)",
-  "overview_evidence": "exact quote",
-  "property_types_available": ["condo", "house", "land", "commercial", "farm", "etc"],
-  "types_evidence": "exact quote",
-  "price_range": {{
-    "min_usd": number or null,
-    "max_usd": number or null,
-    "typical_usd": number or null
+  "page_type": "listing",
+  "search_location": "string (e.g., 'San José, Costa Rica', 'Guanacaste', 'Nationwide')",
+  "location_evidence": "exact quote",
+  "search_filters": {{
+    "property_type": "string or null (e.g., 'houses', 'condos', 'all types')",
+    "transaction_type": "string or null (e.g., 'sale', 'rent', 'both')",
+    "price_min": number or null,
+    "price_max": number or null
   }},
-  "price_range_evidence": "exact quote",
-  "popular_areas": ["area 1", "area 2", "etc"],
-  "areas_evidence": "exact quote",
-  "market_trends": "string or null (description of current market conditions)",
-  "trends_evidence": "exact quote",
-  "featured_properties": [
+  "filters_evidence": "exact quote",
+  "total_results": number or null,
+  "results_evidence": "exact quote",
+  "properties": [
     {{
-      "name": "property name",
+      "title": "string",
       "price_usd": number or null,
-      "type": "string or null",
-      "highlight": "string (why it's featured)"
+      "location": "string",
+      "bedrooms": number or null,
+      "bathrooms": number or null,
+      "area_sqm": number or null,
+      "property_type": "string or null (e.g., 'house', 'condo', 'land')",
+      "key_features": ["feature 1", "feature 2"]
     }}
   ],
-  "featured_evidence": "exact quote",
-  "total_properties_mentioned": number or null,
-  "total_evidence": "exact quote",
-  "investment_tips": ["tip 1", "tip 2", "etc"],
-  "tips_evidence": "exact quote",
-  "legal_considerations": ["consideration 1", "consideration 2", "etc"],
-  "legal_evidence": "exact quote",
-  "featured_items_count": number or null,
+  "properties_evidence": "exact quote showing property listings",
+  "price_range_summary": {{
+    "lowest_usd": number or null,
+    "highest_usd": number or null,
+    "average_usd": number or null
+  }},
+  "popular_areas": ["area 1", "area 2"],
+  "areas_evidence": "exact quote",
   "extraction_confidence": number (0.0 to 1.0),
   "confidence_reasoning": "brief explanation"
 }}
 ```
 
-Now extract the real estate guide information from:
+**IMPORTANT EXTRACTION RULES:**
+- Extract ALL properties visible on the page (aim for at least 10-20 if available)
+- If a property detail is not shown, use null (don't guess)
+- For prices: convert to USD if shown in another currency
+- For areas: convert to square meters if shown in sq ft (1 sq ft = 0.092903 m²)
+- Focus on extracting actual data, not marketing text
+
+Now extract the listing information from:
 
 ---
 {content}

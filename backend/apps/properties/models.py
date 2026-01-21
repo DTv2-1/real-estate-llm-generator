@@ -681,3 +681,43 @@ class ContentGuide(models.Model):
     def featured_items_count(self):
         """Count of featured items."""
         return len(self.featured_items) if self.featured_items else 0
+
+
+# =============================================================================
+# NEW CONTENT MODELS (GENERAL & SPECIFIC)
+# =============================================================================
+
+# Import new content models
+from .models_content import (
+    BaseContent,
+    RealEstateGeneral,
+    RealEstateSpecific,
+    RestaurantGeneral,
+    RestaurantSpecific,
+    TourGeneral,
+    TourSpecific,
+    TransportationGeneral,
+    TransportationSpecific,
+    LocalTipsGeneral,
+    LocalTipsSpecific,
+    ContentImage,
+)
+
+__all__ = [
+    'Property',
+    'PropertyImage',
+    'ContentGuide',
+    # New content models
+    'BaseContent',
+    'RealEstateGeneral',
+    'RealEstateSpecific',
+    'RestaurantGeneral',
+    'RestaurantSpecific',
+    'TourGeneral',
+    'TourSpecific',
+    'TransportationGeneral',
+    'TransportationSpecific',
+    'LocalTipsGeneral',
+    'LocalTipsSpecific',
+    'ContentImage',
+]

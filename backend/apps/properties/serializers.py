@@ -58,21 +58,94 @@ class PropertyDetailSerializer(serializers.ModelSerializer):
     price_per_sqm = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True, source='get_price_per_sqm')
     verified_by_name = serializers.CharField(source='verified_by.get_full_name', read_only=True, allow_null=True)
     
+    # Add content-specific fields from field_confidence JSON
+    restaurant_name = serializers.SerializerMethodField()
+    cuisine_type = serializers.SerializerMethodField()
+    price_range = serializers.SerializerMethodField()
+    rating = serializers.SerializerMethodField()
+    number_of_reviews = serializers.SerializerMethodField()
+    contact_phone = serializers.SerializerMethodField()
+    opening_hours = serializers.SerializerMethodField()
+    signature_dishes = serializers.SerializerMethodField()
+    atmosphere = serializers.SerializerMethodField()
+    dietary_options = serializers.SerializerMethodField()
+    special_experiences = serializers.SerializerMethodField()
+    contact_details = serializers.SerializerMethodField()
+    web_search_context = serializers.SerializerMethodField()
+    web_search_sources = serializers.SerializerMethodField()
+    web_search_citations = serializers.SerializerMethodField()
+    
     class Meta:
         model = Property
         fields = [
             'id', 'tenant', 'property_name', 'property_type', 'property_type_display',
-            'price_usd', 'bedrooms', 'bathrooms', 'square_meters', 'lot_size_m2',
+            'price_usd', 'price_details', 'bedrooms', 'bathrooms', 'square_meters', 'lot_size_m2',
             'location', 'latitude', 'longitude', 'description', 'amenities',
             'hoa_fee_monthly', 'property_tax_annual', 'year_built', 'parking_spaces',
             'status', 'status_display', 'user_roles', 'source_website', 
             'source_website_display', 'source_url',
             'listing_id', 'internal_property_id', 'listing_status', 'date_listed',
-            'extraction_confidence', 'field_confidence', 'extracted_at',
+            'extraction_confidence', 'content_type', 'page_type', 'field_confidence', 'extracted_at',
             'last_verified', 'verified_by_name', 'is_active',
-            'images', 'price_per_sqm', 'created_at', 'updated_at'
+            'images', 'price_per_sqm', 'created_at', 'updated_at',
+            # Content-specific fields
+            'restaurant_name', 'cuisine_type', 'price_range', 'rating', 'number_of_reviews',
+            'contact_phone', 'opening_hours', 'signature_dishes', 'atmosphere',
+            'dietary_options', 'special_experiences', 'contact_details',
+            'web_search_context', 'web_search_sources', 'web_search_citations'
         ]
         read_only_fields = ['id', 'tenant', 'extracted_at', 'created_at', 'updated_at']
+    
+    def _get_from_field_confidence(self, obj, field_name):
+        """Helper to get field from field_confidence JSON."""
+        if obj.field_confidence and isinstance(obj.field_confidence, dict):
+            return obj.field_confidence.get(field_name)
+        return None
+    
+    def get_restaurant_name(self, obj):
+        return self._get_from_field_confidence(obj, 'restaurant_name')
+    
+    def get_cuisine_type(self, obj):
+        return self._get_from_field_confidence(obj, 'cuisine_type')
+    
+    def get_price_range(self, obj):
+        return self._get_from_field_confidence(obj, 'price_range')
+    
+    def get_rating(self, obj):
+        return self._get_from_field_confidence(obj, 'rating')
+    
+    def get_number_of_reviews(self, obj):
+        return self._get_from_field_confidence(obj, 'number_of_reviews')
+    
+    def get_contact_phone(self, obj):
+        return self._get_from_field_confidence(obj, 'contact_phone')
+    
+    def get_opening_hours(self, obj):
+        return self._get_from_field_confidence(obj, 'opening_hours')
+    
+    def get_signature_dishes(self, obj):
+        return self._get_from_field_confidence(obj, 'signature_dishes')
+    
+    def get_atmosphere(self, obj):
+        return self._get_from_field_confidence(obj, 'atmosphere')
+    
+    def get_dietary_options(self, obj):
+        return self._get_from_field_confidence(obj, 'dietary_options')
+    
+    def get_special_experiences(self, obj):
+        return self._get_from_field_confidence(obj, 'special_experiences')
+    
+    def get_contact_details(self, obj):
+        return self._get_from_field_confidence(obj, 'contact_details')
+    
+    def get_web_search_context(self, obj):
+        return self._get_from_field_confidence(obj, 'web_search_context')
+    
+    def get_web_search_sources(self, obj):
+        return self._get_from_field_confidence(obj, 'web_search_sources')
+    
+    def get_web_search_citations(self, obj):
+        return self._get_from_field_confidence(obj, 'web_search_citations')
 
 
 class PropertyCreateSerializer(serializers.ModelSerializer):

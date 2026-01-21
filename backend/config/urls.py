@@ -21,6 +21,7 @@ urlpatterns = [
     path('auth/', include('apps.users.urls')),
     path('tenants/', include('apps.tenants.urls')),
     path('properties/', include('apps.properties.urls')),
+    path('content/', include('apps.properties.urls_content')),  # NEW: Content type APIs
     path('documents/', include('apps.documents.urls')),
     path('conversations/', include('apps.conversations.urls')),
     path('chat/', include('apps.chat.urls')),

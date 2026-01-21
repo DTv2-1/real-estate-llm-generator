@@ -3,6 +3,24 @@ import type { PropertyData } from '../../types';
 import { SectionCard } from '../shared/SectionCard';
 import { FieldRenderer } from '../shared/FieldRenderer';
 import { RestaurantMenu } from './RestaurantMenu';
+import {
+  RestaurantIcon,
+  PhoneIcon,
+  LocationIcon,
+  DollarIcon,
+  ClockIcon,
+  StarIcon,
+  FileTextIcon,
+  SparklesIcon,
+  UsersIcon,
+  LeafIcon,
+  ChefHatIcon,
+  BookOpenIcon,
+  GlobeIcon,
+  LinkIcon,
+  TagIcon,
+  AwardIcon
+} from '../../icons/RestaurantIcons';
 
 /**
  * Props for RestaurantTemplate component
@@ -58,6 +76,45 @@ const cleanMarkdown = (text: string): string => {
 };
 
 /**
+ * Format opening hours object into readable format
+ */
+const formatOpeningHours = (hours: any): { day: string; hours: string }[] => {
+  if (!hours || typeof hours !== 'object') return [];
+  
+  const dayTranslations: { [key: string]: string } = {
+    'Monday': 'Lunes',
+    'Tuesday': 'Martes',
+    'Wednesday': 'Miércoles',
+    'Thursday': 'Jueves',
+    'Friday': 'Viernes',
+    'Saturday': 'Sábado',
+    'Sunday': 'Domingo'
+  };
+  
+  const dayOrder = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  
+  return dayOrder
+    .filter(day => hours[day])
+    .map(day => {
+      const dayHours = hours[day];
+      let hoursText = '';
+      
+      if (typeof dayHours === 'object' && dayHours.opens && dayHours.closes) {
+        hoursText = `${dayHours.opens} - ${dayHours.closes}`;
+      } else if (typeof dayHours === 'string') {
+        hoursText = dayHours;
+      } else if (Array.isArray(dayHours)) {
+        hoursText = dayHours.join(', ');
+      }
+      
+      return {
+        day: dayTranslations[day] || day,
+        hours: hoursText
+      };
+    });
+};
+
+/**
  * Template component for displaying restaurant information
  * Organizes restaurant details including menu, hours, and amenities
  * 
@@ -69,363 +126,297 @@ const cleanMarkdown = (text: string): string => {
  */
 export const RestaurantTemplate: React.FC<RestaurantTemplateProps> = ({ property }) => {
   const extendedProperty = property as any;
+  const openingHours = formatOpeningHours(property.operating_hours || extendedProperty.opening_hours);
   
   return (
-    <div className="restaurant-template content-template">
-      {/* Basic Information */}
-      <SectionCard title="Información del Restaurante" icon="🍽️">
-        <FieldRenderer label="Nombre" value={property.title || extendedProperty.restaurant_name} icon="🏪" />
-        <FieldRenderer label="URL" value={property.url} type="url" icon="🔗" />
-        <FieldRenderer label="Tipo de Cocina" value={property.cuisine_type || extendedProperty.cuisine_type} icon="👨‍🍳" />
-        <FieldRenderer label="Rango de Precio" value={extendedProperty.price_range} icon="💰" />
-        <FieldRenderer label="Categoría" value={property.category} icon="🏷️" />
-      </SectionCard>
-
-      {/* Contact Information - Move up for visibility */}
-      {(property.contact || extendedProperty.contact_phone) && (
-        <SectionCard title="Información de Contacto" icon="📞">
-          {property.contact?.name && <FieldRenderer label="Nombre" value={property.contact.name} icon="👤" />}
-          {(property.contact?.phone || extendedProperty.contact_phone) && (
-            <FieldRenderer
-              label="Teléfono"
-              value={property.contact?.phone || extendedProperty.contact_phone}
-              type="tel"
-              icon="☎️"
-            />
-          )}
-          {property.contact?.email && (
-            <FieldRenderer
-              label="Email"
-              value={property.contact.email}
-              type="email"
-              icon="📧"
-            />
-          )}
-          {property.contact?.whatsapp && (
-            <FieldRenderer
-              label="WhatsApp"
-              value={property.contact.whatsapp}
-              type="tel"
-              icon="💬"
-            />
-          )}
-        </SectionCard>
-      )}
-
-      {/* Reservations */}
-      {(extendedProperty.reservation_required !== undefined || extendedProperty.reservations_required !== undefined) && (
-        <SectionCard title="Reservaciones" icon="📅">
-          <FieldRenderer 
-            label="Reservación Requerida" 
-            value={extendedProperty.reservation_required || extendedProperty.reservations_required ? 'Sí' : 'No'} 
-            icon="✓" 
-          />
-        </SectionCard>
-      )}
-
-      {/* Operating Hours */}
-      {(property.operating_hours || extendedProperty.opening_hours) && (
-        <SectionCard title="Horarios de Atención" icon="🕐">
-          <div className="operating-hours">
-            {Object.entries(property.operating_hours || extendedProperty.opening_hours).map(([day, hours]) => {
-              const dayTranslations: { [key: string]: string } = {
-                'Monday': 'Lunes',
-                'Tuesday': 'Martes',
-                'Wednesday': 'Miércoles',
-                'Thursday': 'Jueves',
-                'Friday': 'Viernes',
-                'Saturday': 'Sábado',
-                'Sunday': 'Domingo'
-              };
-              const translatedDay = dayTranslations[day] || day;
-              const hoursDisplay = Array.isArray(hours) ? hours.join(', ') : hours;
-              
-              return (
-                <FieldRenderer
-                  key={day}
-                  label={translatedDay}
-                  value={hoursDisplay as string}
-                  icon="📅"
-                />
-              );
-            })}
+    <div className="restaurant-template content-template space-y-6">
+      {/* Hero Header with Restaurant Name */}
+      <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-lg p-6 border-l-4 border-orange-500">
+        <div className="flex items-center gap-3 mb-2">
+          <RestaurantIcon className="text-orange-600" size={32} />
+          <h1 className="text-3xl font-bold text-gray-900">
+            {property.title || extendedProperty.restaurant_name}
+          </h1>
+        </div>
+        {extendedProperty.cuisine_type && (
+          <div className="flex flex-wrap gap-2 mt-3">
+            {(Array.isArray(extendedProperty.cuisine_type) 
+              ? extendedProperty.cuisine_type 
+              : [extendedProperty.cuisine_type]
+            ).map((cuisine: string, idx: number) => (
+              <span 
+                key={idx}
+                className="inline-flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm font-medium"
+              >
+                <ChefHatIcon size={14} />
+                {cuisine}
+              </span>
+            ))}
           </div>
-        </SectionCard>
-      )}
+        )}
+        {extendedProperty.rating && (
+          <div className="flex items-center gap-2 mt-3">
+            <StarIcon className="text-yellow-500" size={24} />
+            <span className="text-xl font-semibold text-gray-900">{extendedProperty.rating}</span>
+            {extendedProperty.number_of_reviews && (
+              <span className="text-gray-600">({extendedProperty.number_of_reviews.toLocaleString()} reseñas)</span>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Quick Info Cards Row */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Price Range Card */}
+        {extendedProperty.price_range && (
+          <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-3">
+              <DollarIcon className="text-green-600" size={28} />
+              <div>
+                <div className="text-sm text-gray-600 font-medium">Rango de Precio</div>
+                <div className="text-lg font-semibold text-gray-900">{extendedProperty.price_range}</div>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Phone Card */}
+        {extendedProperty.contact_phone && (
+          <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-3">
+              <PhoneIcon className="text-blue-600" size={28} />
+              <div>
+                <div className="text-sm text-gray-600 font-medium">Teléfono</div>
+                <a 
+                  href={`tel:${extendedProperty.contact_phone}`}
+                  className="text-lg font-semibold text-blue-600 hover:text-blue-800"
+                >
+                  {extendedProperty.contact_phone}
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Location Card */}
+        {(property.location || extendedProperty.location) && (
+          <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-3">
+              <LocationIcon className="text-red-600" size={28} />
+              <div>
+                <div className="text-sm text-gray-600 font-medium">Ubicación</div>
+                <div className="text-lg font-semibold text-gray-900">
+                  {typeof property.location === 'string' ? property.location : extendedProperty.location}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Description */}
       {property.description && (
-        <SectionCard title="Descripción" icon="📄">
-          <div className="description-text" style={{ lineHeight: '1.7', color: '#4A5568' }}>
+        <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-4">
+            <FileTextIcon className="text-gray-700" size={24} />
+            <h2 className="text-xl font-semibold text-gray-900">Descripción</h2>
+          </div>
+          <p className="text-gray-700 leading-relaxed">
             {cleanMarkdown(property.description)}
-          </div>
-        </SectionCard>
-      )}
-
-      {/* Atmosphere & Ambiance */}
-      {extendedProperty.atmosphere && (
-        <SectionCard title="Ambiente" icon="🎭">
-          <div className="atmosphere-text" style={{ lineHeight: '1.7', color: '#4A5568' }}>
-            {cleanMarkdown(extendedProperty.atmosphere)}
-          </div>
-        </SectionCard>
+          </p>
+        </div>
       )}
 
       {/* Signature Dishes */}
       {extendedProperty.signature_dishes && (
-        <SectionCard title="Platos Destacados" icon="⭐">
-          <div className="signature-dishes-text" style={{ lineHeight: '1.7', color: '#4A5568' }}>
-            {cleanMarkdown(extendedProperty.signature_dishes)}
+        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border-l-4 border-yellow-500 p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <AwardIcon className="text-yellow-600" size={24} />
+            <h2 className="text-xl font-semibold text-gray-900">Platos Destacados</h2>
           </div>
-        </SectionCard>
+          <p className="text-gray-700 leading-relaxed">
+            {cleanMarkdown(extendedProperty.signature_dishes)}
+          </p>
+        </div>
+      )}
+
+      {/* Atmosphere */}
+      {extendedProperty.atmosphere && (
+        <div className="bg-purple-50 rounded-lg border-l-4 border-purple-500 p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <UsersIcon className="text-purple-600" size={24} />
+            <h2 className="text-xl font-semibold text-gray-900">Ambiente</h2>
+          </div>
+          <p className="text-gray-700 leading-relaxed">
+            {cleanMarkdown(extendedProperty.atmosphere)}
+          </p>
+        </div>
+      )}
+
+      {/* Operating Hours - Modern Design */}
+      {openingHours.length > 0 && (
+        <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-4">
+            <ClockIcon className="text-blue-600" size={24} />
+            <h2 className="text-xl font-semibold text-gray-900">Horarios de Atención</h2>
+          </div>
+          <div className="space-y-2">
+            {openingHours.map(({ day, hours }) => (
+              <div key={day} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <span className="font-medium text-gray-700">{day}:</span>
+                <span className="text-gray-900 font-semibold">{hours}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Amenities Grid */}
+      {extendedProperty.amenities && (
+        <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-4">
+            <SparklesIcon className="text-indigo-600" size={24} />
+            <h2 className="text-xl font-semibold text-gray-900">Características y Amenidades</h2>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {(Array.isArray(extendedProperty.amenities) 
+              ? extendedProperty.amenities 
+              : typeof extendedProperty.amenities === 'string'
+                ? extendedProperty.amenities.split(',').map((a: string) => a.trim())
+                : []
+            ).map((amenity: string, idx: number) => (
+              <span 
+                key={idx}
+                className="inline-flex items-center gap-1 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium border border-blue-200"
+              >
+                <TagIcon size={14} />
+                {amenity}
+              </span>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Dietary Options */}
       {extendedProperty.dietary_options && (
-        <SectionCard title="Opciones Dietéticas" icon="🥗">
-          <div className="dietary-options-text" style={{ lineHeight: '1.7', color: '#4A5568' }}>
-            {typeof extendedProperty.dietary_options === 'string' 
-              ? cleanMarkdown(extendedProperty.dietary_options)
-              : Array.isArray(extendedProperty.dietary_options)
-                ? extendedProperty.dietary_options.join(', ')
-                : JSON.stringify(extendedProperty.dietary_options)
-            }
+        <div className="bg-green-50 rounded-lg border-l-4 border-green-500 p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <LeafIcon className="text-green-600" size={24} />
+            <h2 className="text-xl font-semibold text-gray-900">Opciones Dietéticas</h2>
           </div>
-        </SectionCard>
+          <div className="flex flex-wrap gap-2">
+            {(Array.isArray(extendedProperty.dietary_options) 
+              ? extendedProperty.dietary_options 
+              : [extendedProperty.dietary_options]
+            ).map((option: string, idx: number) => (
+              <span 
+                key={idx}
+                className="inline-flex items-center gap-1 px-4 py-2 bg-green-100 text-green-800 rounded-full text-sm font-medium"
+              >
+                <LeafIcon size={14} />
+                {option}
+              </span>
+            ))}
+          </div>
+        </div>
       )}
 
-      {/* Dress Code */}
-      {extendedProperty.dress_code && (
-        <SectionCard title="Código de Vestimenta" icon="👔">
-          <FieldRenderer label="Vestimenta" value={extendedProperty.dress_code} icon="👕" />
-        </SectionCard>
+      {/* Price Details - Modern Table */}
+      {extendedProperty.price_details && (
+        <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-4">
+            <DollarIcon className="text-green-600" size={24} />
+            <h2 className="text-xl font-semibold text-gray-900">Detalles de Precios</h2>
+          </div>
+          <div className="space-y-3">
+            {extendedProperty.price_details.appetizers_range && (
+              <div className="flex justify-between items-center p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <ChefHatIcon className="text-blue-600" size={20} />
+                  <span className="font-medium text-gray-700">Entradas:</span>
+                </div>
+                <span className="text-lg font-bold text-gray-900">{extendedProperty.price_details.appetizers_range}</span>
+              </div>
+            )}
+            {extendedProperty.price_details.mains_range && (
+              <div className="flex justify-between items-center p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <RestaurantIcon className="text-orange-600" size={20} />
+                  <span className="font-medium text-gray-700">Platos Fuertes:</span>
+                </div>
+                <span className="text-lg font-bold text-gray-900">{extendedProperty.price_details.mains_range}</span>
+              </div>
+            )}
+            {extendedProperty.price_details.desserts_range && (
+              <div className="flex justify-between items-center p-4 bg-gradient-to-r from-pink-50 to-purple-50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <StarIcon className="text-pink-600" size={20} />
+                  <span className="font-medium text-gray-700">Postres:</span>
+                </div>
+                <span className="text-lg font-bold text-gray-900">{extendedProperty.price_details.desserts_range}</span>
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
-      {/* Web Search Context - Additional Info */}
+      {/* Special Experiences */}
+      {extendedProperty.special_experiences && (
+        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border-l-4 border-indigo-500 p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <SparklesIcon className="text-indigo-600" size={24} />
+            <h2 className="text-xl font-semibold text-gray-900">Experiencias Especiales</h2>
+          </div>
+          <p className="text-gray-700 leading-relaxed">
+            {cleanMarkdown(extendedProperty.special_experiences)}
+          </p>
+        </div>
+      )}
+
+      {/* Web Search Sources - Collapsible */}
+      {extendedProperty.web_search_sources && extendedProperty.web_search_sources.length > 0 && (
+        <details className="bg-gray-50 rounded-lg border border-gray-200 p-6">
+          <summary className="cursor-pointer flex items-center gap-2 font-semibold text-gray-900 hover:text-blue-600 transition-colors">
+            <BookOpenIcon className="text-gray-600" size={20} />
+            <span>Fuentes de Información ({extendedProperty.web_search_sources.length})</span>
+          </summary>
+          <div className="mt-4 space-y-2">
+            {extendedProperty.web_search_sources.slice(0, 10).map((source: string, index: number) => {
+              try {
+                const domain = new URL(source).hostname.replace('www.', '');
+                return (
+                  <a 
+                    key={index}
+                    href={source} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 p-2 hover:bg-white rounded transition-colors text-blue-600 hover:text-blue-800"
+                  >
+                    <LinkIcon size={14} />
+                    <span className="text-sm">{domain}</span>
+                  </a>
+                );
+              } catch {
+                return null;
+              }
+            })}
+          </div>
+        </details>
+      )}
+
+      {/* Additional Web Context - Collapsible */}
       {(property as any).web_search_context && (
-        <SectionCard title="Información Adicional" icon="🌐" collapsible={true} defaultCollapsed={true}>
-          <div className="web-search-context" style={{ 
-            fontSize: '0.95em', 
-            color: '#4A5568',
-            lineHeight: '1.8',
-            padding: '12px',
-            background: '#F7FAFC',
-            borderRadius: '8px',
-            borderLeft: '3px solid #4299E1'
-          }}>
-            <div style={{ whiteSpace: 'pre-wrap' }}>
+        <details className="bg-blue-50 rounded-lg border border-blue-200 p-6">
+          <summary className="cursor-pointer flex items-center gap-2 font-semibold text-gray-900 hover:text-blue-600 transition-colors">
+            <GlobeIcon className="text-blue-600" size={20} />
+            <span>Contexto Adicional de la Web</span>
+          </summary>
+          <div className="mt-4 prose prose-sm max-w-none">
+            <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
               {cleanMarkdown((property as any).web_search_context)}
             </div>
           </div>
-        </SectionCard>
-      )}
-
-      {/* Price Range */}
-      {(property.price_details || extendedProperty.price_details) && (
-        <SectionCard title="Detalles de Precios" icon="💰">
-          {property.price_details?.display_price && (
-            <FieldRenderer
-              label="Rango de Precios"
-              value={property.price_details.display_price}
-              icon="💵"
-            />
-          )}
-          {property.price_details?.average_price && (
-            <FieldRenderer
-              label="Precio Promedio"
-              value={property.price_details.average_price}
-              type="currency"
-              icon="💳"
-            />
-          )}
-          {property.price_details?.currency && (
-            <FieldRenderer label="Moneda" value={property.price_details.currency} icon="💱" />
-          )}
-          {extendedProperty.price_details && (
-            <>
-              {extendedProperty.price_details.appetizers_range && (
-                <FieldRenderer label="Entradas" value={extendedProperty.price_details.appetizers_range} icon="🥗" />
-              )}
-              {extendedProperty.price_details.mains_range && (
-                <FieldRenderer label="Platos Fuertes" value={extendedProperty.price_details.mains_range} icon="🍖" />
-              )}
-              {extendedProperty.price_details.desserts_range && (
-                <FieldRenderer label="Postres" value={extendedProperty.price_details.desserts_range} icon="🍰" />
-              )}
-              {extendedProperty.price_details.drinks_range && (
-                <FieldRenderer label="Bebidas" value={extendedProperty.price_details.drinks_range} icon="🍹" />
-              )}
-              {extendedProperty.price_details.note && (
-                <div style={{ marginTop: '12px', fontSize: '0.9em', color: '#718096', fontStyle: 'italic' }}>
-                  {extendedProperty.price_details.note}
-                </div>
-              )}
-            </>
-          )}
-        </SectionCard>
-      )}
-
-      {/* Operating Hours */}
-      {(property.operating_hours || extendedProperty.opening_hours) && (
-        <SectionCard title="Horarios de Atención" icon="🕐">
-          <div className="operating-hours">
-            {Object.entries(property.operating_hours || extendedProperty.opening_hours).map(([day, hours]) => {
-              const dayTranslations: { [key: string]: string } = {
-                'Monday': 'Lunes',
-                'Tuesday': 'Martes',
-                'Wednesday': 'Miércoles',
-                'Thursday': 'Jueves',
-                'Friday': 'Viernes',
-                'Saturday': 'Sábado',
-                'Sunday': 'Domingo'
-              };
-              const translatedDay = dayTranslations[day] || day;
-              const hoursDisplay = Array.isArray(hours) ? hours.join(', ') : hours;
-              
-              return (
-                <FieldRenderer
-                  key={day}
-                  label={translatedDay}
-                  value={hoursDisplay as string}
-                  icon="📅"
-                />
-              );
-            })}
-          </div>
-        </SectionCard>
-      )}
-
-      {/* Menu */}
-      {property.menu_items && property.menu_items.length > 0 && (
-        <RestaurantMenu menuItems={property.menu_items} />
-      )}
-
-      {/* Location */}
-      {(property.location || extendedProperty.location) && (
-        <SectionCard title="Ubicación" icon="📍">
-          {typeof property.location === 'object' ? (
-            <>
-              <FieldRenderer
-                label="Dirección"
-                value={property.location.address}
-                icon="🏢"
-              />
-              <FieldRenderer label="Ciudad" value={property.location.city} icon="🌆" />
-              <FieldRenderer label="Estado" value={property.location.state} icon="🗺️" />
-              <FieldRenderer label="País" value={property.location.country} icon="🌍" />
-            </>
-          ) : (
-            <FieldRenderer
-              label="Dirección"
-              value={property.location || extendedProperty.location}
-              icon="🏢"
-            />
-          )}
-        </SectionCard>
-      )}
-
-      {/* Features & Amenities */}
-      {((property.features && property.features.length > 0) || 
-        (extendedProperty.amenities && (
-          (typeof extendedProperty.amenities === 'string' && extendedProperty.amenities.trim() !== '') ||
-          (Array.isArray(extendedProperty.amenities) && extendedProperty.amenities.length > 0) ||
-          (typeof extendedProperty.amenities === 'object' && !Array.isArray(extendedProperty.amenities))
-        ))) && (
-        <SectionCard title="Características y Amenidades" icon="⭐">
-          {property.features && property.features.length > 0 && (
-            <FieldRenderer
-              label="Amenidades"
-              value=""
-              type="list"
-              listItems={property.features}
-            />
-          )}
-          {extendedProperty.amenities && (
-            <div className="amenities-text" style={{ lineHeight: '1.7', color: '#4A5568', marginTop: '12px' }}>
-              {typeof extendedProperty.amenities === 'string' 
-                ? cleanMarkdown(extendedProperty.amenities)
-                : Array.isArray(extendedProperty.amenities)
-                  ? extendedProperty.amenities.join(', ')
-                  : JSON.stringify(extendedProperty.amenities)
-              }
-            </div>
-          )}
-        </SectionCard>
-      )}
-
-      {/* Images */}
-      {property.images && property.images.length > 0 && (
-        <SectionCard title={`Galería (${property.images.length})`} icon="📷">
-          <div className="images-grid">
-            {property.images.map((imageUrl: string, index: number) => (
-              <div key={index} className="image-thumbnail">
-                <img src={imageUrl} alt={`Imagen ${index + 1}`} loading="lazy" />
-              </div>
-            ))}
-          </div>
-        </SectionCard>
-      )}
-
-      {/* Special Experiences (Chef's Table, etc.) */}
-      {extendedProperty.special_experiences && (
-        <SectionCard title="Experiencias Especiales" icon="✨">
-          <div className="special-experiences-text" style={{ lineHeight: '1.7', color: '#4A5568' }}>
-            {cleanMarkdown(extendedProperty.special_experiences)}
-          </div>
-        </SectionCard>
-      )}
-
-      {/* Web Search Sources - For transparency */}
-      {extendedProperty.web_search_sources && extendedProperty.web_search_sources.length > 0 && (
-        <SectionCard title="Fuentes de Información" icon="📚" collapsible={true} defaultCollapsed={true}>
-          <div style={{ fontSize: '0.85em', color: '#718096' }}>
-            <p style={{ marginBottom: '8px', fontWeight: '500' }}>
-              Esta información fue verificada consultando las siguientes fuentes:
-            </p>
-            <ul style={{ listStyle: 'none', padding: 0 }}>
-              {extendedProperty.web_search_sources.slice(0, 10).map((source: string, index: number) => {
-                const domain = new URL(source).hostname.replace('www.', '');
-                return (
-                  <li key={index} style={{ marginBottom: '6px' }}>
-                    <a 
-                      href={source} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      style={{ color: '#4299E1', textDecoration: 'none' }}
-                    >
-                      {domain}
-                    </a>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        </SectionCard>
-      )}
-
-      {/* Contact Information */}
-      {property.contact && (
-        <SectionCard title="Información de Contacto" icon="📞">
-          <FieldRenderer label="Nombre" value={property.contact.name} icon="👤" />
-          <FieldRenderer
-            label="Email"
-            value={property.contact.email}
-            type="email"
-            icon="📧"
-          />
-          <FieldRenderer
-            label="Teléfono"
-            value={property.contact.phone}
-            type="tel"
-            icon="☎️"
-          />
-          <FieldRenderer
-            label="WhatsApp"
-            value={property.contact.whatsapp}
-            type="tel"
-            icon="💬"
-          />
-        </SectionCard>
+        </details>
       )}
     </div>
   );

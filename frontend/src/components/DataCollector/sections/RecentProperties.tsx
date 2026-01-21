@@ -94,7 +94,61 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
     return '/placeholder-property.jpg';
   };
 
+  const getBadgeInfo = () => {
+    const contentType = property.content_type || property.detected_content_type || 'real-estate';
+    const pageType = property.page_type || '';
+    
+    const badges: Record<string, { icon: string; label: string; color: string }> = {
+      'local_tips': { icon: '🗺️', label: 'Local Tips', color: 'bg-blue-500' },
+      'restaurant': { icon: '🍽️', label: 'Restaurante', color: 'bg-orange-500' },
+      'tour': { icon: '🎯', label: 'Tour', color: 'bg-green-500' },
+      'transportation': { icon: '🚌', label: 'Transporte', color: 'bg-purple-500' },
+      'real-estate': { icon: '🏠', label: 'Propiedad', color: 'bg-indigo-500' },
+    };
+    
+    const badge = badges[contentType] || badges['real-estate'];
+    const pageLabel = pageType === 'general' ? '📋 General' : pageType === 'specific' ? '📍 Específico' : '';
+    
+    return { ...badge, pageLabel };
+  };
+
   const getPrice = () => {
+    // For non-real-estate content, show different info
+    const contentType = property.content_type || property.detected_content_type || 'real-estate';
+    
+    if (contentType === 'local_tips') {
+      const destCount = property.destinations_covered?.length;
+      return destCount ? `${destCount} destinos` : 'Guía de viaje';
+    }
+    
+    if (contentType === 'restaurant') {
+      if (property.price_range) {
+        return property.price_range;
+      }
+      if (property.cuisine) {
+        return property.cuisine;
+      }
+      return 'Restaurante';
+    }
+    
+    if (contentType === 'tour') {
+      if (property.duration) {
+        return `Duración: ${property.duration}`;
+      }
+      return 'Tour / Actividad';
+    }
+    
+    if (contentType === 'transportation') {
+      if (property.route) {
+        return property.route;
+      }
+      if (property.transport_type) {
+        return property.transport_type;
+      }
+      return 'Transporte';
+    }
+    
+    // Real estate pricing
     if (property.price_details?.display_price) {
       return property.price_details.display_price;
     }
@@ -125,6 +179,8 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
     return 'Ubicación no especificada';
   };
 
+  const badgeInfo = getBadgeInfo();
+
   return (
     <article
       className={`property-card ${isSelected ? 'selected' : ''}`}
@@ -144,8 +200,14 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
           className="card-image"
           loading="lazy"
         />
-        {property.content_type && (
-          <span className="card-badge">{property.content_type}</span>
+        <span className={`card-badge ${badgeInfo.color}`}>
+          <span className="badge-icon">{badgeInfo.icon}</span>
+          <span className="badge-label">{badgeInfo.label}</span>
+        </span>
+        {badgeInfo.pageLabel && (
+          <span className="card-badge-secondary">
+            {badgeInfo.pageLabel}
+          </span>
         )}
       </div>
 

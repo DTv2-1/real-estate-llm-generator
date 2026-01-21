@@ -305,7 +305,9 @@ export const DataCollector: React.FC = () => {
       bathrooms: prop.bathrooms,
       source_website: prop.source_website,
       created_at: prop.created_at,
-      content_type: 'real-estate', // Default for recent properties
+      content_type: prop.content_type || prop.detected_content_type || 'real-estate',
+      detected_content_type: prop.detected_content_type,
+      page_type: prop.page_type,
     } as PropertyData))
   }
 

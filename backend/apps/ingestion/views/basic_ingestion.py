@@ -14,6 +14,18 @@ from rest_framework.permissions import AllowAny
 
 from apps.tenants.models import Tenant
 from apps.properties.models import Property, PropertyImage
+from apps.properties.models_content import (
+    RealEstateGeneral,
+    RealEstateSpecific,
+    RestaurantGeneral,
+    RestaurantSpecific,
+    TourGeneral,
+    TourSpecific,
+    TransportationGeneral,
+    TransportationSpecific,
+    LocalTipsGeneral,
+    LocalTipsSpecific,
+)
 from apps.properties.serializers import PropertyDetailSerializer
 
 from core.scraping.scraper import scrape_url, ScraperError
@@ -24,6 +36,106 @@ from ..progress import ProgressTracker
 from .base import serialize_for_json
 
 logger = logging.getLogger(__name__)
+
+
+# =============================================================================
+# MODEL ROUTING HELPER
+# =============================================================================
+
+def get_model_for_content(content_type: str, page_type: str):
+    """
+    Determine which model to use based on content_type and page_type.
+    
+    Args:
+        content_type: 'real_estate', 'restaurant', 'tour', 'transportation', 'local_tips'
+        page_type: 'specific' (individual item) or 'general' (guide/listing page)
+    
+    Returns:
+        Django model class
+    """
+    model_map = {
+        ('real_estate', 'general'): RealEstateGeneral,
+        ('real_estate', 'specific'): RealEstateSpecific,
+        ('restaurant', 'general'): RestaurantGeneral,
+        ('restaurant', 'specific'): RestaurantSpecific,
+        ('tour', 'general'): TourGeneral,
+        ('tour', 'specific'): TourSpecific,
+        ('transportation', 'general'): TransportationGeneral,
+        ('transportation', 'specific'): TransportationSpecific,
+        ('local_tips', 'general'): LocalTipsGeneral,
+        ('local_tips', 'specific'): LocalTipsSpecific,
+    }
+    
+    key = (content_type, page_type)
+    model = model_map.get(key)
+    
+    if not model:
+        # Fallback to old Property model for backward compatibility
+        logger.warning(f"⚠️ No specific model for content_type={content_type}, page_type={page_type}. Using Property model.")
+        return Property
+    
+    logger.info(f"✅ Using model: {model.__name__} for content_type={content_type}, page_type={page_type}")
+    return model
+
+
+def prepare_data_for_model(extracted_data: dict, model_class):
+    """
+    Prepare extracted data for the specific model by:
+    1. Mapping field names to model field names
+    2. Moving content-specific fields to field_confidence if not in model
+    3. Handling special field conversions
+    
+    Args:
+        extracted_data: Raw extracted data dictionary
+        model_class: Target Django model class
+    
+    Returns:
+        Tuple of (prepared_data, extra_data_for_field_confidence)
+    """
+    # Get model field names
+    model_fields = {f.name for f in model_class._meta.get_fields()}
+    
+    prepared_data = {}
+    extra_data = {}
+    
+    # Special field mappings for different content types
+    # Note: Some fields map to BOTH title AND their specific field
+    field_mappings = {
+        'property_name': 'title',  # Old property_name → new title field
+        'restaurant_name': 'title',
+        'tour_name': 'title',
+        'route_name': 'title',  # Also keep route_name as separate field
+        'tip_title': 'title',
+    }
+    
+    for key, value in extracted_data.items():
+        # Apply field mapping if exists
+        target_field = field_mappings.get(key, key)
+        
+        # If field exists in model, use it directly
+        if target_field in model_fields:
+            prepared_data[target_field] = value
+        
+        # SPECIAL CASE: For transportation, keep both route_name AND title
+        # Also keep departure_location, arrival_location as direct fields
+        if key in ['route_name', 'departure_location', 'arrival_location'] and key in model_fields:
+            prepared_data[key] = value
+        elif target_field not in model_fields:
+            # Store in extra_data for field_confidence
+            extra_data[key] = value
+    
+    # Merge extra_data into field_confidence
+    if extra_data:
+        existing_fc = prepared_data.get('field_confidence', {})
+        if isinstance(existing_fc, dict):
+            existing_fc.update(extra_data)
+            prepared_data['field_confidence'] = existing_fc
+        else:
+            prepared_data['field_confidence'] = extra_data
+    
+    logger.info(f"📦 Prepared data: {len(prepared_data)} direct fields, {len(extra_data)} in field_confidence")
+    
+    return prepared_data, extra_data
 
 
 class IngestURLView(APIView):
@@ -192,10 +304,12 @@ class IngestURLView(APIView):
                 clean_data = {k: v for k, v in extracted_data.items() if k != 'tenant'}
                 
                 # Extract structured data from web context
+                # CRITICAL: Pass page_type to extract correct schema (general vs specific)
                 context_extracted = web_search.extract_from_web_context(
                     web_search_context=extracted_data['web_search_context'],
                     existing_data=clean_data,
-                    content_type=detected_content_type
+                    content_type=detected_content_type,
+                    page_type=detected_page_type
                 )
                 
                 # Clean the web_search_context itself (remove markdown symbols)
@@ -598,9 +712,21 @@ class SavePropertyView(APIView):
                 property_data['status'] = status_mapping.get(property_data['status'], 'available')
             
             # Ensure property_type has a default value if missing or None
+            # For non-real-estate content, use 'other' or first item from array
             if not property_data.get('property_type'):
                 property_data['property_type'] = 'house'  # Default to 'house' if not specified
                 logger.info(f"⚠️ property_type was missing/null, defaulting to 'house'")
+            elif isinstance(property_data.get('property_type'), list):
+                # If property_type is an array (e.g., cuisine types for restaurants), take first item
+                # and store full array in field_confidence
+                cuisine_array = property_data['property_type']
+                property_data['property_type'] = 'commercial'  # Use 'commercial' for restaurants/businesses
+                logger.info(f"⚠️ property_type was an array {cuisine_array}, using 'commercial' and storing array in field_confidence")
+            elif len(str(property_data.get('property_type', ''))) > 20:
+                # If property_type is too long, truncate or use default
+                original = property_data['property_type']
+                property_data['property_type'] = 'commercial'
+                logger.info(f"⚠️ property_type was too long ({len(str(original))} chars), using 'commercial'")
             
             # Build location from address/city/province if location is empty
             if not property_data.get('location') and (property_data.get('city') or property_data.get('address')):
@@ -627,41 +753,114 @@ class SavePropertyView(APIView):
             for field in fields_to_remove:
                 property_data.pop(field, None)
             
-            # Check for duplicate by source_url
+            # Store content-type specific fields in field_confidence JSON
+            # These fields are specific to restaurants, tours, etc. and don't have dedicated columns
+            content_specific_fields = [
+                'restaurant_name', 'cuisine_type', 'price_range', 'rating', 'number_of_reviews',
+                'contact_phone', 'opening_hours', 'signature_dishes', 'atmosphere', 
+                'dietary_options', 'special_experiences', 'contact_details',
+                'web_search_context', 'web_search_sources', 'web_search_citations',
+                'content_type_confidence', 'timestamp',
+                # Tour-specific
+                'tour_name', 'duration', 'difficulty', 'group_size', 'included_items',
+                'excluded_items', 'meeting_point', 'cancellation_policy',
+                # Transportation-specific
+                'route_name', 'departure_location', 'arrival_location', 'travel_time',
+                'transport_type', 'frequency', 'operator',
+            ]
+            
+            # Extract content-specific data before removing
+            extra_data = {}
+            for field in content_specific_fields:
+                if field in property_data:
+                    extra_data[field] = property_data.pop(field)
+            
+            # Store extra data in field_confidence JSON field
+            if extra_data:
+                existing_field_confidence = property_data.get('field_confidence', {})
+                if isinstance(existing_field_confidence, dict):
+                    existing_field_confidence.update(extra_data)
+                    property_data['field_confidence'] = existing_field_confidence
+                else:
+                    property_data['field_confidence'] = extra_data
+                logger.info(f"📦 Stored {len(extra_data)} content-specific fields in field_confidence")
+            
+            # Determine model to use BEFORE checking duplicates
+            content_type = property_data.get('content_type', 'real_estate')
+            page_type = property_data.get('page_type', 'specific')
+            model_class = get_model_for_content(content_type, page_type)
+            
+            # Check for duplicate by source_url using the correct model
             source_url = property_data.get('source_url')
-            logger.info(f"🔍 Checking for duplicate - source_url: {source_url}")
+            logger.info(f"🔍 Checking for duplicate in {model_class.__name__} - source_url: {source_url}")
             
             if source_url:
-                existing = Property.objects.filter(
+                existing = model_class.objects.filter(
                     source_url=source_url,
                     tenant=property_data.get('tenant')
                 ).first()
                 
                 if existing:
-                    logger.warning(f"⚠️ DUPLICATE DETECTED - Property already exists:")
+                    logger.warning(f"⚠️ DUPLICATE DETECTED - {model_class.__name__} already exists:")
                     logger.warning(f"   - URL: {source_url}")
                     logger.warning(f"   - Existing ID: {existing.id}")
-                    logger.warning(f"   - Existing Name: {existing.property_name}")
+                    logger.warning(f"   - Existing Title: {existing.title}")
                     return Response({
                         'status': 'error',
-                        'message': f'This property already exists in the database (ID: {existing.id})',
+                        'message': f'This {content_type} already exists in the database (ID: {existing.id})',
                         'property_id': str(existing.id),
-                        'property_name': existing.property_name,
+                        'title': existing.title,
                         'duplicate': True
                     }, status=status.HTTP_409_CONFLICT)
                 else:
-                    logger.info(f"✅ No duplicate found - OK to save")
+                    logger.info(f"✅ No duplicate found in {model_class.__name__} - OK to save")
             
             # Separate ManyToMany fields (must be set after object creation)
             images_data = property_data.pop('images', [])
             amenities_data = property_data.pop('amenities', [])
             
-            # Create Property
-            logger.info("Creating Property object from saved data...")
-            property_obj = Property.objects.create(**property_data)
+            # Determine which model to use based on content_type and page_type
+            content_type = property_data.get('content_type', 'real_estate')
+            page_type = property_data.get('page_type', 'specific')
             
-            # Create PropertyImage objects from URL list
-            if images_data:
+            logger.info(f"🔍 Detected content_type={content_type}, page_type={page_type}")
+            
+            model_class = get_model_for_content(content_type, page_type)
+            
+            # Prepare data for the specific model
+            prepared_data, extra_data = prepare_data_for_model(property_data, model_class)
+            
+            # CRITICAL FIX: Ensure title is set from route_name for transportation
+            if not prepared_data.get('title') and prepared_data.get('route_name'):
+                prepared_data['title'] = prepared_data['route_name']
+                logger.info(f"📝 Set title from route_name: {prepared_data['title']}")
+            
+            # CRITICAL FIX: If title is still NULL, try to extract from description or web context
+            if not prepared_data.get('title'):
+                # Try description first (truncate to reasonable length)
+                if prepared_data.get('description'):
+                    prepared_data['title'] = prepared_data['description'][:200]
+                    logger.info(f"📝 Set title from description: {prepared_data['title'][:50]}...")
+                # Otherwise use source_url as last resort
+                elif prepared_data.get('source_url'):
+                    # Extract meaningful part from URL
+                    url = prepared_data['source_url']
+                    title_from_url = url.split('/')[-1].replace('-', ' ').replace('_', ' ').title()
+                    prepared_data['title'] = title_from_url[:200] or "Extracted Content"
+                    logger.info(f"📝 Set title from URL: {prepared_data['title']}")
+                else:
+                    prepared_data['title'] = "Extracted Content"
+                    logger.info(f"📝 Set default title: {prepared_data['title']}")
+            
+            # Create object using the appropriate model
+            logger.info(f"Creating {model_class.__name__} object from extracted data...")
+            content_obj = model_class.objects.create(**prepared_data)
+            
+            # For backward compatibility, also log as "property_obj"
+            property_obj = content_obj
+            
+            # Create PropertyImage objects from URL list (only for old Property model for now)
+            if images_data and model_class == Property:
                 logger.info(f"Creating {len(images_data)} PropertyImage objects...")
                 created_count = 0
                 for idx, image_url in enumerate(images_data):
@@ -675,15 +874,32 @@ class SavePropertyView(APIView):
                         created_count += 1
                 logger.info(f"✓ Created {created_count} images")
             
-            # Set amenities (ArrayField - can be set directly)
-            if amenities_data:
+            # Set amenities (ArrayField - can be set directly) - only if model has amenities field
+            if amenities_data and hasattr(content_obj, 'amenities'):
                 logger.info(f"Setting {len(amenities_data)} amenities...")
-                property_obj.amenities = amenities_data
-                property_obj.save(update_fields=['amenities'])
+                content_obj.amenities = amenities_data
+                content_obj.save(update_fields=['amenities'])
             
-            logger.info(f"✓ Property saved successfully: {property_obj.id}")
-            logger.info(f"  - Name: {property_obj.property_name}")
-            logger.info(f"  - Price: ${property_obj.price_usd}")
+            # Log success with appropriate field name
+            title_field = 'title'
+            if hasattr(content_obj, 'restaurant_name'):
+                title_field = 'restaurant_name'
+            elif hasattr(content_obj, 'tour_name'):
+                title_field = 'tour_name'
+            elif hasattr(content_obj, 'route_name'):
+                title_field = 'route_name'
+            elif hasattr(content_obj, 'property_name'):
+                title_field = 'property_name'
+            
+            obj_title = getattr(content_obj, title_field, content_obj.title)
+            
+            logger.info(f"✓ {model_class.__name__} saved successfully: {content_obj.id}")
+            logger.info(f"  - Title: {obj_title}")
+            if hasattr(content_obj, 'price_usd') and content_obj.price_usd:
+                logger.info(f"  - Price: ${content_obj.price_usd}")
+            
+            # For backward compatibility, keep property_obj reference
+            property_obj = content_obj
             
             # Generate embeddings in background thread (non-blocking)
             logger.info("🔮 Starting background embedding generation...")
@@ -697,7 +913,9 @@ class SavePropertyView(APIView):
                     if embedding:
                         property_obj.embedding = embedding
                         property_obj.save(update_fields=['embedding'])
-                        logger.info(f"✅ [BACKGROUND] Embedding generated: {property_obj.property_name}")
+                        # Use title field (works for all content types)
+                        obj_name = getattr(property_obj, 'title', None) or str(property_obj.id)
+                        logger.info(f"✅ [BACKGROUND] Embedding generated: {obj_name}")
                     else:
                         logger.warning(f"⚠️ [BACKGROUND] Embedding generation failed: {property_obj.id}")
                 except Exception as e:

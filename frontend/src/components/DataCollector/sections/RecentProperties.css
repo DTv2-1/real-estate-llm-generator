@@ -94,6 +94,12 @@
 }
 
 .card-image-container {
+  position: relative;
+  min-height: 40px;
+  display: block;
+}
+
+.card-image {
   display: none;
 }
 
@@ -103,17 +109,67 @@
   right: 12px;
   display: inline-flex;
   align-items: center;
+  gap: 6px;
   padding: 8px 14px;
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
-  color: #667eea;
   border-radius: 24px;
   font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border: 2px solid rgba(102, 126, 234, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  z-index: 1;
+  color: white;
+}
+
+.card-badge.bg-blue-500 {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.card-badge.bg-orange-500 {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+}
+
+.card-badge.bg-green-500 {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.card-badge.bg-purple-500 {
+  background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
+}
+
+.card-badge.bg-indigo-500 {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+}
+
+.badge-icon {
+  font-size: 14px;
+  display: inline-block;
+}
+
+.badge-label {
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.card-badge-secondary {
+  position: absolute;
+  top: 56px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(10px);
+  color: white;
+  border-radius: 16px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   z-index: 1;
 }
 

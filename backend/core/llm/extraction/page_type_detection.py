@@ -145,7 +145,9 @@ Respond with only: "SPECIFIC" or "GENERAL" """
             '/tour/', '/experience/',
             '/restaurant/', '/venue/',
             '/property/', '/listing/',
-            '-tour-', '-restaurant-', '-property-'
+            '-tour-', '-restaurant-', '-property-',
+            '/map/',  # Rome2Rio specific routes
+            '/s/',    # Rome2Rio alternate route format
         ]
         
         # Verificar patrones GENERAL
